@@ -268,6 +268,7 @@
   .cgrow input{width:24px;height:24px;min-width:24px;flex:none;padding:0;margin:0;accent-color:var(--c-hp)}
   .cgrow label{line-height:1.2}
   .badge.cg{background:color-mix(in srgb,var(--c-hp) 20%,var(--card));color:var(--text)}
+  .dpbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
 </style>
 </head>
 <body>
@@ -420,6 +421,8 @@
     <h2>Récap dépenses</h2>
     <div class="field" style="max-width:200px"><label for="dMois">Mois</label><input type="month" id="dMois"></div>
     <div id="dRecap"></div>
+    <div class="dpbtns"><button type="button" id="dRecFuel">⛽ Récap essence</button><button type="button" id="dRecMeal">🍽️ Récap repas</button></div>
+    <div class="dpnote">Chaque récap s'ouvre pour le mois choisi, avec PDF et envoi par e-mail. Ces récaps sont séparés de ceux des journées.</div>
   </section>
   </div>
 
@@ -1136,6 +1139,97 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     $('dRecap').innerHTML=h;
   }
   $('mDate').value=today(); $('fDate').value=today(); $('dMois').value=today().slice(0,7);
+
+  // ---------- Récaps dépenses (essence / repas), PDF + e-mail ----------
+  function depMonth(kind,mo){
+    var src=(kind==='fuel'?dep.fuel:dep.meals).filter(function(x){ return x.date.slice(0,7)===mo; }).sort(function(a,b){ return a.date<b.date?-1:a.date>b.date?1:0; });
+    var o={kind:kind,mo:mo,list:src,total:dSum(src),n:src.length,weeks:[],days:[],lit:0,eurL:0};
+    var wk={}; src.forEach(function(x){ var k=dMondayOf(x.date); (wk[k]=wk[k]||{k:k,total:0,n:0}); wk[k].total+=x.montant; wk[k].n++; });
+    o.weeks=Object.keys(wk).sort().map(function(k){ return wk[k]; });
+    var dd={}; src.forEach(function(x){ (dd[x.date]=dd[x.date]||{date:x.date,total:0,items:[]}); dd[x.date].total+=x.montant; dd[x.date].items.push(x); });
+    o.days=Object.keys(dd).sort().map(function(k){ return dd[k]; });
+    src.forEach(function(x){ if(x.litres){ o.lit+=x.litres; o.eurL+=x.montant; } });
+    return o;
+  }
+  function wkLabel(k){ var e=new Date(k+'T12:00:00'); e.setDate(e.getDate()+6); var ek=e.getFullYear()+'-'+String(e.getMonth()+1).padStart(2,'0')+'-'+String(e.getDate()).padStart(2,'0'); return dShort(k)+' - '+dShort(ek); }
+  function litStr(n){ return (Math.round(n*100)/100).toString().replace('.',','); }
+  function depTitle(o){ var p=o.mo.split('-'); return (o.kind==='fuel'?'Essence':'Repas')+' '+MOIS[+p[1]-1]+' '+p[0]; }
+  function recapDep(o){
+    var fuel=(o.kind==='fuel'), t=[], h='', p=o.mo.split('-'), titre=MOIS[+p[1]-1]+' '+p[0];
+    h+='<h3 style="margin:0 0 4px">'+(fuel?'⛽ Récap essence':'🍽️ Récap repas')+' · '+esc(titre)+'</h3>';
+    t.push((fuel?'RECAP ESSENCE':'RECAP REPAS')+' - '+titre);
+    if(!o.n) return {html:h+'<div class="dpnote">Rien de saisi ce mois-ci.</div>',text:t.join('\n')+'\nRien de saisi.',empty:true};
+    var avg=fuel?(o.lit&&o.eurL?eur(o.eurL/o.lit).replace(' €','')+' €/L':''):eur(o.total/o.days.length)+' / jour';
+    h+='<div class="dpsum" style="grid-template-columns:1fr 1fr"><div class="tt"><small>Total</small><b>'+eur(o.total)+'</b></div><div><small>'+(fuel?o.n+' plein'+(o.n>1?'s':''):o.days.length+' jour'+(o.days.length>1?'s':'')+' · '+o.n+' repas')+'</small><b>'+(fuel?(o.lit?litStr(o.lit)+' L':'–'):avg)+'</b></div></div>';
+    t.push('Total : '+eur(o.total)); t.push(fuel?(o.n+' plein(s)'+(o.lit?' - '+litStr(o.lit)+' L'+(avg?' - '+avg:''):'')):(o.n+' repas sur '+o.days.length+' jour(s) - '+avg));
+    h+='<div class="dph3">Par semaine</div><table class="dpt"><tr><th>Semaine</th><th>'+(fuel?'Pleins':'Repas')+'</th><th>Montant</th></tr>';
+    t.push('','PAR SEMAINE');
+    o.weeks.forEach(function(w){ h+='<tr><td>'+esc(wkLabel(w.k))+'</td><td>'+w.n+'</td><td>'+eur(w.total)+'</td></tr>'; t.push(wkLabel(w.k)+' : '+eur(w.total)+' ('+w.n+')'); });
+    h+='</table><div class="dph3">Détail</div><table class="dpt"><tr><th>Date</th><th>'+(fuel?'Litres':'Repas')+'</th><th>Montant</th></tr>';
+    t.push('','DETAIL');
+    if(fuel) o.list.forEach(function(x){ h+='<tr><td>'+esc(longDate(x.date))+'</td><td>'+(x.litres?litStr(x.litres)+' L':'–')+'</td><td>'+eur(x.montant)+'</td></tr>'; t.push(fmtDate(x.date)+' : '+eur(x.montant)+(x.litres?' ('+litStr(x.litres)+' L)':'')); });
+    else o.days.forEach(function(d){ h+='<tr><td>'+esc(longDate(d.date))+'</td><td>'+esc(d.items.map(function(x){ return x.note||'repas'; }).join(', '))+'</td><td>'+eur(d.total)+'</td></tr>'; t.push(fmtDate(d.date)+' : '+eur(d.total)+' ('+d.items.map(function(x){ return (x.note||'repas')+' '+eur(x.montant); }).join(', ')+')'); });
+    h+='</table>';
+    return {html:h,text:t.join('\n'),empty:false};
+  }
+  function pdfDep(o,noSave){
+    var fuel=(o.kind==='fuel'), doc=pdfLib(), p=o.mo.split('-'), titre=MOIS[+p[1]-1]+' '+p[0];
+    var y=pdfHeader(doc,(fuel?'Récap essence':'Récap repas'),titre);
+    var avg=fuel?(o.lit&&o.eurL?(Math.round(o.eurL/o.lit*1000)/1000+'').replace('.',',')+' EUR/L':'-'):eur(o.total/Math.max(1,o.days.length),true)+' / jour';
+    y=pdfCards(doc,y,[{label:'Total du mois',value:eur(o.total,true)},{label:fuel?'Pleins':'Repas',value:String(o.n),sub:fuel?(o.lit?litStr(o.lit)+' L':''):o.days.length+' jour(s)'},{label:fuel?'Prix moyen au litre':'Moyenne par jour',value:avg,small:true}]);
+    y=pdfSection(doc,y,'Par semaine');
+    var o1=tableBase(); o1.startY=y+2; o1.head=[['Semaine',fuel?'Pleins':'Repas','Montant']];
+    o1.body=o.weeks.map(function(w){ return [ws(wkLabel(w.k)),String(w.n),eur(w.total,true)]; });
+    o1.foot=[['TOTAL','',eur(o.total,true)]]; o1.showFoot='lastPage'; o1.footStyles={fillColor:C_NAVY,textColor:[255,255,255],fontStyle:'bold'};
+    o1.columnStyles={1:{halign:'right'},2:{halign:'right',fontStyle:'bold'}};
+    o1.didParseCell=function(h){ if((h.section==='head'||h.section==='foot')&&h.column.index>0) h.cell.styles.halign='right'; };
+    doc.autoTable(o1);
+    var y2=doc.lastAutoTable.finalY+12; if(y2>220){ doc.addPage(); y2=24; }
+    y2=pdfSection(doc,y2,'Détail');
+    var o2=tableBase(); o2.startY=y2+2;
+    if(fuel){ o2.head=[['Date','Litres','Prix / L','Montant']];
+      o2.body=o.list.map(function(x){ return [shortDay(x.date),x.litres?litStr(x.litres)+' L':'-',x.litres?(Math.round(x.montant/x.litres*1000)/1000+'').replace('.',','):'-',eur(x.montant,true)]; });
+      o2.columnStyles={1:{halign:'right'},2:{halign:'right'},3:{halign:'right',fontStyle:'bold'}};
+    } else { o2.head=[['Date','Repas','Total du jour']];
+      o2.body=o.days.map(function(d){ return [shortDay(d.date),ws(d.items.map(function(x){ return (x.note||'repas')+' '+eur(x.montant,true); }).join('  |  ')),eur(d.total,true)]; });
+      o2.columnStyles={2:{halign:'right',fontStyle:'bold'}};
+    }
+    o2.didParseCell=function(h){ if(h.section==='head'&&h.column.index>0&&(fuel||h.column.index===2)) h.cell.styles.halign='right'; };
+    doc.autoTable(o2);
+    if(fuel){
+      var L=[]; o.list.forEach(function(x){ asList(PH['fuel|'+x.id]).forEach(function(ph,i,a){ L.push({x:x,o:ph,i:i,n:a.length}); }); });
+      if(L.length){
+        var W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), gap=8, colW=(W-28-gap)/2, bottom=H-20, yy=pdfSectionPage(doc,true,'Tickets d\'essence'), col=0, rowH=0;
+        L.forEach(function(it){
+          var w=colW, h=w/(it.o.w/it.o.h), capH=bottom-yy-12; if(h>115) h=115; if(h>capH&&col===0&&yy>30){ /* nouvelle page si trop bas */ }
+          if(col===0&&yy+h+12>bottom){ yy=pdfSectionPage(doc,false,'Tickets d\'essence'); }
+          if(h>bottom-yy-12) h=bottom-yy-12; w=h*(it.o.w/it.o.h); if(w>colW){ w=colW; h=w/(it.o.w/it.o.h); }
+          var x=14+col*(colW+gap);
+          doc.setFont('helvetica','bold'); doc.setFontSize(10); tcol(doc,C_NAVY); doc.text(ws(shortDay(it.x.date)+'  -  '+eur(it.x.montant,true)+(it.n>1?'  ('+(it.i+1)+'/'+it.n+')':'')),x,yy);
+          dcol(doc,C_LINE); doc.setLineWidth(0.3); doc.roundedRect(x-0.6,yy+3.4,w+1.2,h+1.2,1.5,1.5,'S'); doc.addImage(it.o.d,'JPEG',x,yy+4,w,h);
+          rowH=Math.max(rowH,h+12);
+          if(col===1){ yy+=rowH; rowH=0; col=0; } else col=1;
+        });
+      }
+    }
+    pdfFooter(doc);
+    var name=(fuel?'recap_essence_':'recap_repas_')+o.mo+'.pdf';
+    if(!noSave) doc.save(name);
+    return {doc:doc,name:name};
+  }
+  function sendDepMail(o,notify){
+    var out; try{ out=pdfDep(o,true); }catch(e){ notify('Impossible de créer le PDF ('+(e&&e.message?e.message:e)+').'); return Promise.resolve('error'); }
+    return deliverDoc(out,'Récap '+depTitle(o),recapDep(o).text,notify);
+  }
+  function openDepRecap(kind){
+    var mo=$('dMois').value||today().slice(0,7), o=depMonth(kind,mo), x=recapDep(o);
+    var ids=(kind==='fuel')?o.list.map(function(f){ return 'fuel|'+f.id; }):[];
+    (ids.length?loadPhotos(ids):Promise.resolve()).then(function(){
+      openDlg(x.html,x.text,x.empty?null:function(){ pdfDep(o); },x.empty?null:function(notify){ sendDepMail(o,notify); });
+    });
+  }
+  $('dRecFuel').addEventListener('click',function(){ openDepRecap('fuel'); });
+  $('dRecMeal').addEventListener('click',function(){ openDepRecap('meals'); });
 
   // ---------- Thèmes de couleurs ----------
   function hx(h){ h=String(h).replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
