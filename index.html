@@ -262,6 +262,12 @@
   .dpi img{width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:zoom-in}
   .dpi .del{width:34px;height:34px;padding:0;border-radius:50%;flex:none}
   .dph3{font-size:13px;font-weight:700;color:var(--muted);margin:16px 0 0;text-transform:uppercase;letter-spacing:.04em}
+  .cgrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .cgrow label{flex:1 1 140px;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--card);font-size:14px;font-weight:600}
+  .cgrow label.on{border-color:var(--c-hp);background:color-mix(in srgb,var(--c-hp) 14%,var(--card))}
+  .cgrow input{width:24px;height:24px;min-width:24px;flex:none;padding:0;margin:0;accent-color:var(--c-hp)}
+  .cgrow label{line-height:1.2}
+  .badge.cg{background:color-mix(in srgb,var(--c-hp) 20%,var(--card));color:var(--text)}
 </style>
 </head>
 <body>
@@ -284,6 +290,7 @@
       <div class="field"><label for="depart">Heure de départ</label><input type="time" id="depart"></div>
       <div class="field"><label for="kmAller">Km (aller)</label><input type="number" id="kmAller" min="0" step="0.1" inputmode="decimal" placeholder="0"></div>
     </div>
+    <div class="cgrow"><label id="cgCpL"><input type="checkbox" id="cgCp"> 🏖️ Congé payé</label><label id="cgCssL"><input type="checkbox" id="cgCss"> Congé sans solde</label></div>
     <div class="photo"><div id="ph-depart"></div><input type="file" id="file-depart" accept="image/*" multiple style="display:none"><div class="msg" id="phmsg-depart"></div></div>
   </section>
 
@@ -470,6 +477,7 @@
       <div class="stat" style="flex:1 1 90px"><small>Jours</small><b id="moisJours">–</b></div>
       <div class="stat" style="flex:1 1 130px"><small>Heures sup du mois</small><b id="moisHs">–</b></div>
       <div class="stat" style="flex:1 1 90px"><small>Km du mois</small><b id="moisKm">–</b></div>
+      <div class="stat" id="moisCgBox" style="flex:1 1 130px;display:none"><small>Congés du mois</small><b id="moisCg">–</b></div>
       <div class="stat" id="moisAstBox" style="flex:1 1 130px;display:none"><small>Astreinte du mois</small><b id="moisAst">–</b></div>
       <div class="stat" id="moisHpBox" style="flex:1 1 130px;display:none"><small>Portes hors astreinte</small><b id="moisHp">–</b></div>
       <div class="stat" id="moisTotBox" style="flex:1 1 100%;display:none"><small>💶 Total estimé du mois (heures sup + astreintes + portes)</small><b id="moisTot">–</b></div>
@@ -951,7 +959,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
   function today(){ var d=new Date(); var m=String(d.getMonth()+1).padStart(2,'0'), j=String(d.getDate()).padStart(2,'0'); return d.getFullYear()+'-'+m+'-'+j; }
   function uid(){ return Math.random().toString(36).slice(2,9); }
-  function blank(){ return {date:today(),from:'',depart:'',kmAller:'',retour:'',kmRetour:'',pause:'',interventions:[{id:uid(),ticket:'',debut:'',fin:''}]}; }
+  function blank(){ return {date:today(),conge:'',from:'',depart:'',kmAller:'',retour:'',kmRetour:'',pause:'',interventions:[{id:uid(),ticket:'',debut:'',fin:''}]}; }
 
   var settings=load(KEY_SET,{seuil:7,mode:'retour'});
   var KEY_AST='hs_astr_v1';
@@ -962,6 +970,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   var cur=load(KEY_DRAFT,null)||blank();
   if(!cur.interventions||!cur.interventions.length) cur.interventions=[{id:uid(),ticket:'',debut:'',fin:''}];
 
+  var CG_LABEL={cp:'Congé payé',css:'Congé sans solde'};
+  function congeOf(d){ return (d&&(d.conge==='cp'||d.conge==='css'))?d.conge:''; }
+  function congeMonth(keys){ var o={cp:[],css:[]}; keys.forEach(function(k){ var c=congeOf(days[k]); if(c) o[c].push(k); }); o.n=o.cp.length+o.css.length; return o; }
   function toMin(t){ if(!t) return null; var p=t.split(':'); return (+p[0])*60+(+p[1]); }
   function diff(a,b){ var x=toMin(a), y=toMin(b); if(x===null||y===null) return null; return ((y-x)%1440+1440)%1440; }
   function fmt(min){ if(min===null||isNaN(min)) return '–'; var h=Math.floor(min/60), m=Math.round(min%60); return h+' h '+String(m).padStart(2,'0'); }
@@ -999,7 +1010,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     $('rAutre').textContent=fmt(r.autre);
     $('rKm').textContent=r.km?(Math.round(r.km*10)/10)+' km':'–';
     var box=$('rHs');
-    if(r.hs===null){ box.className='hs no'; box.textContent=(r.mode==='retour')?'Renseigne le premier T3, le dernier T6 et l\'heure de retour pour voir les heures sup.':(r.mode==='aucun'?'Renseigne le premier T3 et le dernier T6 pour voir les heures sup.':'Renseigne le départ et le retour pour voir les heures sup.'); }
+    if(r.hs===null&&congeOf(cur)){ box.className='hs no'; box.textContent='🏖️ '+CG_LABEL[congeOf(cur)]+' : pas de calcul d\'heures sup ce jour-là.'; }
+    else if(r.hs===null){ box.className='hs no'; box.textContent=(r.mode==='retour')?'Renseigne le premier T3, le dernier T6 et l\'heure de retour pour voir les heures sup.':(r.mode==='aucun'?'Renseigne le premier T3 et le dernier T6 pour voir les heures sup.':'Renseigne le départ et le retour pour voir les heures sup.'); }
     else if(r.hs>0){ box.className='hs yes'; box.innerHTML='Heures sup : <b>'+fmt(r.hs)+'</b> <span style="white-space:nowrap">= <b>'+eur(hsEur(r.hs))+'</b></span> <small>'+r.hs+' min au-dessus de '+fmt(r.seuilMin)+' · '+eur(taux())+'/h · temps compté : '+fmt(r.counted)+'</small>'; }
     else { box.className='hs no'; box.innerHTML='Pas d\'heures sup <small>Temps compté : '+fmt(r.counted)+' sur '+fmt(r.seuilMin)+'</small>'; }
     // durée par intervention
@@ -1598,7 +1610,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     });
   }
 
+  function renderConge(){
+    var c=congeOf(cur); $('cgCp').checked=(c==='cp'); $('cgCss').checked=(c==='css');
+    $('cgCpL').className=(c==='cp')?'on':''; $('cgCssL').className=(c==='css')?'on':'';
+  }
+  function setConge(v){ cur.conge=v; saveDraft(); renderConge(); renderResult(); }
+  $('cgCp').addEventListener('change',function(){ setConge(this.checked?'cp':''); });
+  $('cgCss').addEventListener('change',function(){ setConge(this.checked?'css':''); });
   function fillStatic(){
+    renderConge();
     $('date').value=cur.date||''; $('depart').value=cur.depart||''; $('kmAller').value=cur.kmAller||'';
     $('retour').value=cur.retour||''; $('kmRetour').value=cur.kmRetour||''; $('pause').value=cur.pause||'';
     $('seuil').value=settings.seuil; $('tauxHs').value=(settings.tauxHs===undefined?20:settings.tauxHs); $('primeAst').value=(settings.primeAst===undefined?120:settings.primeAst); $('mode').value=settings.mode; $('nom').value=settings.nom||''; $('email').value=settings.email||''; $('relay').value=settings.relay||''; $('relaySecret').value=settings.relaySecret||'';
@@ -1816,13 +1836,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var t=loadTrash(); t.unshift({k:date,at:new Date().toISOString(),why:why,day:recOf(rec)}); store(KEY_TRASH,t.slice(0,60));
   }
   function norm(d){
-    return JSON.stringify([d.depart||'',String(d.kmAller||''),d.retour||'',String(d.kmRetour||''),String(d.pause||''),
+    return JSON.stringify([congeOf(d),d.depart||'',String(d.kmAller||''),d.retour||'',String(d.kmRetour||''),String(d.pause||''),
       (d.interventions||[]).filter(function(i){return i&&(i.ticket||i.debut||i.fin||crFilled(i));}).map(function(i){return [i.ticket||'',i.debut||'',i.fin||'',crKey(i)];}),
       astOf(d)?[String(d.astreinte.zone||''),String(d.astreinte.portes||''),String(d.astreinte.prix||'')]:null,
       horsOf(d)?horsItems(d).map(function(i){return [i.zone||'',i.ticket||'',i.t3||'',i.t6||'',String(i.prix||'')];}):null]);
   }
   function hasContent(d){
-    return !!(d.depart||d.retour||String(d.kmAller||'').trim()||String(d.kmRetour||'').trim()||String(d.pause||'').trim()||
+    return !!(congeOf(d)||d.depart||d.retour||String(d.kmAller||'').trim()||String(d.kmRetour||'').trim()||String(d.pause||'').trim()||
       (d.interventions||[]).some(function(i){return i.ticket||i.debut||i.fin||crFilled(i);})||!!astOf(d)||!!horsOf(d)||KINDS.some(function(k){return nbPhotos('draft|'+k)>0;}));
   }
   function photosSame(date){
@@ -1992,7 +2012,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     keys.forEach(function(k){
       var d=days[k], r=compute(d); if(r.hs) totHs+=r.hs; totKm+=r.km;
       var nb=d.interventions.filter(function(i){return i.ticket||i.debut||i.fin}).length;
-      var badge=(r.hs===null)?'<span class="badge no">à compléter</span>':(r.hs>0?'<span class="badge yes">HS '+fmt(r.hs)+' · '+eur(hsEur(r.hs))+'</span>':'<span class="badge no">pas de HS</span>');
+      var cgd=congeOf(d);
+      var badge=(cgd&&r.hs===null)?'<span class="badge cg">🏖️ '+CG_LABEL[cgd]+'</span>':(r.hs===null)?'<span class="badge no">à compléter</span>':(r.hs>0?'<span class="badge yes">HS '+fmt(r.hs)+' · '+eur(hsEur(r.hs))+'</span>':'<span class="badge no">pas de HS</span>');
       html+='<details class="day"><summary><span class="dd">'+esc(dayName(k))+'</span>'+
         '<span class="meta">'+nb+' interv. · '+fmt(r.counted)+(r.km?' · '+Math.round(r.km*10)/10+' km':'')+'</span>'+badge+'</summary>'+
         '<div class="body">'+recapDay(d,true).html+'<div class="phs" data-d="'+k+'"></div>'+
@@ -2007,6 +2028,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     $('moisKm').textContent=totKm?(Math.round(totKm*10)/10)+' km':'–';
     var hmo=horsMonth(keys); $('moisHpBox').style.display=hmo.n?'':'none'; $('moisHp').textContent=hmo.n?(hmo.n+' · '+eur(hmo.total)):'–';
     var mm=$('mois').value||today().slice(0,7), fmo=finMonth(mm,keys,totHs); $('moisTotBox').style.display=keys.length?'':'none'; $('moisTot').textContent=eur(fmo.total)+'  (heures sup '+eur(fmo.hs)+(fmo.astN?' · astreinte '+eur(fmo.ast):'')+(fmo.primeN?' · primes '+eur(fmo.prime):'')+(fmo.horsN?' · portes '+eur(fmo.hors):'')+')';
+    var cgm=congeMonth(keys); $('moisCgBox').style.display=cgm.n?'':'none'; $('moisCg').textContent=cgm.n?((cgm.cp.length?cgm.cp.length+' payé'+(cgm.cp.length>1?'s':''):'')+(cgm.cp.length&&cgm.css.length?' · ':'')+(cgm.css.length?cgm.css.length+' sans solde':'')):'–';
     var amo=astMonth(keys); $('moisAstBox').style.display=amo.n?'':'none'; $('moisAst').textContent=amo.n?eur(amo.total):'–';
   }
   $('mois').addEventListener('input',renderHist);
@@ -2114,6 +2136,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     t.push('Récap du '+fmtDate(d.date||today()));
     h+=(noTitle?'':'<h3>Journée du '+fmtDate(d.date||today())+'</h3>')+'<div class="sub">Règle : '+MODE_LABEL[r.mode]+' · seuil '+fmt(r.seuilMin)+'</div>';
     h+='<table><tbody>';
+    var cg=congeOf(d); if(cg){ h+='<tr><td colspan="3"><b>🏖️ '+CG_LABEL[cg]+'</b></td></tr>'; t.push('*** '+CG_LABEL[cg].toUpperCase()+' ***'); }
     h+='<tr><td>Départ maison</td><td class="num">'+esc(d.depart||'–')+'</td><td class="num">'+(num(d.kmAller)?num(d.kmAller)+' km':'')+'</td></tr>';
     t.push('Départ maison : '+(d.depart||'–')+(num(d.kmAller)?' ('+num(d.kmAller)+' km)':''));
     if(!its.length){ h+='<tr><td colspan="3" style="color:var(--muted)">Aucune intervention saisie</td></tr>'; t.push('Aucune intervention saisie'); }
@@ -2134,7 +2157,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       '<div class="stat"><small>Trajet retour</small><b>'+fmt(r.retourTrip)+'</b></div>'+
       '<div class="stat"><small>Temps compté</small><b>'+fmt(r.counted)+'</b></div>'+
       '<div class="stat"><small>Km total</small><b>'+(r.km?Math.round(r.km*10)/10+' km':'–')+'</b></div></div>';
-    if(r.hs===null) h+='<div class="hs no">Heures sup : à calculer (il manque des horaires).</div>';
+    if(r.hs===null){ if(!cg) h+='<div class="hs no">Heures sup : à calculer (il manque des horaires).</div>'; }
+    else if(false) h+='<div class="hs no">Heures sup : à calculer (il manque des horaires).</div>';
     else h+='<div class="hs '+(r.hs>0?'yes':'no')+'">'+(r.hs>0?'Heures sup : <b>'+fmt(r.hs)+'</b> = <b>'+eur(hsEur(r.hs))+'</b> <small>'+r.hs+' min · '+eur(taux())+'/h</small>':'Pas d\'heures sup')+'</div>';
     var jt=hsEur(r.hs||0)+(A?astTotal(A):0)+horsTotal(d);
     if(jt>0&&(A||horsItems(d).length)) h+='<div class="hs no">💶 Total du jour : <b>'+eur(jt)+'</b> <small>heures sup '+eur(hsEur(r.hs||0))+(A?' · astreinte '+eur(astTotal(A)):'')+(horsItems(d).length?' · portes hors astreinte '+eur(horsTotal(d)):'')+'</small></div>';
@@ -2163,11 +2187,20 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     keys.forEach(function(k){
       var d=days[k], r=compute(d), nb=d.interventions.filter(function(i){return i.ticket||i.debut||i.fin}).length;
       if(r.counted!==null) totC+=r.counted; if(r.hs){ totH+=r.hs; nbHs++; } totK+=r.km; totI+=nb;
+      var cgk=congeOf(d);
+      if(cgk&&r.counted===null&&!nb){ h+='<tr><td>'+fmtDate(k)+'</td><td colspan="4">🏖️ '+CG_LABEL[cgk]+'</td></tr>'; t.push(fmtDate(k)+' | '+CG_LABEL[cgk]); return; }
       h+='<tr><td>'+fmtDate(k)+'</td><td class="num">'+nb+'</td><td class="num">'+fmt(r.counted)+'</td><td class="num"><b>'+(r.hs?fmt(r.hs):'–')+'</b></td><td class="num">'+(r.km?Math.round(r.km*10)/10:'–')+'</td></tr>';
       t.push(fmtDate(k)+' | '+nb+' interv. | compté '+fmt(r.counted)+' | HS '+(r.hs?fmt(r.hs):'–')+' | '+(r.km?Math.round(r.km*10)/10:0)+' km');
     });
     h+='<tr class="tot"><td>Total</td><td class="num">'+totI+'</td><td class="num">'+fmt(totC)+'</td><td class="num">'+fmt(totH)+'</td><td class="num">'+Math.round(totK*10)/10+'</td></tr></tbody></table>';
     h+='<div class="kv"><div class="stat"><small>Jours enregistrés</small><b>'+keys.length+'</b></div><div class="stat"><small>Jours avec heures sup</small><b>'+nbHs+'</b></div><div class="stat"><small>Heures sup du mois</small><b>'+fmt(totH)+'</b></div><div class="stat"><small>Km du mois</small><b>'+Math.round(totK*10)/10+' km</b></div>'+(amo.n?'<div class="stat"><small>Astreinte du mois</small><b>'+eur(amo.total)+'</b></div>':'')+(hmo.n?'<div class="stat"><small>Portes hors astreinte</small><b>'+hmo.n+' · '+eur(hmo.total)+'</b></div>':'')+'</div>';
+    var cgm=congeMonth(keys);
+    if(cgm.n){
+      h+='<div class="kv">'+(cgm.cp.length?'<div class="stat"><small>🏖️ Congés payés</small><b>'+cgm.cp.length+' jour'+(cgm.cp.length>1?'s':'')+'</b></div>':'')+(cgm.css.length?'<div class="stat"><small>Congés sans solde</small><b>'+cgm.css.length+' jour'+(cgm.css.length>1?'s':'')+'</b></div>':'')+'<div class="stat"><small>Jours travaillés</small><b>'+(keys.length-cgm.n)+'</b></div></div>';
+      h+='<div class="sub" style="margin-top:6px">'+(cgm.cp.length?'Congé payé : '+cgm.cp.map(fmtDate).join(', ')+'. ':'')+(cgm.css.length?'Congé sans solde : '+cgm.css.map(fmtDate).join(', ')+'.':'')+'</div>';
+      if(cgm.cp.length) t.push('CONGES PAYES : '+cgm.cp.length+' jour(s) ('+cgm.cp.map(fmtDate).join(', ')+')');
+      if(cgm.css.length) t.push('CONGES SANS SOLDE : '+cgm.css.length+' jour(s) ('+cgm.css.map(fmtDate).join(', ')+')');
+    }
     var fm=finMonth(mois,keys,totH);
     h+='<div class="fin"><div class="l"><span>Heures sup<small>'+fmt(totH)+' × '+eur(taux())+'/h</small></span><b>'+eur(fm.hs)+'</b></div>'+
       (fm.astN?'<div class="l"><span>Portes d\'astreinte<small>'+fm.astPortes+' porte(s)</small></span><b>'+eur(fm.ast)+'</b></div>':'')+
@@ -2367,6 +2400,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       var tk=d.interventions.filter(function(i){return i.ticket||i.debut||i.fin});
       var names=tk.map(function(i,n){return ws(i.ticket||('#'+(n+1)));}).join(', ');
       if(r.counted!==null) totC+=r.counted; if(r.hs){ totH+=r.hs; nbHs++; } totK+=r.km; totT+=tk.length;
+      var cgp=congeOf(d); if(cgp&&r.counted===null&&!tk.length){ body.push([shortDay(k),ws(CG_LABEL[cgp]),'–','–','–','–','–','–']); return; }
       body.push([shortDay(k),names||'–',r.firstT3||'–',r.lastT6||'–',d.retour||'–',fmt(r.counted),r.hs?fmt(r.hs):'–',r.km?String(Math.round(r.km*10)/10):'–']);
     });
     y=pdfCards(doc,y,[
@@ -2414,6 +2448,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       o5.columnStyles={4:{halign:'right',fontStyle:'bold'}};
       o5.didParseCell=function(h){ if((h.section==='head'||h.section==='foot')&&h.column.index===4) h.cell.styles.halign='right'; };
       doc.autoTable(o5);
+    }
+    var cgm=congeMonth(keys);
+    if(cgm.n){
+      var yg=doc.lastAutoTable.finalY+12; if(yg>215){ doc.addPage(); yg=22; }
+      yg=pdfSection(doc,yg,'Conges du mois');
+      var o7=tableBase(); o7.startY=yg+2; o7.head=[['Type','Jours','Dates']];
+      o7.body=[]; if(cgm.cp.length) o7.body.push(['Conge paye',String(cgm.cp.length),cgm.cp.map(shortDay).join(', ')]); if(cgm.css.length) o7.body.push(['Conge sans solde',String(cgm.css.length),cgm.css.map(shortDay).join(', ')]);
+      o7.columnStyles={1:{halign:'right',cellWidth:18}}; o7.didParseCell=function(h){ if(h.section==='head'&&h.column.index===1) h.cell.styles.halign='right'; };
+      doc.autoTable(o7);
     }
     var fm=finMonth(mois,keys,totH), yd=doc.lastAutoTable.finalY+12; if(yd>200){ doc.addPage(); yd=22; }
     yd=pdfSection(doc,yd,'Récapitulatif financier du mois');
@@ -2627,7 +2670,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var its=Array.isArray(d.interventions)?d.interventions:[];
     its=its.filter(function(i){return i&&typeof i==='object'}).map(function(i){ var o={id:uid(),ticket:cleanStr(i.ticket),debut:cleanTime(i.debut),fin:cleanTime(i.fin)}; var c=cleanCr(i.cr); if(c) o.cr=c; return o; });
     if(!its.length) its=[{id:uid(),ticket:'',debut:'',fin:''}];
-    return {date:key,depart:cleanTime(d.depart),kmAller:cleanStr(d.kmAller),retour:cleanTime(d.retour),kmRetour:cleanStr(d.kmRetour),pause:cleanStr(d.pause),interventions:its,astreinte:cleanAst(d.astreinte),hors:cleanHors(d.hors)};
+    return {date:key,conge:congeOf(d),depart:cleanTime(d.depart),kmAller:cleanStr(d.kmAller),retour:cleanTime(d.retour),kmRetour:cleanStr(d.kmRetour),pause:cleanStr(d.pause),interventions:its,astreinte:cleanAst(d.astreinte),hors:cleanHors(d.hors)};
   }
   $('restoreFile').addEventListener('change',function(){
     var f=this.files&&this.files[0]; var input=this; if(!f) return;
