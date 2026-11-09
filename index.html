@@ -237,6 +237,31 @@
   .colors{display:flex;gap:16px;margin-top:14px;align-items:flex-end;flex-wrap:wrap}
   .colors input[type=color]{width:64px;height:46px;padding:2px;border-radius:12px}
   .preview{margin-top:14px;padding:14px;border-radius:14px;background:var(--bg);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  #tabBtnDep{flex:0 0 46px;font-size:17px;padding:8px 0}
+  #tabDep .card{border-left-color:var(--c-dep)}
+  #tabDep .card.fu{border-left-color:var(--c-ast)}
+  #tabDep .card.rc{border-left-color:var(--accent)}
+  #tabDep .card h2::before{content:"🍽️";background:color-mix(in srgb,var(--c-dep) 20%,transparent)}
+  #tabDep .card.fu h2::before{content:"⛽";background:color-mix(in srgb,var(--c-ast) 22%,transparent)}
+  #tabDep .card.rc h2::before{content:"📊";background:color-mix(in srgb,var(--accent) 20%,transparent)}
+  .dpnote{font-size:13px;color:var(--muted);margin-top:6px}
+  .dpsum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+  .dpsum div{background:var(--bg);border-radius:12px;padding:10px 6px;text-align:center}
+  .dpsum b{display:block;font-size:17px;margin-top:2px}
+  .dpsum small{font-size:12px;color:var(--muted)}
+  .dpsum .tt{background:var(--grad);color:#fff}.dpsum .tt small{color:rgba(255,255,255,.85)}
+  .dpt{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+  .dpt th{font-size:12px;color:var(--muted);text-align:right;font-weight:600;padding:4px 4px}
+  .dpt th:first-child,.dpt td:first-child{text-align:left;white-space:normal}
+  .dpt td{white-space:nowrap;padding:8px 4px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+  .dpt tr.cw td{font-weight:700;background:color-mix(in srgb,var(--accent) 8%,transparent)}
+  .dpl{margin-top:8px}
+  .dpi{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+  .dpi .t{flex:1;min-width:0}.dpi .t b{display:block}.dpi .t small{color:var(--muted)}
+  .dpi .m{font-weight:700;white-space:nowrap}
+  .dpi img{width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:zoom-in}
+  .dpi .del{width:34px;height:34px;padding:0;border-radius:50%;flex:none}
+  .dph3{font-size:13px;font-weight:700;color:var(--muted);margin:16px 0 0;text-transform:uppercase;letter-spacing:.04em}
 </style>
 </head>
 <body>
@@ -246,6 +271,7 @@
     <button class="tab on" id="tabBtnSaisie" type="button">Saisie</button>
     <button class="tab" id="tabBtnJournees" type="button">Journées</button>
     <button class="tab" id="tabBtnAstreinte" type="button">🚨 Astreintes</button>
+    <button class="tab" id="tabBtnDep" type="button" aria-label="Dépenses" title="Dépenses">💶</button>
     <button class="tab" id="tabBtnTheme" type="button" aria-label="Apparence" title="Apparence">🎨</button>
   </div>
   <div id="tabSaisie">
@@ -360,6 +386,36 @@
   </section>
 
   </div>
+  <div id="tabDep" style="display:none">
+  <section class="card">
+    <h2>Repas du jour</h2>
+    <div class="row">
+      <div class="field"><label for="mDate">Date</label><input type="date" id="mDate"></div>
+      <div class="field"><label for="mMont">Montant (€)</label><input type="number" id="mMont" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></div>
+    </div>
+    <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="mNote">Note (facultatif)</label><input type="text" id="mNote" maxlength="40" placeholder="midi, sandwich…"></div></div>
+    <button type="button" class="primary" id="mAdd" style="margin-top:12px">Ajouter le repas</button>
+    <div class="msg" id="mMsg"></div>
+    <div class="dpnote">Plusieurs repas le même jour ? Ajoute-les un par un, le total du jour se calcule tout seul.</div>
+  </section>
+  <section class="card fu">
+    <h2>Plein d'essence</h2>
+    <div class="row">
+      <div class="field"><label for="fDate">Date du plein</label><input type="date" id="fDate"></div>
+      <div class="field"><label for="fMont">Montant du ticket (€)</label><input type="number" id="fMont" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></div>
+    </div>
+    <div class="row" style="margin-top:10px"><div class="field"><label for="fLitres">Litres (facultatif)</label><input type="number" id="fLitres" min="0" step="0.01" inputmode="decimal" placeholder="0"></div></div>
+    <div class="photo"><div id="fPh"></div><input type="file" id="fFile" accept="image/*" multiple style="display:none"><div class="msg" id="fPhMsg"></div></div>
+    <button type="button" class="primary" id="fAdd" style="margin-top:12px">Ajouter le plein</button>
+    <div class="msg" id="fMsg"></div>
+  </section>
+  <section class="card rc">
+    <h2>Récap dépenses</h2>
+    <div class="field" style="max-width:200px"><label for="dMois">Mois</label><input type="month" id="dMois"></div>
+    <div id="dRecap"></div>
+  </section>
+  </div>
+
   <div id="tabTheme" style="display:none">
   <section class="card">
     <h2>Thème de couleurs</h2>
@@ -953,6 +1009,121 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     });
     renderStatus();
   }
+
+  // ---------- Dépenses (repas + essence) : à part, jamais dans les PDF ----------
+  var KEY_DEP='hs_dep_v1';
+  var dep=cleanDep(load(KEY_DEP,{meals:[],fuel:[]}));
+  function cleanAmt(v){ var n=num(v); return (n>0&&n<100000)?Math.round(n*100)/100:0; }
+  function cleanDep(d){
+    d=(d&&typeof d==='object')?d:{};
+    function ok(x){ return x&&typeof x==='object'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')&&cleanAmt(x.montant)>0; }
+    function id(x){ return (typeof x.id==='string'&&/^[\w-]{1,40}$/.test(x.id))?x.id:uid(); }
+    return {
+      meals:(Array.isArray(d.meals)?d.meals:[]).filter(ok).slice(0,5000).map(function(x){ return {id:id(x),date:x.date,montant:cleanAmt(x.montant),note:cleanStr(x.note).slice(0,40)}; }),
+      fuel:(Array.isArray(d.fuel)?d.fuel:[]).filter(ok).slice(0,2000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant)}; var l=cleanAmt(x.litres); if(l) o.litres=l; return o; })
+    };
+  }
+  function saveDep(){ store(KEY_DEP,dep); }
+  function dMondayOf(k){ var d=new Date(k+'T12:00:00'); var w=(d.getDay()+6)%7; d.setDate(d.getDate()-w); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function dShort(k){ return (+k.slice(8))+' '+['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][+k.slice(5,7)-1]; }
+  function dSum(a){ return a.reduce(function(t,x){ return t+x.montant; },0); }
+  var fPhKey='fuel|draft';
+  function renderFuelPhotoUI(){
+    var list=asList(PH[fPhKey]), h='<div class="ph-row">';
+    list.forEach(function(o,i){ h+='<span class="thumb"><img src="'+o.d+'" alt="Ticket" data-fv="'+i+'"><button type="button" class="x" data-fdel="'+i+'" aria-label="Retirer">×</button></span>'; });
+    if(list.length<3) h+='<button type="button" data-fpick="1">'+(list.length?'+ Ajouter une photo':'📷 Photo du ticket')+'</button>';
+    $('fPh').innerHTML=h+'</div>';
+  }
+  function fMsg(id,t){ var el=$(id); el.textContent=t; clearTimeout(fMsg['t'+id]); fMsg['t'+id]=setTimeout(function(){ el.textContent=''; },4000); }
+  $('fPh').addEventListener('click',function(e){
+    var ds=e.target.dataset||{};
+    if(ds.fpick) $('fFile').click();
+    else if(ds.fdel!==undefined){ var l=asList(PH[fPhKey]); l.splice(+ds.fdel,1); setPhotos(fPhKey,l); renderFuelPhotoUI(); }
+    else if(ds.fv!==undefined) viewPhotos(PH[fPhKey],+ds.fv,'Ticket essence');
+  });
+  $('fFile').addEventListener('change',function(){
+    var inp=this, files=Array.prototype.slice.call(inp.files||[]); if(!files.length) return;
+    loadPhotos([fPhKey]).then(function(){
+      var room=3-asList(PH[fPhKey]).length; if(room<=0){ fMsg('fPhMsg','Maximum 3 photos.'); return; }
+      fMsg('fPhMsg','Traitement…');
+      var acc=[], chain=Promise.resolve();
+      files.slice(0,room).forEach(function(f){ chain=chain.then(function(){ return compressImage(f).then(function(o){ acc.push(o); },function(){}); }); });
+      return chain.then(function(){
+        if(!acc.length){ fMsg('fPhMsg','Impossible de lire cette image.'); return; }
+        return setPhotos(fPhKey,asList(PH[fPhKey]).concat(acc)).then(function(){ renderFuelPhotoUI(); fMsg('fPhMsg','Photo ajoutée.'); });
+      });
+    }).catch(function(){ fMsg('fPhMsg','Impossible de lire cette image.'); }).then(function(){ inp.value=''; });
+  });
+  $('mAdd').addEventListener('click',function(){
+    var d=$('mDate').value, m=cleanAmt($('mMont').value);
+    if(!d){ fMsg('mMsg','Choisis une date.'); return; }
+    if(!m){ fMsg('mMsg','Mets le montant du repas.'); return; }
+    dep.meals.push({id:uid(),date:d,montant:m,note:$('mNote').value.trim().slice(0,40)}); saveDep();
+    $('mMont').value=''; $('mNote').value=''; $('dMois').value=d.slice(0,7);
+    fMsg('mMsg','Repas ajouté : '+eur(m)+' le '+dShort(d)+' Total du jour : '+eur(dSum(dep.meals.filter(function(x){return x.date===d;})))+'.'); renderDep();
+  });
+  $('fAdd').addEventListener('click',function(){
+    var d=$('fDate').value, m=cleanAmt($('fMont').value);
+    if(!d){ fMsg('fMsg','Choisis la date du plein.'); return; }
+    if(!m){ fMsg('fMsg','Mets le montant du ticket.'); return; }
+    var o={id:uid(),date:d,montant:m}, l=cleanAmt($('fLitres').value); if(l) o.litres=l;
+    var ph=asList(PH[fPhKey]);
+    dep.fuel.push(o); saveDep();
+    var job=ph.length?setPhotos('fuel|'+o.id,ph).then(function(){ return setPhotos(fPhKey,[]); }):Promise.resolve();
+    job.then(function(){ renderFuelPhotoUI(); renderDep(); });
+    $('fMont').value=''; $('fLitres').value=''; $('dMois').value=d.slice(0,7);
+    fMsg('fMsg','Plein ajouté : '+eur(m)+' le '+dShort(d)+(ph.length?' (ticket enregistré)':''));
+  });
+  $('dMois').addEventListener('input',renderDep);
+  $('dRecap').addEventListener('click',function(e){
+    var ds=e.target.dataset||{};
+    if(ds.dm){ var m=dep.meals.filter(function(x){return x.id===ds.dm;})[0]; if(!m) return;
+      ask('Supprimer ce repas ?',dShort(m.date)+' · '+eur(m.montant)+(m.note?' · '+m.note:''),['Supprimer','Garder']).then(function(i){ if(i!==0) return; dep.meals=dep.meals.filter(function(x){return x.id!==ds.dm;}); saveDep(); renderDep(); }); }
+    else if(ds.df){ var f=dep.fuel.filter(function(x){return x.id===ds.df;})[0]; if(!f) return;
+      ask('Supprimer ce plein ?',dShort(f.date)+' · '+eur(f.montant)+' (la photo du ticket est supprimée aussi)',['Supprimer','Garder']).then(function(i){ if(i!==0) return; dep.fuel=dep.fuel.filter(function(x){return x.id!==ds.df;}); saveDep(); setPhotos('fuel|'+ds.df,[]); renderDep(); }); }
+    else if(ds.dv){ loadPhotos(['fuel|'+ds.dv]).then(function(){ viewPhotos(PH['fuel|'+ds.dv],0,'Ticket essence'); }); }
+  });
+  function renderDep(){
+    var mo=$('dMois').value; if(!/^\d{4}-\d{2}$/.test(mo)){ mo=today().slice(0,7); $('dMois').value=mo; }
+    var meals=dep.meals.filter(function(x){return x.date.slice(0,7)===mo;}).sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:0;});
+    var fuel=dep.fuel.filter(function(x){return x.date.slice(0,7)===mo;}).sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:0;});
+    var tm=dSum(meals), tf=dSum(fuel), h='';
+    h+='<div class="dpsum"><div><small>🍽️ Repas</small><b>'+eur(tm)+'</b></div><div><small>⛽ Essence</small><b>'+eur(tf)+'</b></div><div class="tt"><small>Total</small><b>'+eur(tm+tf)+'</b></div></div>';
+    var jm={}; meals.forEach(function(x){ jm[x.date]=1; }); var nj=Object.keys(jm).length;
+    var lit=fuel.reduce(function(t,x){ return t+(x.litres||0); },0), eurL=fuel.filter(function(x){return x.litres;}).reduce(function(t,x){return t+x.montant;},0);
+    var st=[]; if(nj) st.push('Repas : '+eur(tm/nj)+' en moyenne par jour ('+nj+' jour'+(nj>1?'s':'')+')'); if(fuel.length) st.push(fuel.length+' plein'+(fuel.length>1?'s':'')+(lit?' · '+(Math.round(lit*100)/100).toString().replace('.',',')+' L'+(eurL?' · '+eur(eurL/lit).replace(' €','')+' €/L':''):''));
+    if(st.length) h+='<div class="dpnote">'+st.map(esc).join('<br>')+'</div>';
+    // par semaine
+    var wk={}; meals.forEach(function(x){ var k=dMondayOf(x.date); (wk[k]=wk[k]||{m:0,f:0}).m+=x.montant; }); fuel.forEach(function(x){ var k=dMondayOf(x.date); (wk[k]=wk[k]||{m:0,f:0}).f+=x.montant; });
+    var wks=Object.keys(wk).sort().reverse(), cw=dMondayOf(today());
+    if(wks.length){
+      h+='<div class="dph3">Par semaine</div><table class="dpt"><tr><th>Semaine</th><th>Repas</th><th>Essence</th><th>Total</th></tr>';
+      wks.forEach(function(k){ var e=new Date(k+'T12:00:00'); e.setDate(e.getDate()+6); var ek=e.getFullYear()+'-'+String(e.getMonth()+1).padStart(2,'0')+'-'+String(e.getDate()).padStart(2,'0');
+        h+='<tr'+(k===cw?' class="cw"':'')+'><td>'+esc(dShort(k)+' – '+dShort(ek))+(k===cw?' ●':'')+'</td><td>'+eur(wk[k].m)+'</td><td>'+eur(wk[k].f)+'</td><td>'+eur(wk[k].m+wk[k].f)+'</td></tr>'; });
+      h+='</table><div class="dpnote">Une semaine va du lundi au dimanche (● = semaine en cours). Si elle chevauche deux mois, seule la partie du mois choisi est comptée.</div>';
+    }
+    // repas par jour
+    if(meals.length){
+      h+='<div class="dph3">Repas par jour</div><div class="dpl">';
+      var byD={}; meals.forEach(function(x){ (byD[x.date]=byD[x.date]||[]).push(x); });
+      Object.keys(byD).sort().reverse().forEach(function(d){
+        h+='<div class="dpi" style="background:var(--bg);border-radius:10px;padding:8px 10px;margin-top:8px;border-top:0"><div class="t"><b>'+esc(longDate(d))+'</b></div><div class="m">'+eur(dSum(byD[d]))+'</div></div>';
+        byD[d].forEach(function(x){ h+='<div class="dpi" style="padding-left:10px"><div class="t">'+(x.note?esc(x.note):'<small>Repas</small>')+'</div><div class="m">'+eur(x.montant)+'</div><button type="button" class="del" data-dm="'+x.id+'" aria-label="Supprimer">🗑️</button></div>'; });
+      });
+      h+='</div>';
+    }
+    if(fuel.length){
+      h+='<div class="dph3">Pleins d\'essence</div><div class="dpl">';
+      var need=[]; fuel.forEach(function(x){ if(PH['fuel|'+x.id]===undefined) need.push('fuel|'+x.id); });
+      fuel.forEach(function(x){ var pl=asList(PH['fuel|'+x.id]);
+        h+='<div class="dpi">'+(pl.length?'<img src="'+pl[0].d+'" alt="Ticket" data-dv="'+x.id+'">':'')+'<div class="t"><b>'+esc(longDate(x.date))+'</b><small>'+(x.litres?(x.litres+'').replace('.',',')+' L':'ticket')+(pl.length>1?' · '+pl.length+' photos':'')+'</small></div><div class="m">'+eur(x.montant)+'</div><button type="button" class="del" data-df="'+x.id+'" aria-label="Supprimer">🗑️</button></div>'; });
+      h+='</div>';
+      if(need.length) loadPhotos(need).then(function(){ if($('tabDep').style.display!=='none') renderDep(); });
+    }
+    if(!meals.length&&!fuel.length) h+='<div class="dpnote">Rien de saisi pour ce mois pour l\'instant.</div>';
+    $('dRecap').innerHTML=h;
+  }
+  $('mDate').value=today(); $('fDate').value=today(); $('dMois').value=today().slice(0,7);
 
   // ---------- Thèmes de couleurs ----------
   function hx(h){ h=String(h).replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
@@ -1886,12 +2057,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
   // ---------- Onglets ----------
   function showTab(name){
-    var j=(name==='journees'), ag=(name==='astreinte'), th=(name==='theme');
-    $('tabSaisie').style.display=(j||ag||th)?'none':'';
+    var j=(name==='journees'), ag=(name==='astreinte'), th=(name==='theme'), dp=(name==='dep');
+    $('tabSaisie').style.display=(j||ag||th||dp)?'none':'';
+    $('tabDep').style.display=dp?'':'none';
+    $('tabBtnDep').className='tab'+(dp?' on':'');
+    if(dp) renderDep();
     $('tabJournees').style.display=j?'':'none';
     $('tabAstreinte').style.display=ag?'':'none';
     $('tabTheme').style.display=th?'':'none';
-    $('tabBtnSaisie').className='tab'+((j||ag||th)?'':' on');
+    $('tabBtnSaisie').className='tab'+((j||ag||th||dp)?'':' on');
     $('tabBtnJournees').className='tab'+(j?' on':'');
     $('tabBtnAstreinte').className='tab'+(ag?' on':'');
     $('tabBtnTheme').className='tab'+(th?' on':'');
@@ -1904,6 +2078,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   $('tabBtnJournees').addEventListener('click',function(){ showTab('journees'); });
   $('tabBtnAstreinte').addEventListener('click',function(){ showTab('astreinte'); });
   $('tabBtnTheme').addEventListener('click',function(){ showTab('theme'); });
+  $('tabBtnDep').addEventListener('click',function(){ showTab('dep'); });
 
   // ---------- Récaps ----------
   function esc(x){ return String(x).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
@@ -2419,10 +2594,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   $('backup').addEventListener('click',function(){
     var ks=[];
     if($('withPhotos').checked) Object.keys(days).forEach(function(dk){ KINDS.forEach(function(kind){ ks.push(dk+'|'+kind); }); });
+    if($('withPhotos').checked) dep.fuel.forEach(function(f){ ks.push('fuel|'+f.id); });
     loadPhotos(ks).then(function(){
       var photos={}, n=0;
       ks.forEach(function(k){ var l=asList(PH[k]); if(l.length){ photos[k]=l; n+=l.length; } });
-      var payload={app:'suivi-journee',version:3,exportedAt:new Date().toISOString(),settings:backupSettings(),days:days,draft:cur,photos:photos,astreintes:periods};
+      var payload={app:'suivi-journee',version:3,exportedAt:new Date().toISOString(),settings:backupSettings(),days:days,draft:cur,photos:photos,astreintes:periods,depenses:dep};
       var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(payload)],{type:'application/json'}));
       a.download='sauvegarde_suivi_'+today()+'.json'; document.body.appendChild(a); a.click(); a.remove();
       flash2('Sauvegarde téléchargée ('+Object.keys(days).length+' journées'+(n?', '+n+' photos':'')+').');
@@ -2480,6 +2656,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         if(typeof st.primeAst==='number'&&st.primeAst>=0&&st.primeAst<=100000) settings.primeAst=st.primeAst;
         store(KEY_SET,settings); $('seuil').value=settings.seuil; $('tauxHs').value=(settings.tauxHs===undefined?20:settings.tauxHs); $('primeAst').value=(settings.primeAst===undefined?120:settings.primeAst); $('mode').value=settings.mode; $('nom').value=settings.nom||''; $('email').value=settings.email||''; $('relay').value=settings.relay||''; $('relaySecret').value=settings.relaySecret||'';
       }
+      var ndep=0, fuelJobs=[];
+      if(data.depenses&&typeof data.depenses==='object'){
+        var cd=cleanDep(data.depenses), hm={}, hf={};
+        dep.meals.forEach(function(x){ hm[x.id]=1; }); dep.fuel.forEach(function(x){ hf[x.id]=1; });
+        cd.meals.forEach(function(x){ if(!hm[x.id]){ dep.meals.push(x); ndep++; } });
+        cd.fuel.forEach(function(x){ if(!hf[x.id]){ dep.fuel.push(x); ndep++; var l=asList((data.photos||{})['fuel|'+x.id]); if(l.length) fuelJobs.push(setPhotos('fuel|'+x.id,l)); } });
+        saveDep(); renderDep();
+      }
       var np=0;
       if(Array.isArray(data.astreintes)){
         data.astreintes.forEach(function(q){
@@ -2495,9 +2679,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         var l=asList(ph[dk+'|'+kind]);
         if(l.length){ jobs.push(setPhotos(dk+'|'+kind,l)); nph+=l.length; }
       }); });
-      Promise.all(jobs).then(function(rs){
+      Promise.all(jobs.concat(fuelJobs)).then(function(rs){
         renderHist();
-        flash2(keys.length+' journée(s) importée(s)'+(nph?' avec '+nph+' photo(s)':'')+(np?' et '+np+' astreinte(s)':'')+'.'+(rs.indexOf(false)>-1?' Certaines photos n\'ont pas pu être conservées (stockage indisponible).':''));
+        flash2(keys.length+' journée(s) importée(s)'+(nph?' avec '+nph+' photo(s)':'')+(np?' et '+np+' astreinte(s)':'')+(ndep?' + '+ndep+' dépense(s)':'')+'.'+(rs.indexOf(false)>-1?' Certaines photos n\'ont pas pu être conservées (stockage indisponible).':''));
       });
       input.value='';
     };
@@ -2510,6 +2694,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
   applyLook();
   renderAll(); renderHist();
+  loadPhotos([fPhKey]).then(renderFuelPhotoUI);
   $('relayCode').textContent=RELAY_SCRIPT; relayStateRender();
   loadPhotos(DRAFT_KEYS.concat(dateKeys(cur.date||today()))).then(function(){ renderPhotoUI(); checkNewDay(); });
 })();
