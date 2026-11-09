@@ -311,6 +311,14 @@
   @keyframes spLeg{0%,100%{transform:rotate(-28deg)}50%{transform:rotate(28deg)}}
   @keyframes spSpin{to{transform:rotate(-360deg)}}
   @media (prefers-reduced-motion:reduce){#splash *{animation-duration:.01s!important;animation-delay:0s!important}}
+  details.astm{border:1px solid var(--line);border-radius:14px;margin-top:10px;background:var(--bg);overflow:hidden}
+  details.astm>summary{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;list-style:none;color:var(--text);font-size:15.5px}
+  details.astm>summary::-webkit-details-marker{display:none}
+  details.astm>summary::after{content:"▾";color:var(--muted);transition:transform .2s;margin-left:6px}
+  details.astm[open]>summary::after{transform:rotate(180deg)}
+  details.astm .astn{margin-left:auto;font-size:13px;color:var(--muted);font-weight:600}
+  details.astm[open]>summary{border-bottom:1px solid var(--line)}
+  details.astm>*:not(summary){margin:10px 12px}
 </style>
 </head>
 <body>
@@ -1588,17 +1596,22 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       '<div class="field" style="flex:1 1 90px"><label>Prime (€)</label><input type="number" min="0" step="0.01" inputmode="decimal" data-pp="'+p.id+'" value="'+esc(p.prime||'')+'" placeholder="'+esc(String(primeDef()))+'"></div>'+
       '<button type="button" class="danger" data-pdel="'+p.id+'">Supprimer</button></div></div>';
   }
+  var astOpen={};
   function renderAstList(){
-    var td=today(), up=periods.filter(function(p){return p.fin>=td;}).sort(function(a,b){return a.debut<b.debut?-1:1;});
-    var past=periods.filter(function(p){return p.fin<td;}).sort(function(a,b){return a.debut<b.debut?1:-1;});
+    var td=today(), cm=td.slice(0,7), by={};
+    periods.forEach(function(p){ var m=p.debut.slice(0,7); (by[m]=by[m]||[]).push(p); });
+    var ms=Object.keys(by).sort(), fut=ms.filter(function(m){return m>=cm;}), pas=ms.filter(function(m){return m<cm;}).reverse();
+    function block(m){
+      var l=by[m].sort(function(a,b){return a.debut<b.debut?-1:1;}), pr=0; l.forEach(function(p){ pr+=primeOf(p); });
+      var pp=m.split('-'), open=(astOpen[m]!==undefined)?astOpen[m]:(m===cm);
+      return '<details class="astm" data-m="'+m+'"'+(open?' open':'')+'><summary><b>'+esc(MOIS[+pp[1]-1][0].toUpperCase()+MOIS[+pp[1]-1].slice(1)+' '+pp[0])+'</b><span class="astn">'+l.length+' astreinte'+(l.length>1?'s':'')+(pr?' · '+esc(eur(pr)):'')+'</span></summary>'+l.map(function(p){ return perHtml(p,p.fin<td); }).join('')+'</details>';
+    }
     var h='';
     if(!periods.length) h='<div style="color:var(--muted);padding:4px 2px">Aucune astreinte pour l\'instant. Ajoute-en une ci-dessus.</div>';
-    else{
-      h+=up.length?up.map(function(p){return perHtml(p,false);}).join(''):'<div style="color:var(--muted);padding:4px 2px">Aucune astreinte à venir.</div>';
-      if(past.length) h+='<details style="margin-top:12px"><summary>Astreintes passées ('+past.length+')</summary>'+past.map(function(p){return perHtml(p,true);}).join('')+'</details>';
-    }
+    else h=fut.concat(pas).map(block).join('');
     $('astList').innerHTML=h;
   }
+  $('astList').addEventListener('toggle',function(e){ var d=e.target; if(d&&d.dataset&&d.dataset.m) astOpen[d.dataset.m]=d.open; },true);
   function renderAgenda(){ renderCal(); renderAstList(); }
   function astSay(t,bad){ var m=$('astMsg'); m.style.color=bad?'var(--warn)':''; m.textContent=t; setTimeout(function(){ if(m.textContent===t) m.textContent=''; },6000); }
   $('calPrev').addEventListener('click',function(){ var p=calMonth.split('-'); var d=new Date(+p[0],+p[1]-2,1); calMonth=d.getFullYear()+'-'+pad2(d.getMonth()+1); renderCal(); });
