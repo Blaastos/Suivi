@@ -428,6 +428,7 @@
         <div class="field"><label for="seuil">Seuil journalier (heures)</label><input type="number" id="seuil" min="0" step="0.25" value="7"></div>
         <div class="field"><label for="tauxHs">Heure sup (€/h)</label><input type="number" id="tauxHs" min="0" step="0.01" inputmode="decimal" value="20"></div>
         <div class="field"><label for="primeAst">Prime semaine d'astreinte (€)</label><input type="number" id="primeAst" min="0" step="0.01" inputmode="decimal" value="120"></div>
+        <div class="field"><label for="salaire">Mon salaire net du mois (€)</label><input type="number" id="salaire" min="0" step="0.01" inputmode="decimal" placeholder="ex. 1900"></div>
         <div class="field" style="flex:2 1 220px"><label for="nom">Nom affiché sur les PDF (optionnel)</label><input type="text" id="nom" maxlength="60" placeholder="ex. Florian"></div>
         <div class="field" style="flex:2 1 260px"><label for="email">Mon e-mail (pré-rempli dans le mail si le PDF ne peut pas être joint tout seul)</label><input type="email" id="email" maxlength="120" placeholder="ex. prenom@gmail.com" autocomplete="email"></div>
       </div>
@@ -1809,7 +1810,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     renderConge();
     $('date').value=cur.date||''; $('depart').value=cur.depart||''; $('kmAller').value=cur.kmAller||'';
     $('retour').value=cur.retour||''; $('kmRetour').value=cur.kmRetour||''; $('pause').value=cur.pause||'';
-    $('seuil').value=settings.seuil; $('tauxHs').value=(settings.tauxHs===undefined?20:settings.tauxHs); $('primeAst').value=(settings.primeAst===undefined?120:settings.primeAst); $('mode').value=settings.mode; $('nom').value=settings.nom||''; $('email').value=settings.email||''; $('relay').value=settings.relay||''; $('relaySecret').value=settings.relaySecret||'';
+    $('seuil').value=settings.seuil; $('tauxHs').value=(settings.tauxHs===undefined?20:settings.tauxHs); $('primeAst').value=(settings.primeAst===undefined?120:settings.primeAst); $('salaire').value=(settings.salaire>0?settings.salaire:''); $('mode').value=settings.mode; $('nom').value=settings.nom||''; $('email').value=settings.email||''; $('relay').value=settings.relay||''; $('relaySecret').value=settings.relaySecret||'';
   }
 
   function renderAll(){ fillStatic(); renderList(); renderAstUI(); renderHors(); renderResult(); renderPhotoUI(); }
@@ -1819,6 +1820,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     $(id).addEventListener('input',function(){ cur[id]=this.value; saveDraft(); renderResult(); });
   });
   $('tauxHs').addEventListener('input',function(){ settings.tauxHs=num(this.value); store(KEY_SET,settings); renderResult(); renderHist(); });
+  $('salaire').addEventListener('input',function(){ var v=num(this.value); settings.salaire=(v>0&&v<1000000)?v:0; store(KEY_SET,settings); });
   $('primeAst').addEventListener('input',function(){ settings.primeAst=num(this.value); store(KEY_SET,settings); renderAstList(); renderHist(); });
   $('seuil').addEventListener('input',function(){ settings.seuil=num(this.value); store(KEY_SET,settings); renderResult(); renderHist(); });
   $('nom').addEventListener('input',function(){ settings.nom=this.value; store(KEY_SET,settings); });
@@ -2407,7 +2409,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       (fm.astN?'<div class="l"><span>Portes d\'astreinte<small>'+fm.astPortes+' porte(s)</small></span><b>'+eur(fm.ast)+'</b></div>':'')+
       (fm.primeN?'<div class="l"><span>Primes d\'astreinte<small>'+fm.primeN+' semaine(s)</small></span><b>'+eur(fm.prime)+'</b></div>':'')+
       (fm.horsN?'<div class="l"><span>Portes hors astreinte<small>'+fm.horsN+' porte(s)</small></span><b>'+eur(fm.hors)+'</b></div>':'')+
-      '<div class="l t"><span>Total estimé du mois</span><b>'+eur(fm.total)+'</b></div></div>';
+      '<div class="l t"><span>Total estimé du mois<small>en plus du salaire</small></span><b>'+eur(fm.total)+'</b></div></div>';
+    var sal=num(settings.salaire);
+    if(sal>0) h+='<div class="fin" style="margin-top:10px"><div class="l"><span>Salaire net de base</span><b>'+eur(sal)+'</b></div><div class="l"><span>+ heures sup, primes et astreintes</span><b>'+eur(fm.total)+'</b></div><div class="l t"><span>À toucher ce mois-ci (estimé)<small>seulement dans l\'appli, pas dans les PDF ni les e-mails</small></span><b>'+eur(sal+fm.total)+'</b></div></div>';
     t.push('TOTAL : '+keys.length+' jours | '+totI+' interventions | compté '+fmt(totC)+' | HS '+fmt(totH)+' ('+totH+' min) | '+Math.round(totK*10)/10+' km');
     if(hmo.n) t.push('PORTES HORS ASTREINTE : '+hmo.n+' porte(s) | '+eur(hmo.total));
     t.push('HEURES SUP EN EUROS : '+fmt(totH)+' x '+eur(taux())+'/h = '+eur(fm.hs));
@@ -2899,7 +2903,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         if(st.look&&typeof st.look==='object'){ var lk=st.look; settings.look={theme:THEMES[lk.theme]?lk.theme:'defaut',mode:['auto','light','dark'].indexOf(lk.mode)>-1?lk.mode:'auto',c1:HEX_RE.test(lk.c1||'')?lk.c1:THEMES.custom.g1,c2:HEX_RE.test(lk.c2||'')?lk.c2:THEMES.custom.g2,pdf:!!lk.pdf,splash:(['clock','road','pulse','off'].indexOf(lk.splash)>-1?lk.splash:'clock')}; if(['theme','white','custom'].indexOf(lk.bg)>-1) settings.look.bg=lk.bg; if(HEX_RE.test(lk.bgc||'')) settings.look.bgc=lk.bgc; applyLook(); }
         if(typeof st.tauxHs==='number'&&st.tauxHs>=0&&st.tauxHs<=1000) settings.tauxHs=st.tauxHs;
         if(typeof st.primeAst==='number'&&st.primeAst>=0&&st.primeAst<=100000) settings.primeAst=st.primeAst;
-        store(KEY_SET,settings); $('seuil').value=settings.seuil; $('tauxHs').value=(settings.tauxHs===undefined?20:settings.tauxHs); $('primeAst').value=(settings.primeAst===undefined?120:settings.primeAst); $('mode').value=settings.mode; $('nom').value=settings.nom||''; $('email').value=settings.email||''; $('relay').value=settings.relay||''; $('relaySecret').value=settings.relaySecret||'';
+        if(typeof st.salaire==='number'&&st.salaire>=0&&st.salaire<1000000) settings.salaire=st.salaire;
+        store(KEY_SET,settings); $('seuil').value=settings.seuil; $('tauxHs').value=(settings.tauxHs===undefined?20:settings.tauxHs); $('primeAst').value=(settings.primeAst===undefined?120:settings.primeAst); $('salaire').value=(settings.salaire>0?settings.salaire:''); $('mode').value=settings.mode; $('nom').value=settings.nom||''; $('email').value=settings.email||''; $('relay').value=settings.relay||''; $('relaySecret').value=settings.relaySecret||'';
       }
       var ndep=0, fuelJobs=[];
       if(data.depenses&&typeof data.depenses==='object'){
