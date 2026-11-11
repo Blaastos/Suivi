@@ -1127,7 +1127,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   $('fPh').addEventListener('click',function(e){
     var ds=e.target.dataset||{};
     if(ds.fpick) $('fFile').click();
-    else if(ds.fdel!==undefined){ var l=asList(PH[fPhKey]); l.splice(+ds.fdel,1); setPhotos(fPhKey,l); renderFuelPhotoUI(); }
+    else if(ds.fdel!==undefined){ var fi=+ds.fdel; ask('Retirer cette photo ?','Elle sera supprimée du ticket en cours de saisie.',['Retirer','Garder']).then(function(k){ if(k!==0) return; var l=asList(PH[fPhKey]); l.splice(fi,1); setPhotos(fPhKey,l); renderFuelPhotoUI(); }); }
     else if(ds.fv!==undefined) viewPhotos(PH[fPhKey],+ds.fv,'Ticket essence');
   });
   $('fFile').addEventListener('change',function(){
@@ -1556,15 +1556,23 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(ds.hv){ var al=asList(PH['draft|portes']), my=hpMine(al,ds.hv), it0=(cur.hors.items||[]).filter(function(x){return x.id===ds.hv;})[0]; viewPhotos(my,+ds.j||0,'Porte '+((it0&&it0.ticket)||'')); return; }
     if(ds.hxd){
       var al2=asList(PH['draft|portes']), my2=hpMine(al2,ds.hxd), tg=my2[+ds.j]; if(!tg) return;
-      var ix=-1; al2.forEach(function(o,n){ if(ix<0&&o.d===tg.d&&o.r===tg.r) ix=n; }); if(ix>-1) al2.splice(ix,1);
-      setPhotos('draft|portes',al2).then(function(){ renderHpPhotos(); renderStatus(); hpNote(ds.hxd,'Photo retirée.'); }); return;
+      ask('Retirer cette photo ?','Elle sera supprimée de cette porte.',['Retirer','Garder']).then(function(k){ if(k!==0) return;
+        var al3=asList(PH['draft|portes']), ix=-1; al3.forEach(function(o,n){ if(ix<0&&o.d===tg.d&&o.r===tg.r) ix=n; }); if(ix>-1) al3.splice(ix,1);
+        setPhotos('draft|portes',al3).then(function(){ renderHpPhotos(); renderStatus(); hpNote(ds.hxd,'Photo retirée.'); }); });
+      return;
     }
     var id=ds.hdel; if(!id||!horsOf(cur)) return;
-    var rmIdx=-1; cur.hors.items.forEach(function(x,n){ if(x.id===id) rmIdx=n; });
-    var keepPh=asList(PH['draft|portes']).filter(function(o){ return !(o.r===id||(!o.r&&rmIdx===0)); });
-    if(keepPh.length!==asList(PH['draft|portes']).length) setPhotos('draft|portes',keepPh);
-    cur.hors.items=cur.hors.items.filter(function(x){return x.id!==id;}); if(!cur.hors.items.length) cur.hors.items.push(hpNewRow());
-    saveDraft(); renderHors(); renderResult();
+    var hit=cur.hors.items.filter(function(x){return x.id===id;})[0];
+    function doHdel(){
+      var rmIdx=-1; cur.hors.items.forEach(function(x,n){ if(x.id===id) rmIdx=n; });
+      var keepPh=asList(PH['draft|portes']).filter(function(o){ return !(o.r===id||(!o.r&&rmIdx===0)); });
+      if(keepPh.length!==asList(PH['draft|portes']).length) setPhotos('draft|portes',keepPh);
+      cur.hors.items=cur.hors.items.filter(function(x){return x.id!==id;}); if(!cur.hors.items.length) cur.hors.items.push(hpNewRow());
+      saveDraft(); renderHors(); renderResult();
+    }
+    var hasPh=asList(PH['draft|portes']).some(function(o){ return o.r===id; });
+    if(!hit||!(hit.ticket||hit.zone||hit.t3||hit.t6||num(hit.prix)||hasPh)){ doHdel(); return; }
+    ask('Retirer cette porte ?',(hit.ticket?'Ticket '+hit.ticket:'Porte sans numéro')+(hit.zone?' · '+hit.zone:'')+(hasPh?'. Ses photos seront supprimées aussi.':'.'),['Retirer','Garder']).then(function(i){ if(i===0) doHdel(); });
   });
 
   // agenda
@@ -1836,9 +1844,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   $('list').addEventListener('click',function(e){
     var cid=e.target.dataset&&e.target.dataset.cr; if(cid){ crOpen(cid); return; }
     var id=e.target.dataset&&e.target.dataset.del; if(!id) return;
-    cur.interventions=cur.interventions.filter(function(x){return x.id!==id});
-    if(!cur.interventions.length) cur.interventions.push({id:uid(),ticket:'',debut:'',fin:''});
-    saveDraft(); renderList(); renderResult();
+    var itd=cur.interventions.filter(function(x){return x.id===id;})[0];
+    function doDel(){
+      cur.interventions=cur.interventions.filter(function(x){return x.id!==id});
+      if(!cur.interventions.length) cur.interventions.push({id:uid(),ticket:'',debut:'',fin:''});
+      saveDraft(); renderList(); renderResult();
+    }
+    if(!itd||!(itd.ticket||itd.debut||itd.fin||crFilled(itd))){ doDel(); return; }
+    ask('Supprimer cette intervention ?',(itd.ticket?'Ticket '+itd.ticket:'Intervention sans numéro')+((itd.debut||itd.fin)?' · T3 '+(itd.debut||'?')+' – T6 '+(itd.fin||'?'):'')+(crFilled(itd)?'. Son compte rendu sera supprimé aussi.':'.'),['Supprimer','Garder']).then(function(i){ if(i===0) doDel(); });
   });
   $('add').addEventListener('click',function(){
     cur.interventions.push({id:uid(),ticket:'',debut:'',fin:''});
@@ -1980,7 +1993,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       var ds=e.target.dataset||{};
       if(ds.pick) inp.click();
       else if(ds.del!==undefined){
-        var l=asList(PH[key]); l.splice(+ds.del,1); setPhotos(key,l); renderPhotoUI(); phNote(kind,'Photo retirée.');
+        var di=+ds.del;
+        ask('Retirer cette photo ?','Elle sera supprimée de la journée.',['Retirer','Garder']).then(function(k){ if(k!==0) return;
+          var l=asList(PH[key]); l.splice(di,1); setPhotos(key,l); renderPhotoUI(); phNote(kind,'Photo retirée.'); });
       }
       else openView(e.target);
     });
@@ -2250,12 +2265,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       flash('Journée du '+fmtDate(o)+' chargée : modifie puis réenregistre.');
     }
     if(rm){
-      if(confirm('Supprimer la journée du '+fmtDate(rm)+' ?\nElle sera mise de côté : tu pourras la restaurer.')){
+      ask('Supprimer la journée du '+fmtDate(rm)+' ?','Elle sera mise de côté : tu pourras la restaurer.',['Supprimer','Garder']).then(function(k){ if(k!==0) return;
         reloadDays(); if(days[rm]) pushTrash(rm,days[rm],'supprimée');
         commitDays(function(d){ delete d[rm]; });
         KINDS.forEach(function(kind){ setPhotos(rm+'|'+kind,[]); });
         renderHist(); renderStatusNow();
-      }
+      });
     }
   });
 
