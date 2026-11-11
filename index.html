@@ -360,7 +360,7 @@
       <div class="field"><label for="depart">Heure de départ</label><input type="time" id="depart"></div>
       <div class="field"><label for="kmAller">Km (aller)</label><input type="number" id="kmAller" min="0" step="0.1" inputmode="decimal" placeholder="0"></div>
     </div>
-    <div class="cgrow"><label id="cgCpL"><input type="checkbox" id="cgCp"> 🏖️ Congé payé</label><label id="cgCssL"><input type="checkbox" id="cgCss"> Congé sans solde</label></div>
+    <div class="cgrow"><label id="cgCpL"><input type="checkbox" id="cgCp"> 🏖️ Congé payé</label><label id="cgCssL"><input type="checkbox" id="cgCss"> Congé sans solde</label><label id="cgFeL"><input type="checkbox" id="cgFe"> 🎌 Férié</label></div>
     <div class="photo"><div id="ph-depart"></div><input type="file" id="file-depart" accept="image/*" multiple style="display:none"><div class="msg" id="phmsg-depart"></div></div>
   </section>
 
@@ -553,7 +553,7 @@
       <div class="stat" style="flex:1 1 90px"><small>Jours</small><b id="moisJours">–</b></div>
       <div class="stat" style="flex:1 1 130px"><small>Heures sup du mois</small><b id="moisHs">–</b></div>
       <div class="stat" style="flex:1 1 90px"><small>Km du mois</small><b id="moisKm">–</b></div>
-      <div class="stat" id="moisCgBox" style="flex:1 1 130px;display:none"><small>Congés du mois</small><b id="moisCg">–</b></div>
+      <div class="stat" id="moisCgBox" style="flex:1 1 130px;display:none"><small>Congés / fériés</small><b id="moisCg">–</b></div>
       <div class="stat" id="moisAstBox" style="flex:1 1 130px;display:none"><small>Astreinte du mois</small><b id="moisAst">–</b></div>
       <div class="stat" id="moisHpBox" style="flex:1 1 130px;display:none"><small>Portes hors astreinte</small><b id="moisHp">–</b></div>
       <div class="stat" id="moisTotBox" style="flex:1 1 100%;display:none"><small>💶 Total estimé du mois (heures sup + astreintes + portes)</small><b id="moisTot">–</b></div>
@@ -1047,9 +1047,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   var cur=load(KEY_DRAFT,null)||blank();
   if(!cur.interventions||!cur.interventions.length) cur.interventions=[{id:uid(),ticket:'',debut:'',fin:''}];
 
-  var CG_LABEL={cp:'Congé payé',css:'Congé sans solde'};
-  function congeOf(d){ return (d&&(d.conge==='cp'||d.conge==='css'))?d.conge:''; }
-  function congeMonth(keys){ var o={cp:[],css:[]}; keys.forEach(function(k){ var c=congeOf(days[k]); if(c) o[c].push(k); }); o.n=o.cp.length+o.css.length; return o; }
+  var CG_LABEL={cp:'Congé payé',css:'Congé sans solde',fe:'Jour férié'};
+  function congeOf(d){ return (d&&(d.conge==='cp'||d.conge==='css'||d.conge==='fe'))?d.conge:''; }
+  function congeMonth(keys){ var o={cp:[],css:[],fe:[]}; keys.forEach(function(k){ var c=congeOf(days[k]); if(c) o[c].push(k); }); o.n=o.cp.length+o.css.length+o.fe.length; return o; }
   function toMin(t){ if(!t) return null; var p=t.split(':'); return (+p[0])*60+(+p[1]); }
   function diff(a,b){ var x=toMin(a), y=toMin(b); if(x===null||y===null) return null; return ((y-x)%1440+1440)%1440; }
   function fmt(min){ if(min===null||isNaN(min)) return '–'; var h=Math.floor(min/60), m=Math.round(min%60); return h+' h '+String(m).padStart(2,'0'); }
@@ -1808,12 +1808,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   }
 
   function renderConge(){
-    var c=congeOf(cur); $('cgCp').checked=(c==='cp'); $('cgCss').checked=(c==='css');
-    $('cgCpL').className=(c==='cp')?'on':''; $('cgCssL').className=(c==='css')?'on':'';
+    var c=congeOf(cur); $('cgCp').checked=(c==='cp'); $('cgCss').checked=(c==='css'); $('cgFe').checked=(c==='fe');
+    $('cgCpL').className=(c==='cp')?'on':''; $('cgCssL').className=(c==='css')?'on':''; $('cgFeL').className=(c==='fe')?'on':'';
   }
   function setConge(v){ cur.conge=v; saveDraft(); renderConge(); renderResult(); }
   $('cgCp').addEventListener('change',function(){ setConge(this.checked?'cp':''); });
   $('cgCss').addEventListener('change',function(){ setConge(this.checked?'css':''); });
+  $('cgFe').addEventListener('change',function(){ setConge(this.checked?'fe':''); });
   function fillStatic(){
     renderConge();
     $('date').value=cur.date||''; $('depart').value=cur.depart||''; $('kmAller').value=cur.kmAller||'';
@@ -2233,7 +2234,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     $('moisKm').textContent=totKm?(Math.round(totKm*10)/10)+' km':'–';
     var hmo=horsMonth(keys); $('moisHpBox').style.display=hmo.n?'':'none'; $('moisHp').textContent=hmo.n?(hmo.n+' · '+eur(hmo.total)):'–';
     var mm=$('mois').value||today().slice(0,7), fmo=finMonth(mm,keys,totHs); $('moisTotBox').style.display=keys.length?'':'none'; $('moisTot').textContent=eur(fmo.total)+'  (heures sup '+eur(fmo.hs)+(fmo.astN?' · astreinte '+eur(fmo.ast):'')+(fmo.primeN?' · primes '+eur(fmo.prime):'')+(fmo.horsN?' · portes '+eur(fmo.hors):'')+')';
-    var cgm=congeMonth(keys); $('moisCgBox').style.display=cgm.n?'':'none'; $('moisCg').textContent=cgm.n?((cgm.cp.length?cgm.cp.length+' payé'+(cgm.cp.length>1?'s':''):'')+(cgm.cp.length&&cgm.css.length?' · ':'')+(cgm.css.length?cgm.css.length+' sans solde':'')):'–';
+    var cgm=congeMonth(keys); $('moisCgBox').style.display=cgm.n?'':'none'; $('moisCg').textContent=cgm.n?((cgm.cp.length?cgm.cp.length+' payé'+(cgm.cp.length>1?'s':''):'')+(cgm.cp.length&&cgm.css.length?' · ':'')+(cgm.css.length?cgm.css.length+' sans solde':'')+((cgm.cp.length||cgm.css.length)&&cgm.fe.length?' · ':'')+(cgm.fe.length?cgm.fe.length+' férié'+(cgm.fe.length>1?'s':''):'')):'–';
     var amo=astMonth(keys); $('moisAstBox').style.display=amo.n?'':'none'; $('moisAst').textContent=amo.n?eur(amo.total):'–';
   }
   $('mois').addEventListener('input',renderHist);
@@ -2414,10 +2415,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     h+='<div class="kv"><div class="stat"><small>Jours enregistrés</small><b>'+keys.length+'</b></div><div class="stat"><small>Jours avec heures sup</small><b>'+nbHs+'</b></div><div class="stat"><small>Heures sup du mois</small><b>'+fmt(totH)+'</b></div><div class="stat"><small>Km du mois</small><b>'+Math.round(totK*10)/10+' km</b></div>'+(amo.n?'<div class="stat"><small>Astreinte du mois</small><b>'+eur(amo.total)+'</b></div>':'')+(hmo.n?'<div class="stat"><small>Portes hors astreinte</small><b>'+hmo.n+' · '+eur(hmo.total)+'</b></div>':'')+'</div>';
     var cgm=congeMonth(keys);
     if(cgm.n){
-      h+='<div class="kv">'+(cgm.cp.length?'<div class="stat"><small>🏖️ Congés payés</small><b>'+cgm.cp.length+' jour'+(cgm.cp.length>1?'s':'')+'</b></div>':'')+(cgm.css.length?'<div class="stat"><small>Congés sans solde</small><b>'+cgm.css.length+' jour'+(cgm.css.length>1?'s':'')+'</b></div>':'')+'<div class="stat"><small>Jours travaillés</small><b>'+(keys.length-cgm.n)+'</b></div></div>';
-      h+='<div class="sub" style="margin-top:6px">'+(cgm.cp.length?'Congé payé : '+cgm.cp.map(fmtDate).join(', ')+'. ':'')+(cgm.css.length?'Congé sans solde : '+cgm.css.map(fmtDate).join(', ')+'.':'')+'</div>';
+      h+='<div class="kv">'+(cgm.cp.length?'<div class="stat"><small>🏖️ Congés payés</small><b>'+cgm.cp.length+' jour'+(cgm.cp.length>1?'s':'')+'</b></div>':'')+(cgm.fe.length?'<div class="stat"><small>🎌 Jours fériés</small><b>'+cgm.fe.length+' jour'+(cgm.fe.length>1?'s':'')+'</b></div>':'')+(cgm.css.length?'<div class="stat"><small>Congés sans solde</small><b>'+cgm.css.length+' jour'+(cgm.css.length>1?'s':'')+'</b></div>':'')+'<div class="stat"><small>Jours travaillés</small><b>'+(keys.length-cgm.n)+'</b></div></div>';
+      h+='<div class="sub" style="margin-top:6px">'+(cgm.cp.length?'Congé payé : '+cgm.cp.map(fmtDate).join(', ')+'. ':'')+(cgm.css.length?'Congé sans solde : '+cgm.css.map(fmtDate).join(', ')+'. ':'')+(cgm.fe.length?'Férié : '+cgm.fe.map(fmtDate).join(', ')+'.':'')+'</div>';
       if(cgm.cp.length) t.push('CONGES PAYES : '+cgm.cp.length+' jour(s) ('+cgm.cp.map(fmtDate).join(', ')+')');
       if(cgm.css.length) t.push('CONGES SANS SOLDE : '+cgm.css.length+' jour(s) ('+cgm.css.map(fmtDate).join(', ')+')');
+      if(cgm.fe.length) t.push('JOURS FERIES : '+cgm.fe.length+' jour(s) ('+cgm.fe.map(fmtDate).join(', ')+')');
     }
     var fm=finMonth(mois,keys,totH);
     h+='<div class="fin"><div class="l"><span>Heures sup<small>'+fmt(totH)+' × '+eur(taux())+'/h</small></span><b>'+eur(fm.hs)+'</b></div>'+
@@ -2673,9 +2675,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var cgm=congeMonth(keys);
     if(cgm.n){
       var yg=doc.lastAutoTable.finalY+12; if(yg>215){ doc.addPage(); yg=22; }
-      yg=pdfSection(doc,yg,'Conges du mois');
+      yg=pdfSection(doc,yg,'Conges, feries du mois');
       var o7=tableBase(); o7.startY=yg+2; o7.head=[['Type','Jours','Dates']];
-      o7.body=[]; if(cgm.cp.length) o7.body.push(['Conge paye',String(cgm.cp.length),cgm.cp.map(shortDay).join(', ')]); if(cgm.css.length) o7.body.push(['Conge sans solde',String(cgm.css.length),cgm.css.map(shortDay).join(', ')]);
+      o7.body=[]; if(cgm.cp.length) o7.body.push(['Conge paye',String(cgm.cp.length),cgm.cp.map(shortDay).join(', ')]); if(cgm.css.length) o7.body.push(['Conge sans solde',String(cgm.css.length),cgm.css.map(shortDay).join(', ')]); if(cgm.fe.length) o7.body.push(['Jour ferie',String(cgm.fe.length),cgm.fe.map(shortDay).join(', ')]);
       o7.columnStyles={1:{halign:'right',cellWidth:18}}; o7.didParseCell=function(h){ if(h.section==='head'&&h.column.index===1) h.cell.styles.halign='right'; };
       doc.autoTable(o7);
     }
