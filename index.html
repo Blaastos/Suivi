@@ -312,6 +312,11 @@
   .dpx .rbrow.on{border-color:#16a34a;background:color-mix(in srgb,#16a34a 12%,var(--card))}
   .dpx .rbd{margin-top:10px}
   .dpx .nophoto{font-size:13px;color:var(--muted);margin-bottom:10px}
+  .dpx .pth{position:relative;display:inline-block}
+  .dpx .pth .px{position:absolute;top:6px;right:6px;width:32px;height:32px;border-radius:50%;padding:0;background:rgba(0,0,0,.62);color:#fff;border:none;font-size:18px;line-height:1}
+  .dpx .acts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .dpx .acts button{flex:1 1 130px}
+  .dpx .edf{background:var(--bg);border-radius:12px;padding:12px;margin-bottom:10px}
   .dpsum2{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
   .dpsum2 span{border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:700}
   .dpsum2 .r{background:color-mix(in srgb,#e11d48 14%,transparent);color:#e11d48}
@@ -555,6 +560,7 @@
   <section class="card rc">
     <h2>Récap dépenses</h2>
     <div class="field" style="max-width:200px"><label for="dMois">Mois</label><input type="month" id="dMois"></div>
+    <input type="file" id="fFile2" accept="image/*" multiple style="display:none">
     <div id="dRecap"></div>
     <div class="dpbtns"><button type="button" id="dRecFuel">⛽ Récap essence</button><button type="button" id="dRecMeal">🍽️ Récap repas</button></div>
     <div class="dpnote">Chaque récap s'ouvre pour le mois choisi, avec PDF et envoi par e-mail. Ces récaps sont séparés de ceux des journées.</div>
@@ -1214,7 +1220,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   function dMondayOf(k){ var d=new Date(k+'T12:00:00'); var w=(d.getDay()+6)%7; d.setDate(d.getDate()-w); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   function dShort(k){ return (+k.slice(8))+' '+['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][+k.slice(5,7)-1]; }
   function dSum(a){ return a.reduce(function(t,x){ return t+x.montant; },0); }
-  var fPhKey='fuel|draft', dEdit=null;
+  var fPhKey='fuel|draft', dEdit=null, dEditF=null, photoFor=null;
   function renderFuelPhotoUI(){
     var list=asList(PH[fPhKey]), h='<div class="ph-row">';
     list.forEach(function(o,i){ h+='<span class="thumb"><img src="'+o.d+'" alt="Ticket" data-fv="'+i+'"><button type="button" class="x" data-fdel="'+i+'" aria-label="Retirer">×</button></span>'; });
@@ -1240,6 +1246,16 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         return setPhotos(fPhKey,asList(PH[fPhKey]).concat(acc)).then(function(){ renderFuelPhotoUI(); fMsg('fPhMsg','Photo ajoutée.'); });
       });
     }).catch(function(){ fMsg('fPhMsg','Impossible de lire cette image.'); }).then(function(){ inp.value=''; });
+  });
+  $('fFile2').addEventListener('change',function(){
+    var inp=this, files=Array.prototype.slice.call(inp.files||[]), id=photoFor; if(!files.length||!id) return;
+    var key='fuel|'+id;
+    loadPhotos([key]).then(function(){
+      var room=3-asList(PH[key]).length; if(room<=0) return;
+      var acc=[], chain=Promise.resolve();
+      files.slice(0,room).forEach(function(f){ chain=chain.then(function(){ return compressImage(f).then(function(o){ acc.push(o); },function(){}); }); });
+      return chain.then(function(){ if(!acc.length) return; return setPhotos(key,asList(PH[key]).concat(acc)); });
+    }).catch(function(){}).then(function(){ inp.value=''; renderDep(); });
   });
   $('mAdd').addEventListener('click',function(){
     var d=$('mDate').value, m=cleanAmt($('mMont').value);
@@ -1269,6 +1285,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     else if(ds.df){ var f=dep.fuel.filter(function(x){return x.id===ds.df;})[0]; if(!f) return;
       ask('Supprimer ce plein ?',dShort(f.date)+' · '+eur(f.montant)+' (la photo du ticket est supprimée aussi)',['Supprimer','Garder']).then(function(i){ if(i!==0) return; dep.fuel=dep.fuel.filter(function(x){return x.id!==ds.df;}); saveDep(); setPhotos('fuel|'+ds.df,[]); renderDep(); }); }
     else if(ds.dv){ loadPhotos(['fuel|'+ds.dv]).then(function(){ viewPhotos(PH['fuel|'+ds.dv],+ds.di||0,'Ticket essence'); }); }
+    else if(ds.pa){ photoFor=ds.pa; $('fFile2').click(); }
+    else if(ds.pe){ dEditF=(dEditF===ds.pe)?null:ds.pe; renderDep(); }
+    else if(ds.pes){ var g=dep.fuel.filter(function(x){return x.id===ds.pes;})[0]; if(!g) return;
+      var nd=$('efDate').value, nm=cleanAmt($('efMont').value), nl=cleanAmt($('efLit').value);
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(nd)||!nm){ $('efMsg').style.color='var(--warn)'; $('efMsg').textContent='Mets une date et un montant.'; return; }
+      g.date=nd; g.montant=nm; if(nl) g.litres=nl; else delete g.litres; dEditF=null; $('dMois').value=nd.slice(0,7); saveDep(); renderDep(); }
+    else if(ds.pdel){ var pi=+ds.pi; ask('Retirer cette photo ?','Elle sera supprimée de ce plein.',['Retirer','Garder']).then(function(k){ if(k!==0) return; loadPhotos(['fuel|'+ds.pdel]).then(function(){ var l=asList(PH['fuel|'+ds.pdel]); l.splice(pi,1); return setPhotos('fuel|'+ds.pdel,l); }).then(renderDep); }); }
     else if(e.target.closest&&e.target.closest('[data-dfx]')&&!e.target.closest('.dpx')){ var id=e.target.closest('[data-dfx]').dataset.dfx; dEdit=(dEdit===id)?null:id; renderDep(); }
   });
   $('dRecap').addEventListener('change',function(e){
@@ -1313,7 +1336,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       fuel.forEach(function(x){ var pl=asList(PH['fuel|'+x.id]), ok=!!x.remb, open=(dEdit===x.id), cl=ok?'ok':'nr';
         h+='<div class="dpi dpf '+cl+'" data-dfx="'+x.id+'" style="'+(open?'border-radius:14px 14px 0 0':'')+'">'+(pl.length?'<img src="'+pl[0].d+'" alt="Ticket" data-dv="'+x.id+'">':'')+'<div class="t"><b>'+esc(longDate(x.date))+'</b><small>'+(x.litres?(x.litres+'').replace('.',',')+' L':'ticket')+(pl.length>1?' · '+pl.length+' photos':'')+'</small><span class="st">'+(ok?'✓ Remboursé le '+esc(dShort(x.remb)):'À rembourser')+'</span></div><div class="m">'+eur(x.montant)+'</div><button type="button" class="del" data-df="'+x.id+'" aria-label="Supprimer">🗑️</button></div>';
         if(open){
-          h+='<div class="dpx '+cl+'">'+(pl.length?'<div class="phs">'+pl.map(function(o,i){ return '<img src="'+o.d+'" alt="Ticket" data-dv="'+x.id+'" data-di="'+i+'">'; }).join('')+'</div>':'<div class="nophoto">Pas de photo de ticket pour ce plein.</div>')
+          h+='<div class="dpx '+cl+'">'+(pl.length?'<div class="phs">'+pl.map(function(o,i){ return '<span class="pth"><img src="'+o.d+'" alt="Ticket" data-dv="'+x.id+'" data-di="'+i+'"><button type="button" class="px" data-pdel="'+x.id+'" data-pi="'+i+'" aria-label="Retirer cette photo">×</button></span>'; }).join('')+'</div>':'<div class="nophoto">Pas de photo de ticket pour ce plein.</div>')
+            +'<div class="acts">'+(pl.length<3?'<button type="button" data-pa="'+x.id+'">📷 '+(pl.length?'Ajouter une photo':'Ajouter la photo du ticket')+'</button>':'')+'<button type="button" data-pe="'+x.id+'">✏️ '+(dEditF===x.id?'Fermer la modification':'Modifier le plein')+'</button></div>'
+            +(dEditF===x.id?'<div class="edf"><div class="row"><div class="field"><label>Date</label><input type="date" id="efDate" value="'+x.date+'"></div><div class="field"><label>Montant (€)</label><input type="number" id="efMont" min="0" step="0.01" inputmode="decimal" value="'+x.montant+'"></div></div><div class="row" style="margin-top:10px"><div class="field"><label>Litres (facultatif)</label><input type="number" id="efLit" min="0" step="0.01" inputmode="decimal" value="'+(x.litres||'')+'"></div></div><button type="button" class="primary" data-pes="'+x.id+'" style="margin-top:12px">Enregistrer</button><div class="msg" id="efMsg"></div></div>':'')
             +'<label class="rbrow'+(ok?' on':'')+'"><input type="checkbox" data-rb="'+x.id+'"'+(ok?' checked':'')+'> Remboursé par l\'entreprise</label>'
             +(ok?'<div class="field rbd"><label>Date du remboursement</label><input type="date" data-rbd="'+x.id+'" value="'+x.remb+'"></div>':'')+'</div>';
         }
