@@ -241,6 +241,8 @@
   #tabDep .card{border-left-color:var(--c-dep)}
   #tabDep .card.fu{border-left-color:var(--c-ast)}
   #tabDep .card.rc{border-left-color:var(--accent)}
+  #tabDep .card.ac{border-left-color:var(--c-hp)}
+  #tabDep .card.ac h2::before{content:"🛒";background:color-mix(in srgb,var(--c-hp) 20%,transparent)}
   #tabDep .card h2::before{content:"🍽️";background:color-mix(in srgb,var(--c-dep) 20%,transparent)}
   #tabDep .card.fu h2::before{content:"⛽";background:color-mix(in srgb,var(--c-ast) 22%,transparent)}
   #tabDep .card.rc h2::before{content:"📊";background:color-mix(in srgb,var(--accent) 20%,transparent)}
@@ -557,12 +559,24 @@
     <button type="button" class="primary" id="fAdd" style="margin-top:12px">Ajouter le plein</button>
     <div class="msg" id="fMsg"></div>
   </section>
+  <section class="card ac">
+    <h2>Achat de matériel</h2>
+    <div class="row">
+      <div class="field"><label for="aDate">Date de l'achat</label><input type="date" id="aDate"></div>
+      <div class="field"><label for="aMont">Montant du ticket (€)</label><input type="number" id="aMont" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></div>
+    </div>
+    <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="aNote">Achat (facultatif)</label><input type="text" id="aNote" maxlength="60" placeholder="ex. Leroy Merlin : colliers + gaine" autocomplete="off"></div></div>
+    <div class="photo"><div id="aPh"></div><input type="file" id="aFile" accept="image/*" multiple style="display:none"><div class="msg" id="aPhMsg"></div></div>
+    <button type="button" class="primary" id="aAdd" style="margin-top:12px">Ajouter l'achat</button>
+    <div class="msg" id="aMsg"></div>
+  </section>
   <section class="card rc">
     <h2>Récap dépenses</h2>
     <div class="field" style="max-width:200px"><label for="dMois">Mois</label><input type="month" id="dMois"></div>
     <input type="file" id="fFile2" accept="image/*" multiple style="display:none">
     <div id="dRecap"></div>
-    <div class="dpbtns"><button type="button" id="dRecFuel">⛽ Récap essence</button><button type="button" id="dRecMeal">🍽️ Récap repas</button></div>
+    <div class="dpbtns"><button type="button" id="dRecFuel">⛽ Récap essence</button><button type="button" id="dRecMeal">🍽️ Récap repas</button><button type="button" id="dRecAch">🛒 Récap achats</button></div>
+    <input type="file" id="aFile2" accept="image/*" multiple style="display:none">
     <div class="dpnote">Chaque récap s'ouvre pour le mois choisi, avec PDF et envoi par e-mail. Ces récaps sont séparés de ceux des journées.</div>
   </section>
   </div>
@@ -1205,7 +1219,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
   // ---------- Dépenses (repas + essence) : à part, jamais dans les PDF ----------
   var KEY_DEP='hs_dep_v1';
-  var dep=cleanDep(load(KEY_DEP,{meals:[],fuel:[]}));
+  var dep=cleanDep(load(KEY_DEP,{meals:[],fuel:[],achats:[]}));
   function cleanAmt(v){ var n=num(v); return (n>0&&n<100000)?Math.round(n*100)/100:0; }
   function cleanDep(d){
     d=(d&&typeof d==='object')?d:{};
@@ -1213,7 +1227,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     function id(x){ return (typeof x.id==='string'&&/^[\w-]{1,40}$/.test(x.id))?x.id:uid(); }
     return {
       meals:(Array.isArray(d.meals)?d.meals:[]).filter(ok).slice(0,5000).map(function(x){ return {id:id(x),date:x.date,montant:cleanAmt(x.montant),note:cleanStr(x.note).slice(0,40)}; }),
-      fuel:(Array.isArray(d.fuel)?d.fuel:[]).filter(ok).slice(0,2000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant)}; var l=cleanAmt(x.litres); if(l) o.litres=l; if(/^\d{4}-\d{2}-\d{2}$/.test(x.remb||'')) o.remb=x.remb; return o; })
+      fuel:(Array.isArray(d.fuel)?d.fuel:[]).filter(ok).slice(0,2000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant)}; var l=cleanAmt(x.litres); if(l) o.litres=l; if(/^\d{4}-\d{2}-\d{2}$/.test(x.remb||'')) o.remb=x.remb; return o; }),
+      achats:(Array.isArray(d.achats)?d.achats:[]).filter(ok).slice(0,3000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant),note:cleanStr(x.note).slice(0,60)}; if(/^\d{4}-\d{2}-\d{2}$/.test(x.remb||'')) o.remb=x.remb; return o; })
     };
   }
   function saveDep(){ store(KEY_DEP,dep); }
@@ -1346,7 +1361,16 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       h+='</div>';
       if(need.length) loadPhotos(need).then(function(){ if($('tabDep').style.display!=='none') renderDep(); });
     }
-    if(!meals.length&&!fuel.length) h+='<div class="dpnote">Rien de saisi pour ce mois pour l\'instant.</div>';
+    var ach=dep.achats.filter(function(x){return x.date.slice(0,7)===mo;}).sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:0;});
+    if(ach.length){
+      var aNr=ach.filter(function(x){return !x.remb;}), aOk=ach.filter(function(x){return x.remb;}), needA=[];
+      ach.forEach(function(x){ if(PH['ach|'+x.id]===undefined) needA.push('ach|'+x.id); });
+      h+='<div class="dph3">Achats de matériel</div><div class="dpsum2">'+(aNr.length?'<span class="r">🔴 Pas payé : '+eur(dSum(aNr))+' ('+aNr.length+')</span>':'')+(aOk.length?'<span class="g">🟢 Payé : '+eur(dSum(aOk))+' ('+aOk.length+')</span>':'')+'</div><div class="dpl">';
+      ach.forEach(function(x){ h+=achatCard(x); });
+      h+='</div><div class="dpnote">Les achats de matériel sont suivis à part : ils ne sont pas dans le total repas + essence ci-dessus.</div>';
+      if(needA.length) loadPhotos(needA).then(function(){ if($('tabDep').style.display!=='none') renderDep(); });
+    }
+    if(!meals.length&&!fuel.length&&!ach.length) h+='<div class="dpnote">Rien de saisi pour ce mois pour l\'instant.</div>';
     $('dRecap').innerHTML=h;
   }
   $('mDate').value=today(); $('fDate').value=today(); $('dMois').value=today().slice(0,7);
@@ -1441,6 +1465,132 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   }
   $('dRecFuel').addEventListener('click',function(){ openDepRecap('fuel'); });
   $('dRecMeal').addEventListener('click',function(){ openDepRecap('meals'); });
+
+  // ---------- Achats de matériel (ticket + payé / pas payé) ----------
+  var aPhKey='ach|draft', aEdit=null, aEditF=null, aPhotoFor=null;
+  function achatCard(x){
+    var pl=asList(PH['ach|'+x.id]), ok=!!x.remb, open=(aEdit===x.id), cl=ok?'ok':'nr', h='';
+    h+='<div class="dpi dpf '+cl+'" data-ax="'+x.id+'" style="'+(open?'border-radius:14px 14px 0 0':'')+'">'+(pl.length?'<img src="'+pl[0].d+'" alt="Ticket" data-av="'+x.id+'">':'')+'<div class="t"><b>'+esc(longDate(x.date))+'</b><small>'+(x.note?esc(x.note):'achat matériel')+(pl.length>1?' · '+pl.length+' photos':'')+'</small><span class="st">'+(ok?'✓ Payé le '+esc(dShort(x.remb)):'Pas payé')+'</span></div><div class="m">'+eur(x.montant)+'</div><button type="button" class="del" data-da="'+x.id+'" aria-label="Supprimer">🗑️</button></div>';
+    if(open){
+      h+='<div class="dpx '+cl+'">'+(pl.length?'<div class="phs">'+pl.map(function(o,i){ return '<span class="pth"><img src="'+o.d+'" alt="Ticket" data-av="'+x.id+'" data-ai="'+i+'"><button type="button" class="px" data-apdel="'+x.id+'" data-pi="'+i+'" aria-label="Retirer cette photo">×</button></span>'; }).join('')+'</div>':'<div class="nophoto">Pas de photo de ticket pour cet achat.</div>')
+        +'<div class="acts">'+(pl.length<3?'<button type="button" data-apa="'+x.id+'">📷 '+(pl.length?'Ajouter une photo':'Ajouter la photo du ticket')+'</button>':'')+'<button type="button" data-ape="'+x.id+'">✏️ '+(aEditF===x.id?'Fermer la modification':'Modifier l\'achat')+'</button></div>'
+        +(aEditF===x.id?'<div class="edf"><div class="row"><div class="field"><label>Date</label><input type="date" id="eaDate" value="'+x.date+'"></div><div class="field"><label>Montant (€)</label><input type="number" id="eaMont" min="0" step="0.01" inputmode="decimal" value="'+x.montant+'"></div></div><div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label>Achat</label><input type="text" id="eaNote" maxlength="60" value="'+esc(x.note||'')+'"></div></div><button type="button" class="primary" data-apes="'+x.id+'" style="margin-top:12px">Enregistrer</button><div class="msg" id="eaMsg"></div></div>':'')
+        +'<label class="rbrow'+(ok?' on':'')+'"><input type="checkbox" data-ab="'+x.id+'"'+(ok?' checked':'')+'> Payé / remboursé par l\'entreprise</label>'
+        +(ok?'<div class="field rbd"><label>Date du paiement</label><input type="date" data-abd="'+x.id+'" value="'+x.remb+'"></div>':'')+'</div>';
+    }
+    return h;
+  }
+  function renderAchatPhotoUI(){
+    var list=asList(PH[aPhKey]), h='<div class="ph-row">';
+    list.forEach(function(o,i){ h+='<span class="thumb"><img src="'+o.d+'" alt="Ticket" data-afv="'+i+'"><button type="button" class="x" data-afdel="'+i+'" aria-label="Retirer">×</button></span>'; });
+    if(list.length<3) h+='<button type="button" data-afpick="1">'+(list.length?'+ Ajouter une photo':'📷 Photo du ticket')+'</button>';
+    $('aPh').innerHTML=h+'</div>';
+  }
+  function addPhotosTo(key,files){
+    return loadPhotos([key]).then(function(){
+      var room=3-asList(PH[key]).length; if(room<=0) return 'max';
+      var acc=[], chain=Promise.resolve();
+      files.slice(0,room).forEach(function(f){ chain=chain.then(function(){ return compressImage(f).then(function(o){ acc.push(o); },function(){}); }); });
+      return chain.then(function(){ if(!acc.length) return 'err'; return setPhotos(key,asList(PH[key]).concat(acc)).then(function(){ return 'ok'; }); });
+    }).catch(function(){ return 'err'; });
+  }
+  $('aPh').addEventListener('click',function(e){
+    var ds=e.target.dataset||{};
+    if(ds.afpick) $('aFile').click();
+    else if(ds.afdel!==undefined){ var fi=+ds.afdel; ask('Retirer cette photo ?','Elle sera supprimée du ticket en cours de saisie.',['Retirer','Garder']).then(function(k){ if(k!==0) return; var l=asList(PH[aPhKey]); l.splice(fi,1); setPhotos(aPhKey,l); renderAchatPhotoUI(); }); }
+    else if(ds.afv!==undefined) viewPhotos(PH[aPhKey],+ds.afv,'Ticket achat');
+  });
+  $('aFile').addEventListener('change',function(){
+    var inp=this, files=Array.prototype.slice.call(inp.files||[]); if(!files.length) return;
+    fMsg('aPhMsg','Traitement…');
+    addPhotosTo(aPhKey,files).then(function(r){ renderAchatPhotoUI(); fMsg('aPhMsg',r==='ok'?'Photo ajoutée.':r==='max'?'Maximum 3 photos.':'Impossible de lire cette image.'); inp.value=''; });
+  });
+  $('aAdd').addEventListener('click',function(){
+    var d=$('aDate').value, m=cleanAmt($('aMont').value);
+    if(!d){ fMsg('aMsg','Choisis une date.'); return; }
+    if(!m){ fMsg('aMsg','Mets le montant du ticket.'); return; }
+    var o={id:uid(),date:d,montant:m,note:$('aNote').value.trim().slice(0,60)}, ph=asList(PH[aPhKey]);
+    dep.achats.push(o); saveDep();
+    var job=ph.length?setPhotos('ach|'+o.id,ph).then(function(){ return setPhotos(aPhKey,[]); }):Promise.resolve();
+    job.then(function(){ renderAchatPhotoUI(); renderDep(); });
+    $('aMont').value=''; $('aNote').value=''; $('dMois').value=d.slice(0,7);
+    fMsg('aMsg','Achat ajouté : '+eur(m)+' le '+dShort(d)+(ph.length?' (ticket enregistré)':''));
+  });
+  $('aFile2').addEventListener('change',function(){
+    var inp=this, files=Array.prototype.slice.call(inp.files||[]), id=aPhotoFor; if(!files.length||!id) return;
+    addPhotosTo('ach|'+id,files).then(function(){ inp.value=''; renderDep(); });
+  });
+  function achFind(id){ return dep.achats.filter(function(x){return x.id===id;})[0]; }
+  $('dRecap').addEventListener('click',function(e){
+    var ds=e.target.dataset||{}, g;
+    if(ds.da){ g=achFind(ds.da); if(!g) return;
+      ask('Supprimer cet achat ?',dShort(g.date)+' · '+eur(g.montant)+(g.note?' · '+g.note:'')+' (la photo du ticket est supprimée aussi)',['Supprimer','Garder']).then(function(i){ if(i!==0) return; dep.achats=dep.achats.filter(function(x){return x.id!==ds.da;}); saveDep(); setPhotos('ach|'+ds.da,[]); renderDep(); }); }
+    else if(ds.av){ loadPhotos(['ach|'+ds.av]).then(function(){ viewPhotos(PH['ach|'+ds.av],+ds.ai||0,'Ticket achat'); }); }
+    else if(ds.apa){ aPhotoFor=ds.apa; $('aFile2').click(); }
+    else if(ds.ape){ aEditF=(aEditF===ds.ape)?null:ds.ape; renderDep(); }
+    else if(ds.apes){ g=achFind(ds.apes); if(!g) return;
+      var nd=$('eaDate').value, nm=cleanAmt($('eaMont').value);
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(nd)||!nm){ $('eaMsg').style.color='var(--warn)'; $('eaMsg').textContent='Mets une date et un montant.'; return; }
+      g.date=nd; g.montant=nm; g.note=($('eaNote').value||'').trim().slice(0,60); aEditF=null; $('dMois').value=nd.slice(0,7); saveDep(); renderDep(); }
+    else if(ds.apdel){ var pi=+ds.pi; ask('Retirer cette photo ?','Elle sera supprimée de cet achat.',['Retirer','Garder']).then(function(k){ if(k!==0) return; loadPhotos(['ach|'+ds.apdel]).then(function(){ var l=asList(PH['ach|'+ds.apdel]); l.splice(pi,1); return setPhotos('ach|'+ds.apdel,l); }).then(renderDep); }); }
+    else if(e.target.closest&&e.target.closest('[data-ax]')&&!e.target.closest('.dpx')){ var id=e.target.closest('[data-ax]').dataset.ax; aEdit=(aEdit===id)?null:id; renderDep(); }
+  });
+  $('dRecap').addEventListener('change',function(e){
+    var ds=e.target.dataset||{}, g;
+    if(ds.ab){ g=achFind(ds.ab); if(!g) return; if(e.target.checked) g.remb=today(); else delete g.remb; saveDep(); renderDep(); }
+    else if(ds.abd){ g=achFind(ds.abd); if(!g) return; if(/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)){ g.remb=e.target.value; saveDep(); renderDep(); } }
+  });
+  $('aDate').value=today();
+  // Récap achats (PDF + e-mail)
+  function achMonth(mo){ var l=dep.achats.filter(function(x){ return x.date.slice(0,7)===mo; }).sort(function(a,b){ return a.date<b.date?-1:a.date>b.date?1:0; });
+    var np=l.filter(function(x){return !x.remb;}), pd=l.filter(function(x){return x.remb;});
+    return {mo:mo,list:l,total:dSum(l),n:l.length,np:np,pd:pd}; }
+  function achText(o){ var p=o.mo.split('-'), t=['RECAP ACHATS MATERIEL - '+MOIS[+p[1]-1]+' '+p[0],'Total : '+eur(o.total)+' ('+o.n+' achat(s))','Pas encore payé : '+eur(dSum(o.np))+' ('+o.np.length+')','Payé : '+eur(dSum(o.pd))+' ('+o.pd.length+')','','DETAIL'];
+    o.list.forEach(function(x){ t.push(fmtDate(x.date)+' : '+eur(x.montant)+(x.note?' - '+x.note:'')+' ['+(x.remb?'payé le '+fmtDate(x.remb):'pas payé')+']'); }); return t.join('\n'); }
+  function pdfAchats(o,noSave){
+    var doc=pdfLib(), p=o.mo.split('-'), titre=MOIS[+p[1]-1]+' '+p[0], np=dSum(o.np);
+    var y=pdfHeader(doc,'Achats de matériel',titre);
+    if(pst()!=='classic') y=pdfHero(doc,y,{label:'Reste à rembourser',value:eur(np,true),sub:o.np.length+' achat(s) pas encore payé(s)',tone:o.np.length?'yes':'no'});
+    y=pdfCards(doc,y,[{label:'Total du mois',value:eur(o.total,true)},{label:'Achats',value:String(o.n)},{label:'Payés',value:eur(dSum(o.pd),true),sub:o.pd.length+' achat(s)',tone:o.pd.length?'no':null}]);
+    y=pdfSection(doc,y,'Détail des achats');
+    var o1=tableBase(); o1.startY=y+2; o1.head=[['Date','Achat','Montant','Statut']];
+    o1.body=o.list.map(function(x){ return [shortDay(x.date),ws(x.note||'-'),eur(x.montant,true),x.remb?ws('Payé le '+shortDay(x.remb)):'Pas payé']; });
+    o1.foot=[['TOTAL','',eur(o.total,true),'']]; o1.showFoot='lastPage'; o1.footStyles={fillColor:C_NAVY,textColor:[255,255,255],fontStyle:'bold'};
+    o1.columnStyles={2:{halign:'right',fontStyle:'bold'}};
+    o1.didParseCell=function(h){ if((h.section==='head'||h.section==='foot')&&h.column.index===2) h.cell.styles.halign='right'; if(h.section==='body'&&h.column.index===3){ var q=o.list[h.row.index]; h.cell.styles.textColor=q.remb?C_OK:C_WARN; h.cell.styles.fontStyle='bold'; } };
+    doc.autoTable(o1);
+    var L=[]; o.list.forEach(function(x){ asList(PH['ach|'+x.id]).forEach(function(ph,i,a){ L.push({x:x,o:ph,i:i,n:a.length}); }); });
+    if(L.length){
+      var W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), gap=8, colW=(W-28-gap)/2, bottom=H-20, yy=pdfSectionPage(doc,true,'Tickets d\'achat'), col=0, rowH=0;
+      L.forEach(function(it){
+        var w=colW, h=w/(it.o.w/it.o.h); if(h>115) h=115;
+        if(col===0&&yy+h+12>bottom){ yy=pdfSectionPage(doc,false,'Tickets d\'achat'); }
+        if(h>bottom-yy-12) h=bottom-yy-12; w=h*(it.o.w/it.o.h); if(w>colW){ w=colW; h=w/(it.o.w/it.o.h); }
+        var x=14+col*(colW+gap);
+        doc.setFont('helvetica','bold'); doc.setFontSize(10); tcol(doc,C_NAVY); doc.text(ws(shortDay(it.x.date)+'  -  '+eur(it.x.montant,true)+(it.n>1?'  ('+(it.i+1)+'/'+it.n+')':'')),x,yy);
+        dcol(doc,C_LINE); doc.setLineWidth(0.3); doc.roundedRect(x-0.6,yy+3.4,w+1.2,h+1.2,pst()==='b'?3:1.5,pst()==='b'?3:1.5,'S'); doc.addImage(it.o.d,'JPEG',x,yy+4,w,h);
+        rowH=Math.max(rowH,h+12);
+        if(col===1){ yy+=rowH; rowH=0; col=0; } else col=1;
+      });
+    }
+    pdfFooter(doc);
+    var name='recap_achats_'+o.mo+'.pdf';
+    if(!noSave) doc.save(name);
+    return {doc:doc,name:name};
+  }
+  $('dRecAch').addEventListener('click',function(){
+    var mo=$('dMois').value||today().slice(0,7), o=achMonth(mo), p=mo.split('-');
+    var h='<h3 style="margin:0 0 4px">🛒 Récap achats · '+esc(MOIS[+p[1]-1]+' '+p[0])+'</h3>';
+    if(!o.n){ openDlg(h+'<div class="dpnote">Aucun achat de matériel ce mois-ci.</div>','Aucun achat ce mois-ci.',null,null); return; }
+    h+='<div class="dpsum" style="grid-template-columns:1fr 1fr"><div class="tt"><small>Total</small><b>'+eur(o.total)+'</b></div><div><small>Reste à rembourser</small><b style="color:var(--warn)">'+eur(dSum(o.np))+'</b></div></div>';
+    h+='<table class="dpt"><tr><th>Date</th><th>Achat</th><th>Montant</th></tr>'+o.list.map(function(x){ return '<tr><td>'+esc(dShort(x.date))+'<br><small style="color:'+(x.remb?'#16a34a':'#e11d48')+';font-weight:700">'+(x.remb?'✓ Payé':'Pas payé')+'</small></td><td>'+esc(x.note||'–')+'</td><td>'+eur(x.montant)+'</td></tr>'; }).join('')+'</table>';
+    loadPhotos(o.list.map(function(x){ return 'ach|'+x.id; })).then(function(){
+      openDlg(h,achText(o),function(){ pdfAchats(o); },function(notify){
+        var out; try{ out=pdfAchats(o,true); }catch(er){ notify('Impossible de créer le PDF ('+(er&&er.message?er.message:er)+').'); return Promise.resolve('error'); }
+        return deliverDoc(out,'Récap achats matériel '+MOIS[+p[1]-1]+' '+p[0],achText(o),notify);
+      });
+    });
+  });
 
   // ---------- Stock du camion ----------
   var KEY_STOCK='hs_stock_v1';
@@ -3255,6 +3405,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var ks=[];
     if($('withPhotos').checked) Object.keys(days).forEach(function(dk){ KINDS.forEach(function(kind){ ks.push(dk+'|'+kind); }); });
     if($('withPhotos').checked) dep.fuel.forEach(function(f){ ks.push('fuel|'+f.id); });
+    if($('withPhotos').checked) dep.achats.forEach(function(f){ ks.push('ach|'+f.id); });
     loadPhotos(ks).then(function(){
       var photos={}, n=0;
       ks.forEach(function(k){ var l=asList(PH[k]); if(l.length){ photos[k]=l; n+=l.length; } });
@@ -3323,6 +3474,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         dep.meals.forEach(function(x){ hm[x.id]=1; }); dep.fuel.forEach(function(x){ hf[x.id]=1; });
         cd.meals.forEach(function(x){ if(!hm[x.id]){ dep.meals.push(x); ndep++; } });
         cd.fuel.forEach(function(x){ if(!hf[x.id]){ dep.fuel.push(x); ndep++; var l=asList((data.photos||{})['fuel|'+x.id]); if(l.length) fuelJobs.push(setPhotos('fuel|'+x.id,l)); } });
+        var ha={}; dep.achats.forEach(function(x){ ha[x.id]=1; });
+        cd.achats.forEach(function(x){ if(!ha[x.id]){ dep.achats.push(x); ndep++; var l=asList((data.photos||{})['ach|'+x.id]); if(l.length) fuelJobs.push(setPhotos('ach|'+x.id,l)); } });
         saveDep(); renderDep();
       }
       var nst=0;
@@ -3363,6 +3516,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   renderAll(); renderHist();
   (function(){ var L=lookOf(); if(L.splash==='off'||navigator.webdriver){ $('splash').classList.add('out'); } else showSplash(L.splash); })();
   loadPhotos([fPhKey]).then(renderFuelPhotoUI);
+  loadPhotos([aPhKey]).then(renderAchatPhotoUI);
   $('relayCode').textContent=RELAY_SCRIPT; relayStateRender();
   loadPhotos(DRAFT_KEYS.concat(dateKeys(cur.date||today()))).then(function(){ renderPhotoUI(); checkNewDay(); });
 })();
