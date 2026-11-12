@@ -3401,6 +3401,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
      "  return { ok: true, chunk: it.next().getBlob().getDataAsString() };",
      "}",
      "",
+     "// À lancer UNE fois à la main (▶ Exécuter) pour donner l'accès à ton Drive.",
+     "function autoriser() {",
+     "  dossier_();",
+     "  Logger.log(\"OK : accès au Drive autorisé\");",
+     "}",
+     "",
      "function doGet() {",
      "  return sortie_({ ok: true, info: \"Relais prêt\" });",
      "}",
@@ -3943,6 +3949,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   function bkErr(e){
     e=String(e||'');
     if(e==='code') return 'code secret incorrect';
+    if(/autoris|permission|DriveApp/i.test(e)) return 'ton script n\'a pas encore l\'accès au Drive : dans Apps Script, choisis la fonction « autoriser », clique ▶ Exécuter et accepte, puis redéploie une nouvelle version';
     if(/base64|pdf|undefined|null|Argument/i.test(e)) return 'ton script Google est l\'ancienne version : copie le nouveau script (bouton ci-dessous) et redéploie-le';
     return e.slice(0,140)||'erreur';
   }
