@@ -559,9 +559,9 @@
     <div class="row" style="margin-top:10px">
       <div class="field"><label for="stMin">Alerte si ≤</label><input type="number" id="stMin" min="0" step="any" inputmode="decimal" placeholder="0"></div>
       <div class="field"><label for="stObj">Objectif (facultatif)</label><input type="number" id="stObj" min="0" step="any" inputmode="decimal" placeholder="plein"></div>
-      <div class="field"><label for="stUnit">Unité</label><input type="text" id="stUnit" maxlength="8" placeholder="pcs, m…" autocomplete="off"></div>
+      <div class="field"><label for="stUnit">Unité</label><select id="stUnit"></select></div>
     </div>
-    <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="stCat">Catégorie (facultatif)</label><input type="text" id="stCat" maxlength="30" list="stCats" placeholder="ex. Câbles, Connectique, Outillage" autocomplete="off"><datalist id="stCats"></datalist></div></div>
+    <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="stCat">Catégorie</label><select id="stCat" class="stcatsel" data-n="stCatNew"></select><input type="text" id="stCatNew" maxlength="30" placeholder="Nom de la nouvelle catégorie" autocomplete="off" style="display:none;margin-top:8px"></div></div>
     <button type="button" class="primary" id="stAdd" style="margin-top:12px">Ajouter au stock</button>
     <div class="msg" id="stMsg"></div>
   </section>
@@ -1405,8 +1405,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   function renderStock(){
     var low=stock.items.filter(stLow).length, tot=stock.items.length;
     $('stSum').innerHTML='<span>'+tot+' référence'+(tot>1?'s':'')+'</span>'+(low?'<span class="bad">⚠️ '+low+' en stock bas</span>':(tot?'<span>✓ Aucun stock bas</span>':''));
-    var cats={}; stock.items.forEach(function(x){ if(x.cat) cats[x.cat]=1; });
-    $('stCats').innerHTML=Object.keys(cats).sort().map(function(c){ return '<option value="'+esc(c)+'">'; }).join('');
+    var pc=$('stCat').value, pu=$('stUnit').value||'pcs';
+    $('stCat').innerHTML=stCatOpts(pc==='__new'?'__new':pc); if(pc==='__new') $('stCat').value='__new'; else if(stCatList().indexOf(pc)<0) $('stCat').value='';
+    $('stCatNew').style.display=($('stCat').value==='__new')?'':'none';
+    $('stUnit').innerHTML=stUnitOpts(pu);
     var q=($('stSearch').value||'').trim().toLowerCase(), h='', n=0, groups=[], gmap={};
     stSorted().forEach(function(x){
       if(stFilter==='low'&&!stLow(x)) return;
@@ -1423,8 +1425,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
           +'<div class="stq"><button type="button" data-stm="'+x.id+'" aria-label="Retirer 1">−</button><span class="n" data-sted="'+x.id+'">'+esc(stQtyTxt(x))+'</span><button type="button" data-stp="'+x.id+'" aria-label="Ajouter 1">+</button></div></div>';
         if(stEdit===x.id){
           h+='<div class="sted"><div class="row"><div class="field" style="flex:2 1 150px"><label>Pièce</label><input type="text" id="seNom" maxlength="60" value="'+esc(x.nom)+'"></div><div class="field"><label>Quantité</label><input type="number" id="seQty" min="0" step="any" inputmode="decimal" value="'+x.qty+'"></div></div>'
-            +'<div class="row"><div class="field"><label>Alerte si ≤</label><input type="number" id="seMin" min="0" step="any" inputmode="decimal" value="'+(x.min||'')+'"></div><div class="field"><label>Objectif</label><input type="number" id="seObj" min="0" step="any" inputmode="decimal" value="'+(x.obj||'')+'"></div><div class="field"><label>Unité</label><input type="text" id="seUnit" maxlength="8" value="'+esc(x.unit)+'"></div></div>'
-            +'<div class="row"><div class="field" style="flex:1 1 100%"><label>Catégorie</label><input type="text" id="seCat" maxlength="30" list="stCats" value="'+esc(x.cat)+'"></div></div>'
+            +'<div class="row"><div class="field"><label>Alerte si ≤</label><input type="number" id="seMin" min="0" step="any" inputmode="decimal" value="'+(x.min||'')+'"></div><div class="field"><label>Objectif</label><input type="number" id="seObj" min="0" step="any" inputmode="decimal" value="'+(x.obj||'')+'"></div><div class="field"><label>Unité</label><select id="seUnit">'+stUnitOpts(x.unit||'pcs')+'</select></div></div>'
+            +'<div class="row"><div class="field" style="flex:1 1 100%"><label>Catégorie</label><select id="seCat" class="stcatsel" data-n="seCatNew">'+stCatOpts(x.cat)+'</select><input type="text" id="seCatNew" maxlength="30" placeholder="Nom de la nouvelle catégorie" style="display:none;margin-top:8px"></div></div>'
             +'<div class="btns"><button type="button" class="primary" data-sesave="'+x.id+'">Enregistrer</button><button type="button" data-secancel="1">Annuler</button><button type="button" data-sedel="'+x.id+'" style="color:var(--warn)">Supprimer</button></div></div>';
         }
       });
@@ -1433,7 +1435,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(!n) h='<div class="dpnote" style="margin:8px 0">'+(tot?(stFilter==='low'&&!q?'Aucun stock bas, tout est bon 👍':'Aucune pièce ne correspond.'):'Ton stock est vide : ajoute ta première pièce ci-dessous.')+'</div>';
     $('stList').innerHTML=h;
   }
+  function stCatList(){ var c={}; stock.items.forEach(function(x){ if(x.cat) c[x.cat]=1; }); return Object.keys(c).sort(function(a,b){ return a.toLowerCase()<b.toLowerCase()?-1:1; }); }
+  function stCatOpts(sel){ var h='<option value="">Sans catégorie</option>'; stCatList().forEach(function(c){ h+='<option value="'+esc(c)+'"'+(c===sel?' selected':'')+'>'+esc(c)+'</option>'; }); return h+'<option value="__new">➕ Nouvelle catégorie…</option>'; }
+  function stUnitOpts(sel){ var u=[['pcs','Pièces'],['m','Mètres']], f=false; var h=''; u.forEach(function(o){ if(o[0]===sel) f=true; h+='<option value="'+o[0]+'"'+(o[0]===sel?' selected':'')+'>'+o[1]+'</option>'; }); if(sel&&!f) h+='<option value="'+esc(sel)+'" selected>'+esc(sel)+'</option>'; return h; }
+  function stReadCat(sid,nid){ var v=$(sid).value; return v==='__new'?($(nid).value||'').trim().slice(0,30):v; }
   function stFind(id){ for(var i=0;i<stock.items.length;i++) if(stock.items[i].id===id) return stock.items[i]; return null; }
+  $('tabStock').addEventListener('change',function(e){ var t=e.target; if(t.classList&&t.classList.contains('stcatsel')){ var n=$(t.dataset.n); n.style.display=(t.value==='__new')?'':'none'; if(t.value==='__new') n.focus(); } });
   $('stSearch').addEventListener('input',renderStock);
   $('stList').addEventListener('toggle',function(e){ var d=e.target; if(!d||!d.classList||!d.classList.contains('stc')) return; if($('stSearch').value.trim()||stFilter==='low') return; var g=d.getAttribute('data-g'); if(d.open) stOpen[g]=1; else delete stOpen[g]; saveStOpen(); },true);
   function stSetAll(v){ stock.items.forEach(function(x){ var c=x.cat||'Sans catégorie'; if(v) stOpen[c]=1; else delete stOpen[c]; }); saveStOpen(); renderStock(); }
@@ -1446,16 +1453,17 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     else if(ds.sted){ stEdit=(stEdit===ds.sted)?null:ds.sted; renderStock(); }
     else if(ds.secancel){ stEdit=null; renderStock(); }
     else if(ds.sesave){ x=stFind(ds.sesave); if(!x) return; var nom=($('seNom').value||'').trim(); if(!nom){ $('seNom').focus(); return; }
-      x.nom=nom.slice(0,60); x.qty=cleanQty($('seQty').value); x.min=cleanQty($('seMin').value); x.obj=cleanQty($('seObj').value); x.unit=($('seUnit').value||'').trim().slice(0,8); x.cat=($('seCat').value||'').trim().slice(0,30); stEdit=null; saveStock(); renderStock(); }
+      x.nom=nom.slice(0,60); x.qty=cleanQty($('seQty').value); x.min=cleanQty($('seMin').value); x.obj=cleanQty($('seObj').value); x.unit=$('seUnit').value; x.cat=stReadCat('seCat','seCatNew'); stEdit=null; saveStock(); renderStock(); }
     else if(ds.sedel){ x=stFind(ds.sedel); if(!x) return; ask('Supprimer cette pièce ?',x.nom+' ('+stQtyTxt(x)+' en stock)',['Supprimer','Garder']).then(function(i){ if(i!==0) return; stock.items=stock.items.filter(function(y){ return y.id!==x.id; }); stEdit=null; saveStock(); renderStock(); }); }
   });
   $('stAdd').addEventListener('click',function(){
-    var nom=($('stNom').value||'').trim(), m=$('stMsg');
+    var nom=($('stNom').value||'').trim(), m=$('stMsg'), newCat=stReadCat('stCat','stCatNew');
+    if($('stCat').value==='__new'&&!newCat){ m.style.color='var(--warn)'; m.textContent='Écris le nom de la nouvelle catégorie.'; $('stCatNew').focus(); return; }
     if(!nom){ m.style.color='var(--warn)'; m.textContent='Indique le nom de la pièce.'; $('stNom').focus(); return; }
     var dup=stock.items.filter(function(y){ return y.nom.toLowerCase()===nom.toLowerCase(); })[0];
     var add=function(){
-      stock.items.push({id:uid(),nom:nom.slice(0,60),qty:cleanQty($('stQty').value),min:cleanQty($('stMin').value),obj:cleanQty($('stObj').value),unit:($('stUnit').value||'').trim().slice(0,8),cat:($('stCat').value||'').trim().slice(0,30)});
-      saveStock(); ['stNom','stQty','stMin','stObj','stUnit'].forEach(function(id){ $(id).value=''; });
+      stock.items.push({id:uid(),nom:nom.slice(0,60),qty:cleanQty($('stQty').value),min:cleanQty($('stMin').value),obj:cleanQty($('stObj').value),unit:$('stUnit').value||'pcs',cat:newCat});
+      saveStock(); ['stNom','stQty','stMin','stObj','stCatNew'].forEach(function(id){ $(id).value=''; }); $('stCat').innerHTML=stCatOpts(newCat); $('stCat').value=newCat; $('stUnit').value='pcs';
       m.style.color=''; m.textContent='✓ '+nom+' ajouté au stock.'; renderStock(); setTimeout(function(){ if(m.textContent.indexOf('✓')===0) m.textContent=''; },4000);
     };
     if(dup) ask('Cette pièce existe déjà',nom+' est déjà dans ton stock. L\'ajouter quand même ?',['Ajouter quand même','Annuler']).then(function(i){ if(i===0) add(); }); else add();
