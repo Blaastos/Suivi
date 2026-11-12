@@ -3984,8 +3984,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(settings.bkAuto===false||!relayUrl()||bkBusy) return;
     var st=bkState(), sig=bkSig();
     if(st.sig===sig) return;
-    if(!force&&st.at&&Date.now()-st.at<10*60000) return;
-    if(st.errAt&&Date.now()-st.errAt<30*60000) return;
+    if(!force&&st.at&&Date.now()-st.at<2*60000) return;
+    if(st.errAt&&Date.now()-st.errAt<5*60000) return;
     bkRun(false);
   }
   function stampTxt(ms){ var d=new Date(+ms); return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' à '+pad2(d.getHours())+':'+pad2(d.getMinutes()); }
@@ -4140,7 +4140,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     h+='<section class="card"><h2>Bilan de l\'année</h2>'+yearHtml(yearSel)+'<div class="tools"><button type="button" data-act="xlsx">📊 Exporter tout en Excel</button></div><div class="msg" id="hmXMsg"></div></section>';
     var bk=bkState(), hasUrl=!!relayUrl();
     h+='<section class="card"><h2>☁️ Sauvegarde Google Drive</h2>'+
-      (hasUrl?'<div class="bkstat '+(bk.err?'bad':bk.at?'ok':'')+'">'+(bkBusy?'⏳ Sauvegarde en cours…':bk.at?('✓ Dernière sauvegarde : '+esc(stampTxt(bk.at))+' · '+esc(sizeTxt(bk.size))):'Pas encore de sauvegarde envoyée.')+(bk.err&&!bkBusy?'<br>⚠ '+esc(bk.err):'')+'</div>'
+      (hasUrl?'<div class="bkstat '+(bk.err?'bad':bk.at?'ok':'')+'">'+(bkBusy?'⏳ Sauvegarde en cours…':(bk.at&&bk.sig!==bkSig()&&settings.bkAuto!==false)?'🕓 Modifications en attente : envoi automatique dans quelques secondes.<br>':'')+(bkBusy?'':bk.at?('✓ Dernière sauvegarde : '+esc(stampTxt(bk.at))+' · '+esc(sizeTxt(bk.size))):'Pas encore de sauvegarde envoyée.')+(bk.err&&!bkBusy?'<br>⚠ '+esc(bk.err):'')+'</div>'
         :'<div class="bkstat">Pas encore branchée : utilise le même script Google que pour l\'envoi des mails.</div>')+
       '<label class="check"><input type="checkbox" data-bkopt="auto"'+(settings.bkAuto!==false?' checked':'')+'> Sauvegarde automatique (quand tu fermes l\'appli, si ça a changé)</label>'+
       '<label class="check"><input type="checkbox" data-bkopt="photos"'+(settings.bkPhotos!==false?' checked':'')+'> Inclure les photos (tickets, GPS)</label>'+
@@ -4200,7 +4200,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   if(pinCfg()) lkShow('unlock','Code de l\'appli'); else lkHide();
   setTimeout(function(){ checkUpdate(true); },3000);
   setTimeout(function(){ bkAuto(false); },6000);
-  setInterval(function(){ bkAuto(false); },5*60000);
+  var bkSeen='', bkSeenAt=0;
+  setInterval(function(){
+    if(document.hidden||bkBusy) return;
+    var sg=bkSig(), now=Date.now();
+    if(sg!==bkSeen){ bkSeen=sg; bkSeenAt=now; renderHomeIfVisible(); return; }
+    if(sg!==bkState().sig&&now-bkSeenAt>=20000) bkAuto(false);
+  },5000);
   loadPhotos(DRAFT_KEYS.concat(dateKeys(cur.date||today()))).then(function(){ renderPhotoUI(); checkNewDay(); });
 })();
 </script>
