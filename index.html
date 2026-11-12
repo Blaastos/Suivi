@@ -296,6 +296,26 @@
   .dpi .m{font-weight:700;white-space:nowrap}
   .dpi img{width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:zoom-in}
   .dpi .del{width:34px;height:34px;padding:0;border-radius:50%;flex:none}
+  .dpf{border:2px solid;border-radius:14px;padding:10px 12px;margin-top:10px;cursor:pointer;transition:box-shadow .2s}
+  .dpf.nr{border-color:#e11d48;background:color-mix(in srgb,#e11d48 8%,var(--card));box-shadow:0 0 0 3px color-mix(in srgb,#e11d48 14%,transparent),0 0 16px 2px color-mix(in srgb,#e11d48 38%,transparent)}
+  .dpf.ok{border-color:#16a34a;background:color-mix(in srgb,#16a34a 10%,var(--card));box-shadow:none}
+  .dpf .st{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;margin-top:5px}.dpf .t small{display:block}
+  .dpf.nr .st{background:#e11d48;color:#fff}
+  .dpf.ok .st{background:#16a34a;color:#fff}
+  .dpf .m{font-size:16px}
+  .dpx{border:2px solid;border-top:0;border-radius:0 0 14px 14px;padding:12px;margin:0;background:var(--card)}
+  .dpx.nr{border-color:#e11d48}.dpx.ok{border-color:#16a34a}
+  .dpx .phs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .dpx .phs img{width:100%;max-width:200px;height:auto;max-height:260px;object-fit:cover;border-radius:10px;cursor:zoom-in}
+  .dpx .rbrow{display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:2px solid var(--line);font-weight:700;font-size:15px}
+  .dpx .rbrow input{width:24px;height:24px;flex:none}
+  .dpx .rbrow.on{border-color:#16a34a;background:color-mix(in srgb,#16a34a 12%,var(--card))}
+  .dpx .rbd{margin-top:10px}
+  .dpx .nophoto{font-size:13px;color:var(--muted);margin-bottom:10px}
+  .dpsum2{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+  .dpsum2 span{border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:700}
+  .dpsum2 .r{background:color-mix(in srgb,#e11d48 14%,transparent);color:#e11d48}
+  .dpsum2 .g{background:color-mix(in srgb,#16a34a 14%,transparent);color:#16a34a}
   .dph3{font-size:13px;font-weight:700;color:var(--muted);margin:16px 0 0;text-transform:uppercase;letter-spacing:.04em}
   .cgrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
   .cgrow label{flex:1 1 140px;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--card);font-size:14px;font-weight:600}
@@ -1187,14 +1207,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     function id(x){ return (typeof x.id==='string'&&/^[\w-]{1,40}$/.test(x.id))?x.id:uid(); }
     return {
       meals:(Array.isArray(d.meals)?d.meals:[]).filter(ok).slice(0,5000).map(function(x){ return {id:id(x),date:x.date,montant:cleanAmt(x.montant),note:cleanStr(x.note).slice(0,40)}; }),
-      fuel:(Array.isArray(d.fuel)?d.fuel:[]).filter(ok).slice(0,2000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant)}; var l=cleanAmt(x.litres); if(l) o.litres=l; return o; })
+      fuel:(Array.isArray(d.fuel)?d.fuel:[]).filter(ok).slice(0,2000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant)}; var l=cleanAmt(x.litres); if(l) o.litres=l; if(/^\d{4}-\d{2}-\d{2}$/.test(x.remb||'')) o.remb=x.remb; return o; })
     };
   }
   function saveDep(){ store(KEY_DEP,dep); }
   function dMondayOf(k){ var d=new Date(k+'T12:00:00'); var w=(d.getDay()+6)%7; d.setDate(d.getDate()-w); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   function dShort(k){ return (+k.slice(8))+' '+['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][+k.slice(5,7)-1]; }
   function dSum(a){ return a.reduce(function(t,x){ return t+x.montant; },0); }
-  var fPhKey='fuel|draft';
+  var fPhKey='fuel|draft', dEdit=null;
   function renderFuelPhotoUI(){
     var list=asList(PH[fPhKey]), h='<div class="ph-row">';
     list.forEach(function(o,i){ h+='<span class="thumb"><img src="'+o.d+'" alt="Ticket" data-fv="'+i+'"><button type="button" class="x" data-fdel="'+i+'" aria-label="Retirer">×</button></span>'; });
@@ -1248,7 +1268,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       ask('Supprimer ce repas ?',dShort(m.date)+' · '+eur(m.montant)+(m.note?' · '+m.note:''),['Supprimer','Garder']).then(function(i){ if(i!==0) return; dep.meals=dep.meals.filter(function(x){return x.id!==ds.dm;}); saveDep(); renderDep(); }); }
     else if(ds.df){ var f=dep.fuel.filter(function(x){return x.id===ds.df;})[0]; if(!f) return;
       ask('Supprimer ce plein ?',dShort(f.date)+' · '+eur(f.montant)+' (la photo du ticket est supprimée aussi)',['Supprimer','Garder']).then(function(i){ if(i!==0) return; dep.fuel=dep.fuel.filter(function(x){return x.id!==ds.df;}); saveDep(); setPhotos('fuel|'+ds.df,[]); renderDep(); }); }
-    else if(ds.dv){ loadPhotos(['fuel|'+ds.dv]).then(function(){ viewPhotos(PH['fuel|'+ds.dv],0,'Ticket essence'); }); }
+    else if(ds.dv){ loadPhotos(['fuel|'+ds.dv]).then(function(){ viewPhotos(PH['fuel|'+ds.dv],+ds.di||0,'Ticket essence'); }); }
+    else if(e.target.closest&&e.target.closest('[data-dfx]')&&!e.target.closest('.dpx')){ var id=e.target.closest('[data-dfx]').dataset.dfx; dEdit=(dEdit===id)?null:id; renderDep(); }
+  });
+  $('dRecap').addEventListener('change',function(e){
+    var ds=e.target.dataset||{}, f;
+    if(ds.rb){ f=dep.fuel.filter(function(x){return x.id===ds.rb;})[0]; if(!f) return; if(e.target.checked) f.remb=today(); else delete f.remb; saveDep(); renderDep(); }
+    else if(ds.rbd){ f=dep.fuel.filter(function(x){return x.id===ds.rbd;})[0]; if(!f) return; if(/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)){ f.remb=e.target.value; saveDep(); renderDep(); } }
   });
   function renderDep(){
     var mo=$('dMois').value; if(!/^\d{4}-\d{2}$/.test(mo)){ mo=today().slice(0,7); $('dMois').value=mo; }
@@ -1282,8 +1308,16 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(fuel.length){
       h+='<div class="dph3">Pleins d\'essence</div><div class="dpl">';
       var need=[]; fuel.forEach(function(x){ if(PH['fuel|'+x.id]===undefined) need.push('fuel|'+x.id); });
-      fuel.forEach(function(x){ var pl=asList(PH['fuel|'+x.id]);
-        h+='<div class="dpi">'+(pl.length?'<img src="'+pl[0].d+'" alt="Ticket" data-dv="'+x.id+'">':'')+'<div class="t"><b>'+esc(longDate(x.date))+'</b><small>'+(x.litres?(x.litres+'').replace('.',',')+' L':'ticket')+(pl.length>1?' · '+pl.length+' photos':'')+'</small></div><div class="m">'+eur(x.montant)+'</div><button type="button" class="del" data-df="'+x.id+'" aria-label="Supprimer">🗑️</button></div>'; });
+      var nrL=fuel.filter(function(x){return !x.remb;}), okL=fuel.filter(function(x){return x.remb;});
+      h=h.replace('<div class="dph3">Pleins d\'essence</div><div class="dpl">','<div class="dph3">Pleins d\'essence</div><div class="dpsum2">'+(nrL.length?'<span class="r">🔴 À rembourser : '+eur(dSum(nrL))+' ('+nrL.length+')</span>':'')+(okL.length?'<span class="g">🟢 Remboursé : '+eur(dSum(okL))+' ('+okL.length+')</span>':'')+'</div><div class="dpl">');
+      fuel.forEach(function(x){ var pl=asList(PH['fuel|'+x.id]), ok=!!x.remb, open=(dEdit===x.id), cl=ok?'ok':'nr';
+        h+='<div class="dpi dpf '+cl+'" data-dfx="'+x.id+'" style="'+(open?'border-radius:14px 14px 0 0':'')+'">'+(pl.length?'<img src="'+pl[0].d+'" alt="Ticket" data-dv="'+x.id+'">':'')+'<div class="t"><b>'+esc(longDate(x.date))+'</b><small>'+(x.litres?(x.litres+'').replace('.',',')+' L':'ticket')+(pl.length>1?' · '+pl.length+' photos':'')+'</small><span class="st">'+(ok?'✓ Remboursé le '+esc(dShort(x.remb)):'À rembourser')+'</span></div><div class="m">'+eur(x.montant)+'</div><button type="button" class="del" data-df="'+x.id+'" aria-label="Supprimer">🗑️</button></div>';
+        if(open){
+          h+='<div class="dpx '+cl+'">'+(pl.length?'<div class="phs">'+pl.map(function(o,i){ return '<img src="'+o.d+'" alt="Ticket" data-dv="'+x.id+'" data-di="'+i+'">'; }).join('')+'</div>':'<div class="nophoto">Pas de photo de ticket pour ce plein.</div>')
+            +'<label class="rbrow'+(ok?' on':'')+'"><input type="checkbox" data-rb="'+x.id+'"'+(ok?' checked':'')+'> Remboursé par l\'entreprise</label>'
+            +(ok?'<div class="field rbd"><label>Date du remboursement</label><input type="date" data-rbd="'+x.id+'" value="'+x.remb+'"></div>':'')+'</div>';
+        }
+      });
       h+='</div>';
       if(need.length) loadPhotos(need).then(function(){ if($('tabDep').style.display!=='none') renderDep(); });
     }
