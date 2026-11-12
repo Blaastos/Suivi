@@ -1761,29 +1761,47 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(dup) ask('Cette pièce existe déjà',nom+' est déjà dans ton stock. L\'ajouter quand même ?',['Ajouter quand même','Annuler']).then(function(i){ if(i===0) add(); }); else add();
   });
   function stReappro(){ return stSorted().filter(stLow); }
+  function stGroup(L){
+    var g=[], gi={};
+    L.forEach(function(x){ var c=(x.cat||'').trim()||'Sans catégorie'; if(gi[c]===undefined){ gi[c]=g.length; g.push({cat:c,items:[]}); } g[gi[c]].items.push(x); });
+    g.sort(function(p,q){ if(p.cat==='Sans catégorie') return 1; if(q.cat==='Sans catégorie') return -1; return p.cat.localeCompare(q.cat,'fr'); });
+    return g;
+  }
   function stRecapText(){
     var L=stReappro(); if(!L.length) return 'Stock camion : aucune pièce à recompléter.';
-    return 'Stock camion - à recompléter ('+L.length+') :\n'+L.map(function(x){ var nd=stNeed(x); return '- '+x.nom+' : reste '+stQtyTxt(x)+' (alerte ≤ '+stNum(x.min)+')'+(nd?' -> prendre '+stNum(nd)+(x.unit?' '+x.unit:''):''); }).join('\n');
+    return 'Stock camion - à recompléter ('+L.length+') :\n'+stGroup(L).map(function(g){ return '\n'+g.cat.toUpperCase()+' ('+g.items.length+')\n'+g.items.map(function(x){ var nd=stNeed(x); return '- '+x.nom+' : reste '+stQtyTxt(x)+' (alerte ≤ '+stNum(x.min)+')'+(nd?' -> prendre '+stNum(nd)+(x.unit?' '+x.unit:''):''); }).join('\n'); }).join('\n');
   }
   function pdfStock(full,noSave){
     var doc=pdfLib(), all=stSorted(), L=full?all:stReappro(), low=all.filter(stLow).length;
     var y=pdfHeader(doc,full?'Inventaire du camion':'Stock à recompléter',longDate(today()));
     if(pst()!=='classic') y=pdfHero(doc,y,{label:'Pièces en stock bas',value:String(low),sub:low?'à recompléter':'tout est bon',tone:low?'yes':'no'});
     y=pdfCards(doc,y,[{label:'Références',value:String(all.length)},{label:full?'Pièces listées':'À recompléter',value:String(L.length),tone:(!full&&L.length)?'yes':null},{label:'Stock bas',value:String(low),tone:low?'yes':'no'}]);
-    y=pdfSection(doc,y,full?'Tout le stock':'Pièces à recompléter');
-    var o=tableBase(); o.startY=y+2;
-    if(full){
-      o.head=[['Pièce','Catégorie','Stock','Alerte','Objectif']];
-      o.body=L.map(function(x){ return [ws(x.nom),ws(x.cat||'-'),ws(stQtyTxt(x)),x.min>0?stNum(x.min):'-',x.obj>0?stNum(x.obj):'-']; });
-      o.columnStyles={2:{halign:'right',fontStyle:'bold'},3:{halign:'right'},4:{halign:'right'}};
-      o.didParseCell=function(h){ if(h.section==='head'&&h.column.index>1) h.cell.styles.halign='right'; if(h.section==='body'&&stLow(L[h.row.index])){ h.cell.styles.fillColor=C_WARNBG; if(h.column.index===2){ h.cell.styles.textColor=C_WARN; } } };
-    } else {
-      o.head=[['Pièce','Catégorie','Reste','Alerte','À prendre']];
-      o.body=L.length?L.map(function(x){ var nd=stNeed(x); return [ws(x.nom),ws(x.cat||'-'),ws(stQtyTxt(x)),stNum(x.min),nd?ws(stNum(nd)+(x.unit?' '+x.unit:'')):'-']; }):[['Rien à recompléter : tout est bon','','','','']];
-      o.columnStyles={2:{halign:'right',textColor:C_WARN,fontStyle:'bold'},3:{halign:'right'},4:{halign:'right',fontStyle:'bold'}};
-      o.didParseCell=function(h){ if(h.section==='head'&&h.column.index>1) h.cell.styles.halign='right'; };
+    var groups=[], gi={};
+    L.forEach(function(x){ var c=(x.cat||'').trim()||'Sans catégorie'; if(gi[c]===undefined){ gi[c]=groups.length; groups.push({cat:c,items:[]}); } groups[gi[c]].items.push(x); });
+    groups.sort(function(p,q){ if(p.cat==='Sans catégorie') return 1; if(q.cat==='Sans catégorie') return -1; return p.cat.localeCompare(q.cat,'fr'); });
+    if(!groups.length){
+      y=pdfSection(doc,y,'Pièces à recompléter');
+      var o0=tableBase(); o0.startY=y+2; o0.head=[['Pièce','Reste','Alerte','À prendre']]; o0.body=[['Rien à recompléter : tout est bon','','','']];
+      doc.autoTable(o0); y=doc.lastAutoTable.finalY+14;
     }
-    doc.autoTable(o); pdfFooter(doc);
+    groups.forEach(function(g){
+      var nLow=g.items.filter(stLow).length;
+      y=pdfSection(doc,y,g.cat.toUpperCase()+'  ·  '+g.items.length+' pièce'+(g.items.length>1?'s':'')+(nLow?'  ·  '+nLow+' à recompléter':''));
+      var o=tableBase(); o.startY=y+2;
+      if(full){
+        o.head=[['Pièce','Stock','Alerte','Objectif']];
+        o.body=g.items.map(function(x){ return [ws(x.nom),ws(stQtyTxt(x)),x.min>0?stNum(x.min):'-',x.obj>0?stNum(x.obj):'-']; });
+        o.columnStyles={1:{halign:'right',fontStyle:'bold'},2:{halign:'right'},3:{halign:'right'}};
+        o.didParseCell=function(h){ if(h.section==='head'&&h.column.index>0) h.cell.styles.halign='right'; if(h.section==='body'&&stLow(g.items[h.row.index])){ h.cell.styles.fillColor=C_WARNBG; if(h.column.index===1){ h.cell.styles.textColor=C_WARN; } } };
+      } else {
+        o.head=[['Pièce','Reste','Alerte','À prendre']];
+        o.body=g.items.map(function(x){ var nd=stNeed(x); return [ws(x.nom),ws(stQtyTxt(x)),stNum(x.min),nd?ws(stNum(nd)+(x.unit?' '+x.unit:'')):'-']; });
+        o.columnStyles={1:{halign:'right',textColor:C_WARN,fontStyle:'bold'},2:{halign:'right'},3:{halign:'right',fontStyle:'bold'}};
+        o.didParseCell=function(h){ if(h.section==='head'&&h.column.index>0) h.cell.styles.halign='right'; };
+      }
+      doc.autoTable(o); y=doc.lastAutoTable.finalY+14;
+    });
+    pdfFooter(doc);
     var name=(full?'inventaire_camion_':'stock_a_recompleter_')+today()+'.pdf';
     if(!noSave) doc.save(name);
     return {doc:doc,name:name};
@@ -1795,7 +1813,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   $('stRecap').addEventListener('click',function(){
     var L=stReappro(), h;
     if(!L.length) h='<p>✓ Aucune pièce n\'est au seuil d\'alerte : tout est bon.</p>';
-    else h='<h3>À recompléter ('+L.length+')</h3><table class="dpt"><tr><th>Pièce</th><th>Reste</th><th>À prendre</th></tr>'+L.map(function(x){ var nd=stNeed(x); return '<tr><td>'+esc(x.nom)+'</td><td><b style="color:var(--warn)">'+esc(stQtyTxt(x))+'</b></td><td>'+(nd?esc(stNum(nd)+(x.unit?' '+x.unit:'')):'–')+'</td></tr>'; }).join('')+'</table>';
+    else h='<h3>À recompléter ('+L.length+')</h3><table class="dpt"><tr><th>Pièce</th><th>Reste</th><th>À prendre</th></tr>'+stGroup(L).map(function(g){ return '<tr><td colspan="3" style="background:var(--bg);font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:.03em">'+esc(g.cat)+' · '+g.items.length+'</td></tr>'+g.items.map(function(x){ var nd=stNeed(x); return '<tr><td>'+esc(x.nom)+'</td><td><b style="color:var(--warn)">'+esc(stQtyTxt(x))+'</b></td><td>'+(nd?esc(stNum(nd)+(x.unit?' '+x.unit:'')):'–')+'</td></tr>'; }).join(''); }).join('')+'</table>';
     openDlg(h,stRecapText(),function(){ pdfStock(false); },stMail(false));
   });
   $('stAll').addEventListener('click',function(){
