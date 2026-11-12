@@ -254,7 +254,18 @@
   .stsum span{background:var(--bg);border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:600}
   .stsum span.bad{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
   #stSearch{width:100%;margin-bottom:10px}
-  .stcat{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 4px}
+  details.stc{margin:8px 0;border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+  details.stc>summary{display:flex;align-items:center;gap:10px;padding:13px 14px;list-style:none;color:var(--text);font-size:15.5px;font-weight:700}
+  details.stc>summary::-webkit-details-marker{display:none}
+  details.stc>summary::before{content:"▸";color:var(--muted);transition:transform .2s;font-size:15px}
+  details.stc[open]>summary::before{transform:rotate(90deg)}
+  details.stc>summary .stcn{flex:1;min-width:0;overflow-wrap:anywhere}
+  details.stc>summary .stcc{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--bg);border-radius:999px;padding:3px 10px}
+  details.stc>summary .stcl{font-size:12.5px;font-weight:700;color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent);border-radius:999px;padding:3px 10px}
+  details.stc.haslow{border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}
+  details.stc>.stb{padding:0 10px 8px}
+  .sttools{display:flex;gap:8px;margin:2px 0 4px}
+  .sttools button{flex:1;font-size:13.5px;padding:8px}
   .sti{display:flex;align-items:center;gap:10px;padding:9px 8px;border-bottom:1px solid var(--line);border-radius:10px}
   .sti.low{background:color-mix(in srgb,var(--warn) 9%,transparent)}
   .sti .stn{flex:1;min-width:0;cursor:pointer}
@@ -536,6 +547,7 @@
     <div class="stsum" id="stSum"></div>
     <input type="search" id="stSearch" placeholder="Rechercher une pièce…" autocomplete="off">
     <div class="seg" id="stFilter" style="margin-bottom:6px"><button type="button" data-f="all" class="on">Tout</button><button type="button" data-f="low">⚠️ Stock bas</button></div>
+    <div class="sttools"><button type="button" id="stOpenAll">Tout ouvrir</button><button type="button" id="stCloseAll">Tout fermer</button></div>
     <div id="stList"></div>
   </section>
   <section class="card add">
@@ -1382,7 +1394,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   }
   var stock=cleanStock(load(KEY_STOCK,{items:[]}));
   function saveStock(){ store(KEY_STOCK,stock); }
-  var stFilter='all', stEdit=null;
+  var stFilter='all', stEdit=null, stOpen={};
+  try{ stOpen=JSON.parse(localStorage.getItem('hs_stopen_v1')||'{}')||{}; }catch(e){ stOpen={}; }
+  function saveStOpen(){ try{ localStorage.setItem('hs_stopen_v1',JSON.stringify(stOpen)); }catch(e){} }
   function stLow(x){ return x.min>0&&x.qty<=x.min; }
   function stNeed(x){ return x.obj>x.qty?Math.round((x.obj-x.qty)*100)/100:null; }
   function stNum(n){ return String(n).replace('.',','); }
@@ -1393,27 +1407,38 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     $('stSum').innerHTML='<span>'+tot+' référence'+(tot>1?'s':'')+'</span>'+(low?'<span class="bad">⚠️ '+low+' en stock bas</span>':(tot?'<span>✓ Aucun stock bas</span>':''));
     var cats={}; stock.items.forEach(function(x){ if(x.cat) cats[x.cat]=1; });
     $('stCats').innerHTML=Object.keys(cats).sort().map(function(c){ return '<option value="'+esc(c)+'">'; }).join('');
-    var q=($('stSearch').value||'').trim().toLowerCase(), h='', last=null, n=0;
+    var q=($('stSearch').value||'').trim().toLowerCase(), h='', n=0, groups=[], gmap={};
     stSorted().forEach(function(x){
       if(stFilter==='low'&&!stLow(x)) return;
       if(q&&(x.nom+' '+x.cat).toLowerCase().indexOf(q)<0) return;
-      n++;
-      var c=x.cat||'Sans catégorie'; if(c!==last){ h+='<div class="stcat">'+esc(c)+'</div>'; last=c; }
-      var sub=[]; if(x.min>0) sub.push('alerte ≤ '+stNum(x.min)); if(x.obj>0) sub.push('objectif '+stNum(x.obj));
-      h+='<div class="sti'+(stLow(x)?' low':'')+'"><div class="stn" data-sted="'+x.id+'"><b>'+esc(x.nom)+'</b>'+(sub.length?'<small>'+(stLow(x)?'⚠️ ':'')+sub.join(' · ')+'</small>':'')+'</div>'
-        +'<div class="stq"><button type="button" data-stm="'+x.id+'" aria-label="Retirer 1">−</button><span class="n" data-sted="'+x.id+'">'+esc(stQtyTxt(x))+'</span><button type="button" data-stp="'+x.id+'" aria-label="Ajouter 1">+</button></div></div>';
-      if(stEdit===x.id){
-        h+='<div class="sted"><div class="row"><div class="field" style="flex:2 1 150px"><label>Pièce</label><input type="text" id="seNom" maxlength="60" value="'+esc(x.nom)+'"></div><div class="field"><label>Quantité</label><input type="number" id="seQty" min="0" step="any" inputmode="decimal" value="'+x.qty+'"></div></div>'
-          +'<div class="row"><div class="field"><label>Alerte si ≤</label><input type="number" id="seMin" min="0" step="any" inputmode="decimal" value="'+(x.min||'')+'"></div><div class="field"><label>Objectif</label><input type="number" id="seObj" min="0" step="any" inputmode="decimal" value="'+(x.obj||'')+'"></div><div class="field"><label>Unité</label><input type="text" id="seUnit" maxlength="8" value="'+esc(x.unit)+'"></div></div>'
-          +'<div class="row"><div class="field" style="flex:1 1 100%"><label>Catégorie</label><input type="text" id="seCat" maxlength="30" list="stCats" value="'+esc(x.cat)+'"></div></div>'
-          +'<div class="btns"><button type="button" class="primary" data-sesave="'+x.id+'">Enregistrer</button><button type="button" data-secancel="1">Annuler</button><button type="button" data-sedel="'+x.id+'" style="color:var(--warn)">Supprimer</button></div></div>';
-      }
+      n++; var c=x.cat||'Sans catégorie'; if(!gmap[c]){ gmap[c]={name:c,items:[]}; groups.push(gmap[c]); } gmap[c].items.push(x);
+    });
+    groups.forEach(function(g){
+      var nl=g.items.filter(stLow).length, forced=!!q||stFilter==='low'||g.items.some(function(x){ return x.id===stEdit; });
+      var open=forced||stOpen[g.name];
+      h+='<details class="stc'+(nl?' haslow':'')+'" data-g="'+esc(g.name)+'"'+(open?' open':'')+'><summary><span class="stcn">'+esc(g.name)+'</span>'+(nl?'<span class="stcl">⚠️ '+nl+'</span>':'')+'<span class="stcc">'+g.items.length+'</span></summary><div class="stb">';
+      g.items.forEach(function(x){
+        var sub=[]; if(x.min>0) sub.push('alerte ≤ '+stNum(x.min)); if(x.obj>0) sub.push('objectif '+stNum(x.obj));
+        h+='<div class="sti'+(stLow(x)?' low':'')+'"><div class="stn" data-sted="'+x.id+'"><b>'+esc(x.nom)+'</b>'+(sub.length?'<small>'+(stLow(x)?'⚠️ ':'')+sub.join(' · ')+'</small>':'')+'</div>'
+          +'<div class="stq"><button type="button" data-stm="'+x.id+'" aria-label="Retirer 1">−</button><span class="n" data-sted="'+x.id+'">'+esc(stQtyTxt(x))+'</span><button type="button" data-stp="'+x.id+'" aria-label="Ajouter 1">+</button></div></div>';
+        if(stEdit===x.id){
+          h+='<div class="sted"><div class="row"><div class="field" style="flex:2 1 150px"><label>Pièce</label><input type="text" id="seNom" maxlength="60" value="'+esc(x.nom)+'"></div><div class="field"><label>Quantité</label><input type="number" id="seQty" min="0" step="any" inputmode="decimal" value="'+x.qty+'"></div></div>'
+            +'<div class="row"><div class="field"><label>Alerte si ≤</label><input type="number" id="seMin" min="0" step="any" inputmode="decimal" value="'+(x.min||'')+'"></div><div class="field"><label>Objectif</label><input type="number" id="seObj" min="0" step="any" inputmode="decimal" value="'+(x.obj||'')+'"></div><div class="field"><label>Unité</label><input type="text" id="seUnit" maxlength="8" value="'+esc(x.unit)+'"></div></div>'
+            +'<div class="row"><div class="field" style="flex:1 1 100%"><label>Catégorie</label><input type="text" id="seCat" maxlength="30" list="stCats" value="'+esc(x.cat)+'"></div></div>'
+            +'<div class="btns"><button type="button" class="primary" data-sesave="'+x.id+'">Enregistrer</button><button type="button" data-secancel="1">Annuler</button><button type="button" data-sedel="'+x.id+'" style="color:var(--warn)">Supprimer</button></div></div>';
+        }
+      });
+      h+='</div></details>';
     });
     if(!n) h='<div class="dpnote" style="margin:8px 0">'+(tot?(stFilter==='low'&&!q?'Aucun stock bas, tout est bon 👍':'Aucune pièce ne correspond.'):'Ton stock est vide : ajoute ta première pièce ci-dessous.')+'</div>';
     $('stList').innerHTML=h;
   }
   function stFind(id){ for(var i=0;i<stock.items.length;i++) if(stock.items[i].id===id) return stock.items[i]; return null; }
   $('stSearch').addEventListener('input',renderStock);
+  $('stList').addEventListener('toggle',function(e){ var d=e.target; if(!d||!d.classList||!d.classList.contains('stc')) return; if($('stSearch').value.trim()||stFilter==='low') return; var g=d.getAttribute('data-g'); if(d.open) stOpen[g]=1; else delete stOpen[g]; saveStOpen(); },true);
+  function stSetAll(v){ stock.items.forEach(function(x){ var c=x.cat||'Sans catégorie'; if(v) stOpen[c]=1; else delete stOpen[c]; }); saveStOpen(); renderStock(); }
+  $('stOpenAll').addEventListener('click',function(){ stSetAll(true); });
+  $('stCloseAll').addEventListener('click',function(){ stSetAll(false); });
   $('stFilter').addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; stFilter=b.dataset.f; Array.prototype.forEach.call(this.children,function(c){ c.className=(c.dataset.f===stFilter)?'on':''; }); renderStock(); });
   $('stList').addEventListener('click',function(e){
     var t=e.target.closest('button,[data-sted]'); if(!t) return; var ds=t.dataset, x;
