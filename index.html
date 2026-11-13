@@ -36,6 +36,17 @@
   .interv{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
   .interv .dur{font-size:14px;color:var(--muted);min-width:90px;padding-bottom:10px}
   .interv .dur b{color:var(--text)}
+  .pl-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .pl-rf{min-width:44px;font-size:18px;padding:6px 12px}
+  .pl-info{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.pl-info span{font-size:13px;font-weight:600;background:color-mix(in srgb,var(--c-int) 12%,var(--card));border-radius:999px;padding:4px 10px}
+  .pl-r{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+  .pl-h{min-width:78px;font-weight:700;font-size:13px;color:var(--muted);padding-top:2px}
+  .pl-t{flex:1;min-width:0;font-size:15px;word-break:break-word}.pl-t b{color:var(--c-int)}
+  .pl-n{font-size:13px;color:var(--muted);margin-top:2px}
+  .pl-p{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .pl-tel{display:inline-block;font-weight:700;font-size:14px;text-decoration:none;color:#fff;background:linear-gradient(135deg,#16a34a,#0d9488);border-radius:999px;padding:7px 14px}
+  .pl-up{font-size:12px;color:var(--muted);margin-top:6px;text-align:right}
+
   .result{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
   .stat{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
   .stat small{display:block;color:var(--muted);font-size:12px}
@@ -2488,6 +2499,59 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var inputs=$('list').querySelectorAll('input[data-k="ticket"]'); if(inputs.length) inputs[inputs.length-1].focus();
   });
 
+
+  // ---------- Planning du jour (agenda Google « FLO SOUT » via le script) : affichage sur l'accueil ----------
+  var KEY_PLAN='hs_plan_v2', planSt={date:'',items:[],info:[],at:0,err:'',errAt:0,busy:false};
+  try{ var pc0=JSON.parse(localStorage.getItem(KEY_PLAN)||'null'); if(pc0&&pc0.date) planSt=Object.assign(planSt,pc0,{busy:false}); }catch(e){}
+  var PH_RE=/(?:\+33|0)\s?[1-9](?:[ .]?\d{2}){4}/g;
+  function hhmm(ms){ var d=new Date(ms); return ('0'+d.getHours()).slice(-2)+'h'+('0'+d.getMinutes()).slice(-2); }
+  function fmtTel(t){ var d=t.replace(/\D/g,''); if(d.indexOf('33')===0&&d.length===11) d='0'+d.slice(2); return d.replace(/(\d{2})(?=\d)/g,'$1 '); }
+  function parsePlan(events){
+    var items=[], info=[], seen={};
+    (events||[]).forEach(function(e){
+      var title=String(e.title||''), desc=String(e.desc||'').trim();
+      if(e.allDay){ if(title.trim()) info.push(title.trim()); return; }
+      var phones=[]; (title+' '+desc).replace(PH_RE,function(m){ var f=fmtTel(m); if(phones.indexOf(f)<0) phones.push(f); return m; });
+      var clean=title.replace(PH_RE,'').replace(/\s+/g,' ').trim();
+      var m=/^(\d{5,7})\b\s*(.*)$/.exec(clean), ticket=m?m[1]:'', label=m?m[2]:clean;
+      var o=ticket?seen[ticket]:null;
+      if(o){ phones.forEach(function(p){ if(o.phones.indexOf(p)<0) o.phones.push(p); }); if(!o.label&&label) o.label=label; if(desc&&!o.note) o.note=desc.replace(PH_RE,'').trim(); return; }
+      o={ticket:ticket,label:label,heure:hhmm(e.start)+'–'+hhmm(e.end),start:e.start,phones:phones,note:desc.replace(PH_RE,'').trim()};
+      if(ticket) seen[ticket]=o; items.push(o);
+    });
+    return {items:items,info:info};
+  }
+  function planSave(){ try{ localStorage.setItem(KEY_PLAN,JSON.stringify({date:planSt.date,items:planSt.items,info:planSt.info,at:planSt.at})); }catch(e){} }
+  function planLoad(force){
+    var t=today();
+    if(!relayUrl()||planSt.busy) return;
+    if(!force){ if(planSt.date===t&&Date.now()-planSt.at<10*60000) return; if(Date.now()-planSt.errAt<2*60000) return; }
+    planSt.busy=true; planSt.err=''; renderHomeIfVisible();
+    relayJson({secret:settings.relaySecret||'',action:'agenda',date:t},30000).then(function(r){
+      planSt.busy=false;
+      if(!r.ok||!r.events){ planSt.errAt=Date.now(); planSt.err=(!r.ok&&r.error&&!/action|agenda_|Calendar|autoris|permission/i.test(String(r.error)))?String(r.error):'Mets à jour le script Google (« Copier le script » plus bas), lance « autoriser », puis redéploie en nouvelle version.'; }
+      else { var p=parsePlan(r.events); planSt.date=t; planSt.items=p.items; planSt.info=p.info; planSt.at=Date.now(); planSt.err=''; planSave(); }
+      renderHomeIfVisible();
+    });
+  }
+  function planCard(){
+    var t=today(), mine=(planSt.date===t), h='<section class="card"><div class="pl-hd"><h2 style="margin:0">📅 Planning du jour</h2>'+(relayUrl()?'<button type="button" class="pl-rf" data-act="plan" aria-label="Actualiser"'+(planSt.busy?' disabled':'')+'>'+(planSt.busy?'⏳':'↻')+'</button>':'')+'</div>';
+    if(!relayUrl()) return h+'<div class="bkstat">Branche d\'abord ton script Google (Saisie → réglages) pour voir ton planning ici.</div></section>';
+    if(planSt.err) h+='<div class="msg bad" style="display:block">'+esc(planSt.err)+'</div>';
+    if(!mine&&planSt.busy) return h+'<div class="bkstat">Lecture du planning…</div></section>';
+    if(mine){
+      if(planSt.info.length) h+='<div class="pl-info">'+planSt.info.map(function(x){ return '<span>👥 '+esc(x)+'</span>'; }).join('')+'</div>';
+      if(!planSt.items.length&&!planSt.err) h+='<div class="bkstat">Rien de prévu aujourd\'hui dans le planning.</div>';
+      planSt.items.forEach(function(it){
+        h+='<div class="pl-r"><div class="pl-h">'+esc(it.heure)+'</div><div class="pl-t">'+(it.ticket?'<b>'+esc(it.ticket)+'</b> ':'')+esc(it.label)+
+          (it.note?'<div class="pl-n">'+esc(it.note)+'</div>':'')+
+          (it.phones.length?'<div class="pl-p">'+it.phones.map(function(p){ return '<a class="pl-tel" href="tel:'+p.replace(/\s/g,'')+'">📞 '+esc(p)+'</a>'; }).join('')+'</div>':'')+'</div></div>';
+      });
+      if(planSt.at) h+='<div class="pl-up">Mis à jour à '+hhmm(planSt.at).replace('h',':')+'</div>';
+    }
+    return h+'</section>';
+  }
+
   // ---------- Photos GPS (stockées dans IndexedDB, plusieurs par trajet) ----------
   var KINDS=['depart','retour','portes'], UIKINDS=['depart','retour'];
   var DRAFT_KEYS=['draft|depart','draft|retour','draft|portes'];
@@ -3458,6 +3522,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
      "var DESTINATAIRE = \"\"; // optionnel : vide = ta propre adresse Gmail",
      "var DOSSIER = \"Suivi - sauvegardes\"; // dossier créé dans TON Drive",
      "var GARDER = 10;       // nombre de sauvegardes conservées",
+     "var CALENDRIER = \"FLO SOUT\"; // nom de l'agenda où arrive ton planning",
      "",
      "function doPost(e) {",
      "  try {",
@@ -3468,6 +3533,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
      "    if (data.action === \"backup\") { sauver_(data); return sortie_({ ok: true }); }",
      "    if (data.action === \"list\") { return sortie_({ ok: true, sets: lister_() }); }",
      "    if (data.action === \"get\") { return sortie_(lire_(data)); }",
+     "    if (data.action === \"agenda\") { return sortie_(agenda_(data)); }",
      "    var to = DESTINATAIRE || Session.getEffectiveUser().getEmail();",
      "    var pdf = Utilities.newBlob(",
      "      Utilities.base64Decode(data.pdf),",
@@ -3527,10 +3593,25 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
      "  return { ok: true, chunk: it.next().getBlob().getDataAsString() };",
      "}",
      "",
-     "// À lancer UNE fois à la main (▶ Exécuter) pour donner l'accès à ton Drive.",
+     "function agenda_(d) {",
+     "  var cals = CalendarApp.getCalendarsByName(CALENDRIER);",
+     "  if (!cals.length) return { ok: false, error: \"agenda « \" + CALENDRIER + \" » introuvable\" };",
+     "  var p = String(d.date).split(\"-\"), jour = new Date(+p[0], +p[1] - 1, +p[2]), out = [];",
+     "  cals.forEach(function (c) {",
+     "    c.getEventsForDay(jour).forEach(function (e) {",
+     "      out.push({ title: e.getTitle(), desc: e.getDescription(), allDay: e.isAllDayEvent(),",
+     "        start: e.getStartTime().getTime(), end: e.getEndTime().getTime() });",
+     "    });",
+     "  });",
+     "  out.sort(function (a, b) { return a.start - b.start; });",
+     "  return { ok: true, events: out };",
+     "}",
+     "",
+     "// À lancer UNE fois à la main (▶ Exécuter) pour donner l'accès à ton Drive et à ton agenda.",
      "function autoriser() {",
      "  dossier_();",
-     "  Logger.log(\"OK : accès au Drive autorisé\");",
+     "  CalendarApp.getCalendarsByName(CALENDRIER);",
+     "  Logger.log(\"OK : accès au Drive et à l'agenda autorisé\");",
      "}",
      "",
      "function doGet() {",
@@ -4249,6 +4330,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var isNow=(homeMonth===t.slice(0,7)), hasToday=!!days[t];
     h+='<section class="card hm-hero"><div class="hm-hello">Bonjour'+esc(firstName())+' 👋</div><div class="hm-date">'+esc(longDate(t))+'</div>'+
       '<div class="tools" style="margin-top:12px"><button type="button" class="primary" data-go="saisie">'+(hasToday?'✓ Journée enregistrée · voir / modifier':'✏️ Saisir ma journée')+'</button></div></section>';
+    if(isNow) h+=planCard();
     if(updInfo&&updInfo.newer) h+='<div class="hm-bn upd" data-act="upd"><span>🆕</span><span>Nouvelle version disponible ('+esc(updInfo.latest)+')<small>Touche pour mettre à jour — tes données ne sont pas touchées.</small></span></div>';
     if(low.length) h+='<div class="hm-bn low" data-go="stock"><span>📦</span><span>Stock bas : '+low.length+' pièce'+(low.length>1?'s':'')+'<small>'+esc(low.slice(0,4).map(function(x){return x.nom;}).join(', ')+(low.length>4?'…':''))+' — touche pour la liste de réappro</small></span></div>';
     if(pr.late) h+='<div class="hm-bn late" data-go="dep"><span>⏰</span><span>'+pr.late+' remboursement'+(pr.late>1?'s':'')+' en retard (+'+LATE_DAYS+' j) : '+eur(pr.lateSum)+'<small>Le plus ancien attend depuis '+pr.oldest+' jours</small></span></div>';
@@ -4281,7 +4363,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       (pc?'<div class="row" style="margin-top:8px"><div class="field"><label for="pinDelay">Verrouiller après</label><select id="pinDelay"><option value="0"'+(pc.delay===0?' selected':'')+'>Tout de suite en quittant</option><option value="30"'+((pc.delay===30||pc.delay===undefined)?' selected':'')+'>30 secondes</option><option value="300"'+(pc.delay===300?' selected':'')+'>5 minutes</option></select></div></div>':'')+
       '<div class="row" style="margin-top:10px"><div class="field"><label for="enhSel">Photos de tickets</label><select id="enhSel"><option value="auto"'+(enhMode()==='auto'?' selected':'')+'>✨ Améliorer (contraste auto)</option><option value="doc"'+(enhMode()==='doc'?' selected':'')+'>📄 Mode document (noir & blanc net)</option><option value="off"'+(enhMode()==='off'?' selected':'')+'>Photo d\'origine</option></select></div></div>'+
       '<div class="hm-ver"><span>Version <b>'+APP_VERSION+'</b>'+(updInfo&&updInfo.ok&&!updInfo.newer?' · ✓ à jour':'')+(updInfo&&updInfo.ok===false?' · pas de connexion':'')+'</span><button type="button" data-act="upd-check">Vérifier les mises à jour</button></div></section>';
-    $('homeBox').innerHTML=h;
+    $('homeBox').innerHTML=h; planLoad(false);
   }
   $('homeBox').addEventListener('change',function(e){
     var t=e.target;
@@ -4302,7 +4384,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       return;
     }
     var a=ds.act;
-    if(a==='upd'){ applyUpdate(); }
+    if(a==='plan'){ planLoad(true); }
+    else if(a==='upd'){ applyUpdate(); }
     else if(a==='upd-check'){ b.disabled=true; b.textContent='Vérification…'; checkUpdate(false).then(function(i){ if(i&&i.newer) return; }); }
     else if(a==='xlsx'){ var ok=exportXlsx(); var m=$('hmXMsg'); m.style.color=ok?'':'var(--warn)'; m.textContent=ok?'Fichier Excel créé : regarde dans tes téléchargements.':'Impossible de créer le fichier.'; }
     else if(a==='bk-now'){ bkRun(true); }
