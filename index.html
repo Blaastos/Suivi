@@ -340,6 +340,15 @@
   #splash .sp-ring{position:absolute;inset:0;z-index:1;display:none}
   #splash .sp-ring circle{fill:none;stroke:rgba(255,255,255,.9);stroke-width:5;stroke-linecap:round;stroke-dasharray:540;stroke-dashoffset:540;transform:rotate(-90deg);transform-origin:50% 50%;animation:spRing 1.2s .25s ease-out forwards}
   #splash[data-sp=clock] .sp-ring{display:block}
+  #splash .sp-cv{position:absolute;inset:0;width:100%;height:100%;display:none;z-index:0}
+  #splash[data-sp=fibre]{background:#04081a}
+  #splash[data-sp=fibre] .sp-cv{display:block}
+  #splash[data-sp=fibre] .sp-box,#splash[data-sp=fibre] h1,#splash[data-sp=fibre] p{position:relative;z-index:2}
+  #splash[data-sp=fibre] .sp-load,#splash[data-sp=fibre] .sp-ring,#splash[data-sp=fibre] .sp-rip,#splash[data-sp=fibre] .sp-road{display:none}
+  #splash[data-sp=fibre] .sp-ic{visibility:hidden;animation:none}
+  #splash[data-sp=fibre] h1{margin-top:58px;animation:spUp .7s 1.95s ease both;text-shadow:0 0 22px color-mix(in srgb,var(--g2) 70%,transparent);letter-spacing:.03em}
+  #splash[data-sp=fibre] p{animation:spUp .7s 2.2s ease both}
+
   #splash .sp-rip{position:absolute;inset:40px;border-radius:50%;border:3px solid rgba(255,255,255,.7);opacity:0;display:none}
   #splash[data-sp=pulse] .sp-rip{display:block;animation:spRip 1.6s ease-out infinite}
   #splash[data-sp=pulse] .sp-rip:nth-child(2){animation-delay:.5s}
@@ -462,7 +471,7 @@
 </head>
 <body>
 <script>try{ if(localStorage.getItem("hs_pin_v1")) document.documentElement.classList.add("locked"); }catch(e){}</script>
-<div id="splash" data-sp="clock" aria-hidden="true"><div class="sp-box"><svg class="sp-ring" viewBox="0 0 190 190"><circle cx="95" cy="95" r="86"/></svg><span class="sp-rip"></span><span class="sp-rip"></span><span class="sp-rip"></span><img class="sp-ic" alt="" src=""></div><div class="sp-road"><i></i><b>🚐</b></div><h1>Suivi de journée</h1><p>Heures supp · trajets · tickets</p><div class="sp-load"><div class="sp-gnd"></div><div class="sp-fib"></div><svg class="sp-wk" viewBox="0 0 150 100" aria-hidden="true"><defs><linearGradient id="spVest" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e4ff1a"/><stop offset="1" stop-color="#b9e000"/></linearGradient><linearGradient id="spHel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd84a"/><stop offset="1" stop-color="#f5a900"/></linearGradient><radialGradient id="spDrum" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#f59e0b"/><stop offset="1" stop-color="#b45309"/></radialGradient></defs>
+<div id="splash" data-sp="fibre" aria-hidden="true"><canvas class="sp-cv"></canvas><div class="sp-box"><svg class="sp-ring" viewBox="0 0 190 190"><circle cx="95" cy="95" r="86"/></svg><span class="sp-rip"></span><span class="sp-rip"></span><span class="sp-rip"></span><img class="sp-ic" alt="" src=""></div><div class="sp-road"><i></i><b>🚐</b></div><h1>Suivi de journée</h1><p>Heures supp · trajets · tickets</p><div class="sp-load"><div class="sp-gnd"></div><div class="sp-fib"></div><svg class="sp-wk" viewBox="0 0 150 100" aria-hidden="true"><defs><linearGradient id="spVest" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e4ff1a"/><stop offset="1" stop-color="#b9e000"/></linearGradient><linearGradient id="spHel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd84a"/><stop offset="1" stop-color="#f5a900"/></linearGradient><radialGradient id="spDrum" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#f59e0b"/><stop offset="1" stop-color="#b45309"/></radialGradient></defs>
 <ellipse cx="75" cy="97" rx="62" ry="2.6" fill="rgba(0,0,0,.22)"/>
 <g class="sp-bob">
 <g class="sp-spool"><circle cx="36" cy="68" r="28" fill="url(#spDrum)" stroke="#92400e" stroke-width="2"/><circle cx="36" cy="68" r="24" fill="none" stroke="#fcd34d" stroke-width="1" opacity=".6"/><circle cx="36" cy="68" r="20" fill="#0369a1"/><circle cx="36" cy="68" r="17" fill="none" stroke="#38bdf8" stroke-width="2.2"/><circle cx="36" cy="68" r="13" fill="none" stroke="#7dd3fc" stroke-width="2"/><circle cx="36" cy="68" r="9.5" fill="none" stroke="#38bdf8" stroke-width="1.8"/><circle cx="36" cy="68" r="6" fill="#78350f"/><circle cx="36" cy="68" r="2.2" fill="#fbbf24"/><circle cx="36" cy="42" r="1.8" fill="#78350f"/><circle cx="36" cy="94" r="1.8" fill="#78350f"/><circle cx="10" cy="68" r="1.8" fill="#78350f"/><circle cx="62" cy="68" r="1.8" fill="#78350f"/></g>
@@ -711,7 +720,7 @@
     <div class="seg" id="bgSeg"><button type="button" data-b="theme">Thème</button><button type="button" data-b="white">Blanc</button><button type="button" data-b="custom">Au choix</button></div>
     <div class="colors" id="bgBox" style="display:none;margin-top:12px"><div class="field" style="flex:0 0 auto"><label for="bgc">Fond</label><input type="color" id="bgc" value="#ffffff"></div><div style="font-size:13px;color:var(--muted);flex:1 1 150px">Le texte et les cartes s'adaptent tout seuls (fond clair ou foncé).</div></div>
     <div class="field" style="min-width:0;margin-top:16px"><label>Animation au lancement</label></div>
-    <div class="seg" id="spSeg" style="flex-wrap:wrap"><button type="button" data-s="clock">⏱️ Horloge</button><button type="button" data-s="road">🚐 Route</button><button type="button" data-s="pulse">💫 Pulse</button><button type="button" data-s="off">Aucune</button></div>
+    <div class="seg" id="spSeg" style="flex-wrap:wrap"><button type="button" data-s="fibre">✨ Fibre</button><button type="button" data-s="clock">⏱️ Horloge</button><button type="button" data-s="road">🚐 Route</button><button type="button" data-s="pulse">💫 Pulse</button><button type="button" data-s="off">Aucune</button></div>
     <button type="button" id="spPlay" style="margin-top:10px">▶ Revoir l'animation</button>
     <label class="check" style="margin-top:14px"><input type="checkbox" id="pdfTheme"> Utiliser les couleurs du thème dans les PDF</label>
   </section>
@@ -1842,7 +1851,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   function lookOf(){
     var l=settings.look||{};
     return {theme:(THEMES[l.theme]?l.theme:'defaut'),mode:(['auto','light','dark'].indexOf(l.mode)>-1?l.mode:'auto'),
-      c1:HEX_RE.test(l.c1||'')?l.c1:THEMES.custom.g1,c2:HEX_RE.test(l.c2||'')?l.c2:THEMES.custom.g2,pdf:!!l.pdf,splash:(['clock','road','pulse','off'].indexOf(l.splash)>-1?l.splash:'clock'),
+      c1:HEX_RE.test(l.c1||'')?l.c1:THEMES.custom.g1,c2:HEX_RE.test(l.c2||'')?l.c2:THEMES.custom.g2,pdf:!!l.pdf,splash:(['fibre','clock','road','pulse','off'].indexOf(l.splash)>-1?l.splash:'fibre'),
       bg:(['theme','white','custom'].indexOf(l.bg)>-1?l.bg:(l.theme==='bbr'||!l.theme&&false?'theme':'theme')),bgc:HEX_RE.test(l.bgc||'')?l.bgc:'#ffffff'};
   }
   var DEF_NAVY=[20,40,75], DEF_BLUE=[31,95,214];
@@ -1900,6 +1909,104 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     Array.prototype.forEach.call($('bgSeg').querySelectorAll('button'),function(b){ b.className=(b.dataset.b===eff)?'on':''; });
     $('bgBox').style.display=(L.bg==='custom')?'flex':'none'; $('bgc').value=L.bgc;
   }
+
+  // ---------- Splash "Fibre" (canvas) ----------
+  var fbRaf=0, fbT0=0;
+  function fbStop(){ if(fbRaf){ cancelAnimationFrame(fbRaf); fbRaf=0; } }
+  function fbColors(){
+    var cs=getComputedStyle(document.documentElement), g1=(cs.getPropertyValue('--g1')||'#4f46e5').trim(), g2=(cs.getPropertyValue('--g2')||'#0891b2').trim();
+    function rgb(h){ h=h.replace('#',''); if(h.length===3) h=h.replace(/(.)/g,'$1$1'); var n=parseInt(h,16); if(isNaN(n)||h.length!==6) return [79,70,229]; return [(n>>16)&255,(n>>8)&255,n&255]; }
+    var a=rgb(g1), b=rgb(g2), lift=function(c,k){ return [Math.round(c[0]+(255-c[0])*k),Math.round(c[1]+(255-c[1])*k),Math.round(c[2]+(255-c[2])*k)]; };
+    var out=[lift(a,.35),lift(b,.35),lift(b,.75),[255,255,255]]; out.raw=[a,b]; return out;
+  }
+  var FC=[[0,125,255],[255,140,10],[40,205,90],[170,110,60],[150,160,178],[240,244,255],[255,64,64],[255,228,50],[172,92,255],[255,120,184],[40,232,232],[120,255,60]];
+  function fbStart(){
+    var el=$('splash'), cv=el&&el.querySelector('.sp-cv'); if(!cv) return; fbStop();
+    var dpr=Math.min(2,window.devicePixelRatio||1), W=el.clientWidth||window.innerWidth, H=el.clientHeight||window.innerHeight;
+    cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
+    var g=cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+    var ic=el.querySelector('.sp-ic'), cx=W/2, cy=H/2-24;
+    try{ var r0=el.querySelector('.sp-box').getBoundingClientRect(), r1=el.getBoundingClientRect(); cx=r0.left+r0.width/2-r1.left; cy=r0.top+r0.height/2-r1.top; }catch(e){}
+    var C=fbColors(), R=Math.min(92,W*0.26), RO=Math.hypot(W,H)/2*1.08, TAU=Math.PI*2, N=W<500?34:46;
+    var seed=7; function rnd(){ seed=(seed*16807)%2147483647; return (seed-1)/2147483646; }
+    var fibers=[], i;
+    for(i=0;i<N;i++){ fibers.push({a:(i/N)*TAU+rnd()*.12,sw:(rnd()<.5?-1:1)*(0.9+rnd()*1.4),w:.7+rnd()*1.3,c:FC[i%12],d:rnd()*.45,sp:.5+rnd()*.5,off:rnd(),wob:rnd()*TAU}); }
+    var sparks=[]; for(i=0;i<90;i++){ var an=rnd()*TAU, v=60+rnd()*210; sparks.push({an:an,v:v,l:.5+rnd()*.7,c:FC[(rnd()*12)|0],z:.6+rnd()*1.6}); }
+
+    var ease=function(x){ return x<0?0:x>1?1:1-Math.pow(1-x,3); }, clamp=function(x){ return x<0?0:x>1?1:x; };
+    function pt(f,u,t){ // u: 0 = bord, 1 = anneau
+      var e=ease(u), r=RO+(R-RO)*e, th=f.a+f.sw*Math.pow(1-e,1.9)*0.85+Math.sin(u*9+f.wob+t*1.5)*.018*(1-u);
+      return [cx+Math.cos(th)*r,cy+Math.sin(th)*r];
+    }
+    function rgba(c,a){ return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')'; }
+    var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    fbT0=performance.now();
+    function frame(now){
+      var t=(now-fbT0)/1000; if(reduce) t=2.4;
+      g.globalCompositeOperation='source-over';
+      g.fillStyle='#04081a'; g.fillRect(0,0,W,H);
+      var glow=g.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*.75), gk=clamp(t/1.6);
+      glow.addColorStop(0,rgba(C[0],.34*gk)); glow.addColorStop(.35,rgba(C[1],.14*gk)); glow.addColorStop(1,'rgba(4,8,26,0)');
+      g.fillStyle=glow; g.fillRect(0,0,W,H);
+      g.globalCompositeOperation='lighter'; g.lineCap='round';
+      // fibres + impulsions
+      fibers.forEach(function(f){
+        var grow=ease((t-f.d)/1.25); if(grow<=0) return;
+        var steps=46, last=null, k, u, p;
+        g.lineWidth=f.w; 
+        for(k=0;k<=steps;k++){
+          u=(k/steps)*grow; p=pt(f,u,t);
+          if(last){ var fade=.2+.6*(k/steps); g.strokeStyle=rgba(f.c,Math.min(1,fade*1.05)); g.beginPath(); g.moveTo(last[0],last[1]); g.lineTo(p[0],p[1]); g.stroke(); }
+          last=p;
+        }
+        // impulsion lumineuse (trace + tête)
+        var pu=((t*f.sp*.62+f.off)%1), head=pu*grow, tail=7;
+        for(k=tail;k>=0;k--){ u=Math.max(0,head-k*.012); p=pt(f,u,t); var al=(1-k/tail)*.9; g.fillStyle=rgba(f.c,al*.7); g.beginPath(); g.arc(p[0],p[1],(1-k/tail)*2.8*f.w+.3,0,TAU); g.fill(); }
+        p=pt(f,head,t); var hg=g.createRadialGradient(p[0],p[1],0,p[0],p[1],11); hg.addColorStop(0,'rgba(255,255,255,.95)'); hg.addColorStop(.3,rgba(f.c,.6)); hg.addColorStop(1,rgba(f.c,0)); g.fillStyle=hg; g.beginPath(); g.arc(p[0],p[1],11,0,TAU); g.fill();
+      });
+      // cadran : arc, graduations, aiguilles
+      var ringP=ease((t-.45)/1.0), faceA=1;
+      if(ringP>0&&faceA>0){
+        g.globalAlpha=faceA;
+        g.fillStyle='rgba(6,12,34,'+(.62*ringP)+')'; g.beginPath(); g.arc(cx,cy,R-1,0,TAU); g.fill();
+        g.lineWidth=3.2;
+        g.shadowBlur=16; g.lineWidth=3.6;
+        for(var sj=0;sj<12;sj++){ var a0=sj/12, a1=Math.min((sj+1)/12,ringP); if(a1<=a0) break; g.strokeStyle=rgba(FC[sj],.98); g.shadowColor=rgba(FC[sj],1); g.beginPath(); g.arc(cx,cy,R,-Math.PI/2+TAU*a0+.02,-Math.PI/2+TAU*a1-.02); g.stroke(); }
+        g.shadowBlur=0;
+        for(i=0;i<60;i++){ var ta=-Math.PI/2+i/60*TAU, on=(i/60)<ringP, big=i%5===0; if(!on) continue;
+          g.strokeStyle=rgba(big?C[3]:C[1],big?.95:.5); g.lineWidth=big?2.2:1;
+          var r1=R-(big?13:7), r2=R-3; g.beginPath(); g.moveTo(cx+Math.cos(ta)*r1,cy+Math.sin(ta)*r1); g.lineTo(cx+Math.cos(ta)*r2,cy+Math.sin(ta)*r2); g.stroke(); }
+        // aiguilles : la grande fait 2 tours, finit à 17h00
+        var hp=ease((t-.5)/1.0), tk=Math.max(0,t-1.5), mA=-Math.PI/2+TAU*2*hp+tk*TAU/3, hA=-Math.PI/2+(TAU*(5/12))*hp+tk*TAU/36;
+        g.shadowColor=rgba(C[2],1); g.shadowBlur=14; g.lineWidth=4; g.strokeStyle=rgba(C[3],.95);
+        g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx+Math.cos(hA)*R*.5,cy+Math.sin(hA)*R*.5); g.stroke();
+        g.lineWidth=2.6; g.beginPath(); g.moveTo(cx,cy); g.lineTo(cx+Math.cos(mA)*R*.76,cy+Math.sin(mA)*R*.76); g.stroke(); g.shadowBlur=0;
+        g.fillStyle=rgba(C[3],1); g.beginPath(); g.arc(cx,cy,4.5,0,TAU); g.fill();
+        g.globalAlpha=1;
+      }
+      // onde de choc + étincelles à l'arrivée du logo
+      var st=t-1.5;
+      if(st>0){
+        var sw=ease(st/.9); g.lineWidth=3*(1-sw)+.5; for(var wj=0;wj<12;wj++){ g.strokeStyle=rgba(FC[wj],(1-sw)*.9); g.beginPath(); g.arc(cx,cy,R*.8+sw*Math.max(W,H)*.55,wj/12*TAU,(wj+1)/12*TAU); g.stroke(); }
+        var sw2=ease((st-.12)/.9); if(sw2>0){ g.lineWidth=2*(1-sw2)+.4; for(var wk=0;wk<12;wk++){ g.strokeStyle=rgba(FC[(wk+6)%12],(1-sw2)*.7); g.beginPath(); g.arc(cx,cy,R*.8+sw2*Math.max(W,H)*.4,wk/12*TAU,(wk+1)/12*TAU); g.stroke(); } }
+        sparks.forEach(function(s){
+          var k=st/s.l; if(k>=1) return; var d=ease(k)*s.v+R*.7, x=cx+Math.cos(s.an)*d, y=cy+Math.sin(s.an)*d, al=(1-k);
+          g.strokeStyle=rgba(s.c,al*.9); g.lineWidth=s.z; g.beginPath(); g.moveTo(x,y); g.lineTo(x-Math.cos(s.an)*8*al,y-Math.sin(s.an)*8*al); g.stroke();
+        });
+        var halo=g.createRadialGradient(cx,cy,0,cx,cy,R*1.5), ha=Math.max(0,1-st/1.1)*.55+.12; halo.addColorStop(0,rgba(C[2],ha)); halo.addColorStop(1,rgba(C[1],0)); g.fillStyle=halo; g.beginPath(); g.arc(cx,cy,R*1.5,0,TAU); g.fill();
+      }
+      g.globalCompositeOperation='source-over';
+      // comète multicolore autour de l'horloge
+      if(st>0){
+        g.globalCompositeOperation='lighter';
+        for(i=0;i<18;i++){ var pa=(t*1.3-i*.04)*TAU-Math.PI/2, ca=(1-i/18)*clamp(st/.5);
+          g.fillStyle=rgba(FC[((t*3|0)+i)%12],ca*.95); g.beginPath(); g.arc(cx+Math.cos(pa)*(R+11),cy+Math.sin(pa)*(R+11),(1-i/18)*5+1,0,TAU); g.fill(); }
+        g.globalCompositeOperation='source-over';
+      }
+      if(!el.classList.contains('out')&&!reduce) fbRaf=requestAnimationFrame(frame); else fbRaf=0;
+    }
+    fbRaf=requestAnimationFrame(frame);
+  }
   var spTimer=0;
   function showSplash(style){
     var el=$('splash'); if(!el) return; clearTimeout(spTimer);
@@ -1908,9 +2015,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     // relance les animations
     el.querySelectorAll('*').forEach(function(n){ var a=n.style.animation; n.style.animation='none'; void n.offsetWidth; n.style.animation=a||''; });
     var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    spTimer=setTimeout(hideSplash,reduce?300:2800);
+    if(style==='fibre') fbStart(); else fbStop();
+    spTimer=setTimeout(hideSplash,reduce?300:(style==='fibre'?4600:2800));
   }
-  function hideSplash(){ var el=$('splash'); if(el) el.classList.add('out'); }
+  function hideSplash(){ var el=$('splash'); if(el){ el.classList.add('out'); setTimeout(fbStop,700); } }
   $('splash').addEventListener('click',hideSplash);
   $('spSeg').addEventListener('click',function(e){ var m=e.target.dataset&&e.target.dataset.s; if(m){ setLook('splash',m); if(m!=='off') showSplash(m); } });
   $('spPlay').addEventListener('click',function(){ var L=lookOf(); showSplash(L.splash==='off'?'clock':L.splash); });
