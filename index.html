@@ -3721,7 +3721,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   function sendDayMail(d,photos,notify,extra){
     var out;
     try{ out=pdfDay(d,photos,true); }catch(e){ notify('Impossible de créer le PDF ('+(e&&e.message?e.message:e)+').'); return Promise.resolve('error'); }
-    return deliverDoc(out,dayMailSubject(d),recapDay(d).text,notify,extra);
+    return deliverDoc(out,dayMailSubject(d),recapDay(d).text,notify,extra).then(function(r){ if(relayUrl()) bkRun(false); return r; });
   }
   function sendMonthMail(mois,notify){
     var out;
@@ -4133,7 +4133,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   });
   var hiddenAt=0;
   document.addEventListener('visibilitychange',function(){
-    if(document.hidden){ hiddenAt=Date.now(); bkAuto(false); return; }
+    if(document.hidden){ hiddenAt=Date.now(); return; }
     var cfg=pinCfg(); if(!cfg||lk.mode) return;
     if(hiddenAt&&Date.now()-hiddenAt>=(cfg.delay||0)*1000) lkShow('unlock','Code de l\'appli');
   });
@@ -4348,9 +4348,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     h+='<section class="card"><h2>Bilan de l\'année</h2>'+yearHtml(yearSel)+'<div class="tools"><button type="button" data-act="xlsx">📊 Exporter tout en Excel</button></div><div class="msg" id="hmXMsg"></div></section>';
     var bk=bkState(), hasUrl=!!relayUrl();
     h+='<section class="card"><h2>☁️ Sauvegarde Google Drive</h2>'+
-      (hasUrl?'<div class="bkstat '+(bk.err?'bad':bk.at?'ok':'')+'">'+(bkBusy?'⏳ Sauvegarde en cours…':(bk.at&&bk.sig!==bkSig()&&settings.bkAuto!==false)?'🕓 Modifications en attente : envoi automatique dans quelques secondes.<br>':'')+(bkBusy?'':bk.at?('✓ Dernière sauvegarde : '+esc(stampTxt(bk.at))+' · '+esc(sizeTxt(bk.size))):'Pas encore de sauvegarde envoyée.')+(bk.err&&!bkBusy?'<br>⚠ '+esc(bk.err):'')+'</div>'
+      (hasUrl?'<div class="bkstat '+(bk.err?'bad':bk.at?'ok':'')+'">'+(bkBusy?'⏳ Sauvegarde en cours…<br>':'')+(bkBusy?'':bk.at?('✓ Dernière sauvegarde : '+esc(stampTxt(bk.at))+' · '+esc(sizeTxt(bk.size))):'Pas encore de sauvegarde envoyée.')+(bk.err&&!bkBusy?'<br>⚠ '+esc(bk.err):'')+'</div>'
         :'<div class="bkstat">Pas encore branchée : utilise le même script Google que pour l\'envoi des mails.</div>')+
-      '<label class="check"><input type="checkbox" data-bkopt="auto"'+(settings.bkAuto!==false?' checked':'')+'> Sauvegarde automatique (quand tu fermes l\'appli, si ça a changé)</label>'+
+      '<div style="font-size:13px;color:var(--muted);margin:6px 0">🗓️ Sauvegarde automatique : 1 par jour, au moment où tu envoies le récap de la journée par mail. Le reste du temps, utilise le bouton ci-dessous.</div>'+
       '<label class="check"><input type="checkbox" data-bkopt="photos"'+(settings.bkPhotos!==false?' checked':'')+'> Inclure les photos (tickets, GPS)</label>'+
       '<div class="tools"><button type="button" class="primary" data-act="bk-now">Sauvegarder maintenant</button><button type="button" data-act="bk-restore">Restaurer depuis mon Drive</button></div>'+
       '<div class="tools" style="margin-top:6px"><button type="button" data-act="bk-script">Copier le script (mis à jour)</button><button type="button" data-go="saisie-relay">Réglages du script</button></div>'+
@@ -4408,13 +4408,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   showTab('home');
   if(pinCfg()) lkShow('unlock','Code de l\'appli'); else lkHide();
   setTimeout(function(){ checkUpdate(true); },3000);
-  setTimeout(function(){ bkAuto(false); },6000);
   var bkSeen='', bkSeenAt=0;
   setInterval(function(){
     if(document.hidden||bkBusy) return;
     var sg=bkSig(), now=Date.now();
     if(sg!==bkSeen){ bkSeen=sg; bkSeenAt=now; renderHomeIfVisible(); return; }
-    if(sg!==bkState().sig&&now-bkSeenAt>=20000) bkAuto(false);
   },5000);
   loadPhotos(DRAFT_KEYS.concat(dateKeys(cur.date||today()))).then(function(){ renderPhotoUI(); checkNewDay(); });
 })();
