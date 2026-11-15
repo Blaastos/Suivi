@@ -36,6 +36,7 @@
   .interv{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
   .interv .dur{font-size:14px;color:var(--muted);min-width:90px;padding-bottom:10px}
   .interv .dur b{color:var(--text)}
+  .lnkbtn{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;font-weight:700;font-size:16px;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 10px}
   .pl-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
   .pl-rf{min-width:44px;font-size:18px;padding:6px 12px}
   .pl-info{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.pl-info span{font-size:13px;font-weight:600;background:color-mix(in srgb,var(--c-int) 12%,var(--card));border-radius:999px;padding:4px 10px}
@@ -3431,35 +3432,34 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     keys.forEach(function(k){
       var d=days[k], r=compute(d);
       var tk=d.interventions.filter(function(i){return i.ticket||i.debut||i.fin});
-      var names=tk.map(function(i,n){return ws(i.ticket||('#'+(n+1)));}).join(', ');
       if(r.counted!==null) totC+=r.counted; if(r.hs){ totH+=r.hs; nbHs++; } totK+=r.km; totT+=tk.length;
-      var cgp=congeOf(d); if(cgp&&r.counted===null&&!tk.length){ body.push([shortDay(k),ws(CG_LABEL[cgp]),'–','–','–','–','–','–']); return; }
-      body.push([shortDay(k),names||'–',r.firstT3||'–',r.lastT6||'–',d.retour||'–',fmt(r.counted),r.hs?fmt(r.hs):'–',r.km?String(Math.round(r.km*10)/10):'–']);
+      var cgp=congeOf(d); if(cgp&&r.counted===null&&!tk.length){ body.push([shortDay(k),{content:ws(CG_LABEL[cgp]),colSpan:6,styles:{halign:'left',textColor:C_GREY}}]); return; }
+      body.push([shortDay(k),r.firstT3||'–',r.lastT6||'–',d.retour||'–',fmt(r.counted),r.hs?fmt(r.hs):'–',r.km?String(Math.round(r.km*10)/10):'–']);
     });
     if(pst()!=='classic'){
       y=pdfHero(doc,y,{label:'Heures sup du mois',value:fmt(totH),right:eur(hsEur(totH),true),sub:totH+' min  -  '+nbHs+' jour(s) avec heures sup',tone:totH>0?'yes':'no'});
-      y=pdfCards(doc,y,[{label:'Jours enregistrés',value:String(keys.length)},{label:'Temps compté total',value:fmt(totC)},{label:'Km du mois',value:(Math.round(totK*10)/10)+' km',sub:totT+' tickets'}]);
+      y=pdfCards(doc,y,[{label:'Jours enregistrés',value:String(keys.length)},{label:'Temps compté total',value:fmt(totC)},{label:'Km du mois',value:(Math.round(totK*10)/10)+' km',}]);
     } else
     y=pdfCards(doc,y,[
       {label:'Jours enregistrés',value:String(keys.length),sub:nbHs+' avec heures sup'},
       {label:'Heures sup du mois',value:fmt(totH),sub:totH+' min  -  '+eur(hsEur(totH),true),tone:totH>0?'yes':'no'},
       {label:'Temps compté total',value:fmt(totC)},
-      {label:'Km du mois',value:(Math.round(totK*10)/10)+' km',sub:totT+' tickets'}
+      {label:'Km du mois',value:(Math.round(totK*10)/10)+' km'}
     ]);
-    y=pdfSection(doc,y,'Détail des journées');
+    y=pdfSection(doc,y,'Détail par jour');
     var o=tableBase(); o.startY=y+2;
-    o.head=[['Date','Tickets','T3','T6','Retour','Temps compté','Heures sup','Km']];
+    o.head=[['Date','T3','T6','Retour','Temps compté','Heures sup','Km']];
     o.body=body;
-    o.foot=[['Total',totT+' tickets','','','',fmt(totC),fmt(totH),String(Math.round(totK*10)/10)]];
+    o.foot=[['Total','','','',fmt(totC),fmt(totH),String(Math.round(totK*10)/10)]];
     o.showFoot='lastPage';
     o.styles.fontSize=9; o.styles.cellPadding={top:2.6,bottom:2.6,left:2.4,right:2.4};
     o.footStyles={fillColor:C_NAVY,textColor:[255,255,255],fontStyle:'bold'};
-    o.columnStyles={0:{cellWidth:23},1:{cellWidth:'auto'},2:{halign:'center',cellWidth:13},3:{halign:'center',cellWidth:13},4:{halign:'center',cellWidth:18},5:{halign:'right',cellWidth:25},6:{halign:'right',cellWidth:23},7:{halign:'right',cellWidth:13}};
+    o.columnStyles={0:{cellWidth:'auto'},1:{halign:'center',cellWidth:22},2:{halign:'center',cellWidth:22},3:{halign:'center',cellWidth:22},4:{halign:'right',cellWidth:28},5:{halign:'right',cellWidth:26},6:{halign:'right',cellWidth:18}};
     o.didParseCell=function(h){
-      if(h.section==='body'&&h.column.index===6&&h.cell.raw!=='–'){ h.cell.styles.textColor=C_WARN; h.cell.styles.fontStyle='bold'; h.cell.styles.fillColor=C_WARNBG; }
-      if(h.section==='head'&&[2,3,4].indexOf(h.column.index)>-1) h.cell.styles.halign='center';
-      if(h.section==='head'&&h.column.index>4) h.cell.styles.halign='right';
-      if(h.section==='foot'&&h.column.index>4) h.cell.styles.halign='right';
+      if(h.section==='body'&&h.column.index===5&&h.cell.raw!=='–'&&typeof h.cell.raw!=='object'){ h.cell.styles.textColor=C_WARN; h.cell.styles.fontStyle='bold'; h.cell.styles.fillColor=C_WARNBG; }
+      if(h.section==='head'&&[1,2,3].indexOf(h.column.index)>-1) h.cell.styles.halign='center';
+      if(h.section==='head'&&h.column.index>3) h.cell.styles.halign='right';
+      if(h.section==='foot'&&h.column.index>3) h.cell.styles.halign='right';
     };
     doc.autoTable(o);
     var am=astMonth(keys);
@@ -3478,12 +3478,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(hm.n){
       var yc=doc.lastAutoTable.finalY+12; if(yc>215){ doc.addPage(); yc=22; }
       yc=pdfSection(doc,yc,'Portes hors astreinte');
-      var o5=tableBase(); o5.startY=yc+2; o5.head=[['Date','Ticket','Zone','T3 - T6','Prix']];
-      o5.body=hm.rows.map(function(r){ return [shortDay(r.k),ws(r.ticket||'-'),ws(r.zone||'-'),(r.t3||'?')+' - '+(r.t6||'?'),r.prix?eur(r.prix,true):'-']; });
-      o5.foot=[['Total','','','',hm.n+' porte(s)  -  '+eur(hm.total,true)]]; o5.showFoot='lastPage';
+      var o5=tableBase(); o5.startY=yc+2; o5.head=[['Date','Zone','T3 - T6','Prix']];
+      o5.body=hm.rows.map(function(r){ return [shortDay(r.k),ws(r.zone||'-'),(r.t3||'?')+' - '+(r.t6||'?'),r.prix?eur(r.prix,true):'-']; });
+      o5.foot=[['Total','','',hm.n+' porte(s)  -  '+eur(hm.total,true)]]; o5.showFoot='lastPage';
       o5.footStyles={fillColor:C_NAVY,textColor:[255,255,255],fontStyle:'bold'};
-      o5.columnStyles={4:{halign:'right',fontStyle:'bold'}};
-      o5.didParseCell=function(h){ if((h.section==='head'||h.section==='foot')&&h.column.index===4) h.cell.styles.halign='right'; };
+      o5.columnStyles={3:{halign:'right',fontStyle:'bold'}};
+      o5.didParseCell=function(h){ if((h.section==='head'||h.section==='foot')&&h.column.index===3) h.cell.styles.halign='right'; };
       doc.autoTable(o5);
     }
     var cgm=congeMonth(keys);
@@ -4353,6 +4353,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       '<div style="font-size:13px;color:var(--muted);margin:6px 0">🗓️ Sauvegarde automatique : 1 par jour, au moment où tu envoies le récap de la journée par mail. Le reste du temps, utilise le bouton ci-dessous.</div>'+
       '<label class="check"><input type="checkbox" data-bkopt="photos"'+(settings.bkPhotos!==false?' checked':'')+'> Inclure les photos (tickets, GPS)</label>'+
       '<div class="tools"><button type="button" class="primary" data-act="bk-now">Sauvegarder maintenant</button><button type="button" data-act="bk-restore">Restaurer depuis mon Drive</button></div>'+
+      '<div class="tools"><a class="lnkbtn" href="https://drive.google.com/drive/search?q=Suivi%20-%20sauvegardes&authuser=florianbuoro%40gmail.com" target="_blank" rel="noopener">📁 Ouvrir mon Drive</a><a class="lnkbtn" href="https://mail.google.com/mail/u/?authuser=florianbuoro.allcoms%40gmail.com" target="_blank" rel="noopener">📬 Ma boîte mail</a></div>'+
       '<div class="tools" style="margin-top:6px"><button type="button" data-act="bk-script">Copier le script (mis à jour)</button><button type="button" data-go="saisie-relay">Réglages du script</button></div>'+
       '<div class="msg'+(bkNote.bad?' bad':'')+'" id="bkMsg">'+esc(bkNote.t)+'</div>'+
       '<div style="font-size:12px;color:var(--muted)">Les copies sont rangées dans le dossier « Suivi - sauvegardes » de TON Drive (les 10 dernières). Rien ne passe par un serveur à moi.</div></section>';
