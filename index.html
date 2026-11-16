@@ -668,12 +668,13 @@
     <div class="dpnote">Plusieurs repas le même jour ? Ajoute-les un par un, le total du jour se calcule tout seul.</div>
   </section>
   <section class="card fu">
-    <h2>Plein d'essence</h2>
+    <h2>Plein d'essence / péage autoroute</h2>
+    <div class="row" style="margin-bottom:10px"><div class="field" style="flex:1 1 100%"><label for="fType">Type de dépense</label><select id="fType"><option value="essence">⛽ Plein d'essence</option><option value="peage">🛣️ Péage autoroute</option></select></div></div>
     <div class="row">
-      <div class="field"><label for="fDate">Date du plein</label><input type="date" id="fDate"></div>
+      <div class="field"><label for="fDate">Date</label><input type="date" id="fDate"></div>
       <div class="field"><label for="fMont">Montant du ticket (€)</label><input type="number" id="fMont" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></div>
     </div>
-    <div class="row" style="margin-top:10px"><div class="field"><label for="fLitres">Litres (facultatif)</label><input type="number" id="fLitres" min="0" step="0.01" inputmode="decimal" placeholder="0"></div></div>
+    <div class="row" id="fLitRow" style="margin-top:10px"><div class="field"><label for="fLitres">Litres (facultatif)</label><input type="number" id="fLitres" min="0" step="0.01" inputmode="decimal" placeholder="0"></div></div>
     <div class="photo"><div id="fPh"></div><input type="file" id="fFile" accept="image/*" multiple style="display:none"><div class="msg" id="fPhMsg"></div></div>
     <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="fPay">Mode de paiement</label><select id="fPay" class="paysel"></select></div></div>
     <button type="button" class="primary" id="fAdd" style="margin-top:12px">Ajouter le plein</button>
@@ -1457,7 +1458,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     function id(x){ return (typeof x.id==='string'&&/^[\w-]{1,40}$/.test(x.id))?x.id:uid(); }
     return {
       meals:(Array.isArray(d.meals)?d.meals:[]).filter(ok).slice(0,5000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant),note:cleanStr(x.note).slice(0,40)}; if(payOk(x.pay)) o.pay=x.pay; return o; }),
-      fuel:(Array.isArray(d.fuel)?d.fuel:[]).filter(ok).slice(0,2000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant)}; if(payOk(x.pay)) o.pay=x.pay; var l=cleanAmt(x.litres); if(l) o.litres=l; if(/^\d{4}-\d{2}-\d{2}$/.test(x.remb||'')) o.remb=x.remb; return o; }),
+      fuel:(Array.isArray(d.fuel)?d.fuel:[]).filter(ok).slice(0,2000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant)}; if(payOk(x.pay)) o.pay=x.pay; var l=cleanAmt(x.litres); if(l) o.litres=l; if(/^\d{4}-\d{2}-\d{2}$/.test(x.remb||'')) o.remb=x.remb; if(x.type==='peage') o.type='peage'; return o; }),
       achats:(Array.isArray(d.achats)?d.achats:[]).filter(ok).slice(0,3000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant),note:cleanStr(x.note).slice(0,60)}; if(payOk(x.pay)) o.pay=x.pay; if(/^\d{4}-\d{2}-\d{2}$/.test(x.remb||'')) o.remb=x.remb; return o; })
     };
   }
@@ -1524,14 +1525,16 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var d=$('fDate').value, m=cleanAmt($('fMont').value);
     if(!d){ fMsg('fMsg','Choisis la date du plein.'); return; }
     if(!m){ fMsg('fMsg','Mets le montant du ticket.'); return; }
-    var o={id:uid(),date:d,montant:m}, l=cleanAmt($('fLitres').value); if(l) o.litres=l; if(payOk($('fPay').value)) o.pay=$('fPay').value;
+    var o={id:uid(),date:d,montant:m}, l=cleanAmt($('fLitres').value); if(l) o.litres=l; if(payOk($('fPay').value)) o.pay=$('fPay').value; if($('fType').value==='peage'){ o.type='peage'; delete o.litres; }
     var ph=asList(PH[fPhKey]);
     dep.fuel.push(o); saveDep();
     var job=ph.length?setPhotos('fuel|'+o.id,ph).then(function(){ return setPhotos(fPhKey,[]); }):Promise.resolve();
     job.then(function(){ renderFuelPhotoUI(); renderDep(); });
     $('fMont').value=''; $('fLitres').value=''; $('dMois').value=d.slice(0,7);
-    fMsg('fMsg','Plein ajouté : '+eur(m)+' le '+dShort(d)+(ph.length?' (ticket enregistré)':''));
+    fMsg('fMsg',(o.type==='peage'?'Péage ajouté : ':'Plein ajouté : ')+eur(m)+' le '+dShort(d)+(ph.length?' (ticket enregistré)':''));
   });
+  function fTypeUI(){ var pe=$('fType').value==='peage'; $('fLitRow').style.display=pe?'none':''; $('fAdd').textContent=pe?'Ajouter le péage':'Ajouter le plein'; }
+  $('fType').addEventListener('change',fTypeUI); fTypeUI();
   $('dMois').addEventListener('input',renderDep);
   $('dRecap').addEventListener('click',function(e){
     var ds=e.target.dataset||{};
@@ -1589,7 +1592,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       var nrL=fuel.filter(function(x){return !x.remb;}), okL=fuel.filter(function(x){return x.remb;});
       h=h.replace('<div class="dph3">Pleins d\'essence</div><div class="dpl">','<div class="dph3">Pleins d\'essence</div><div class="dpsum2">'+(nrL.length?'<span class="r">🔴 À rembourser : '+eur(dSum(nrL))+' ('+nrL.length+')</span>':'')+(okL.length?'<span class="g">🟢 Remboursé : '+eur(dSum(okL))+' ('+okL.length+')</span>':'')+'</div><div class="dpl">');
       fuel.forEach(function(x){ var pl=asList(PH['fuel|'+x.id]), ok=!!x.remb, open=(dEdit===x.id), cl=ok?'ok':('nr'+(lateOf(x)?' late':''));
-        h+='<div class="dpi dpf '+cl+'"'+lateAttr(x)+' data-dfx="'+x.id+'" style="'+(open?'border-radius:14px 14px 0 0':'')+'">'+(pl.length?'<img src="'+pl[0].d+'" alt="Ticket" data-dv="'+x.id+'">':'')+'<div class="t"><b>'+esc(longDate(x.date))+'</b><small>'+(x.litres?(x.litres+'').replace('.',',')+' L':'ticket')+(pl.length>1?' · '+pl.length+' photos':'')+'</small>'+payBadge(x)+'<span class="st">'+(ok?'✓ Remboursé le '+esc(dShort(x.remb)):'À rembourser')+'</span></div><div class="m">'+eur(x.montant)+'</div><button type="button" class="del" data-df="'+x.id+'" aria-label="Supprimer">🗑️</button></div>';
+        h+='<div class="dpi dpf '+cl+'"'+lateAttr(x)+' data-dfx="'+x.id+'" style="'+(open?'border-radius:14px 14px 0 0':'')+'">'+(pl.length?'<img src="'+pl[0].d+'" alt="Ticket" data-dv="'+x.id+'">':'')+'<div class="t"><b>'+esc(longDate(x.date))+'</b><small>'+(x.type==='peage'?'🛣️ Péage autoroute':'⛽ '+(x.litres?(x.litres+'').replace('.',',')+' L':'plein'))+(pl.length>1?' · '+pl.length+' photos':'')+'</small>'+payBadge(x)+'<span class="st">'+(ok?'✓ Remboursé le '+esc(dShort(x.remb)):'À rembourser')+'</span></div><div class="m">'+eur(x.montant)+'</div><button type="button" class="del" data-df="'+x.id+'" aria-label="Supprimer">🗑️</button></div>';
         if(open){
           h+='<div class="dpx '+cl+'">'+(pl.length?'<div class="phs">'+pl.map(function(o,i){ return '<span class="pth"><img src="'+o.d+'" alt="Ticket" data-dv="'+x.id+'" data-di="'+i+'"><button type="button" class="px" data-pdel="'+x.id+'" data-pi="'+i+'" aria-label="Retirer cette photo">×</button></span>'; }).join('')+'</div>':'<div class="nophoto">Pas de photo de ticket pour ce plein.</div>')
             +'<div class="acts">'+(pl.length<3?'<button type="button" data-pa="'+x.id+'">📷 '+(pl.length?'Ajouter une photo':'Ajouter la photo du ticket')+'</button>':'')+'<button type="button" data-pe="'+x.id+'">✏️ '+(dEditF===x.id?'Fermer la modification':'Modifier le plein')+'</button></div>'
