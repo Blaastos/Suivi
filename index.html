@@ -36,6 +36,8 @@
   .interv{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
   .interv .dur{font-size:14px;color:var(--muted);min-width:90px;padding-bottom:10px}
   .interv .dur b{color:var(--text)}
+  .paybd{display:inline-block;font-size:11px;font-weight:700;margin:3px 6px 0 0;white-space:nowrap;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--accent) 14%,var(--card));color:var(--text)}
+  .paysel{width:100%}
   .lnkbtn{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;font-weight:700;font-size:16px;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 10px}
   .pl-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
   .pl-rf{min-width:44px;font-size:18px;padding:6px 12px}
@@ -645,6 +647,7 @@
       <div class="field"><label for="mMont">Montant (€)</label><input type="number" id="mMont" min="0" step="0.01" inputmode="decimal" placeholder="0,00"></div>
     </div>
     <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="mNote">Note (facultatif)</label><input type="text" id="mNote" maxlength="40" placeholder="midi, sandwich…"></div></div>
+    <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="mPay">Mode de paiement</label><select id="mPay" class="paysel"></select></div></div>
     <button type="button" class="primary" id="mAdd" style="margin-top:12px">Ajouter le repas</button>
     <div class="msg" id="mMsg"></div>
     <div class="dpnote">Plusieurs repas le même jour ? Ajoute-les un par un, le total du jour se calcule tout seul.</div>
@@ -657,6 +660,7 @@
     </div>
     <div class="row" style="margin-top:10px"><div class="field"><label for="fLitres">Litres (facultatif)</label><input type="number" id="fLitres" min="0" step="0.01" inputmode="decimal" placeholder="0"></div></div>
     <div class="photo"><div id="fPh"></div><input type="file" id="fFile" accept="image/*" multiple style="display:none"><div class="msg" id="fPhMsg"></div></div>
+    <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="fPay">Mode de paiement</label><select id="fPay" class="paysel"></select></div></div>
     <button type="button" class="primary" id="fAdd" style="margin-top:12px">Ajouter le plein</button>
     <div class="msg" id="fMsg"></div>
   </section>
@@ -668,6 +672,7 @@
     </div>
     <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="aNote">Achat (facultatif)</label><input type="text" id="aNote" maxlength="60" placeholder="ex. Leroy Merlin : colliers + gaine" autocomplete="off"></div></div>
     <div class="photo"><div id="aPh"></div><input type="file" id="aFile" accept="image/*" multiple style="display:none"><div class="msg" id="aPhMsg"></div></div>
+    <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="aPay">Mode de paiement</label><select id="aPay" class="paysel"></select></div></div>
     <button type="button" class="primary" id="aAdd" style="margin-top:12px">Ajouter l'achat</button>
     <div class="msg" id="aMsg"></div>
   </section>
@@ -1329,11 +1334,22 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     function ok(x){ return x&&typeof x==='object'&&/^\d{4}-\d{2}-\d{2}$/.test(x.date||'')&&cleanAmt(x.montant)>0; }
     function id(x){ return (typeof x.id==='string'&&/^[\w-]{1,40}$/.test(x.id))?x.id:uid(); }
     return {
-      meals:(Array.isArray(d.meals)?d.meals:[]).filter(ok).slice(0,5000).map(function(x){ return {id:id(x),date:x.date,montant:cleanAmt(x.montant),note:cleanStr(x.note).slice(0,40)}; }),
-      fuel:(Array.isArray(d.fuel)?d.fuel:[]).filter(ok).slice(0,2000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant)}; var l=cleanAmt(x.litres); if(l) o.litres=l; if(/^\d{4}-\d{2}-\d{2}$/.test(x.remb||'')) o.remb=x.remb; return o; }),
-      achats:(Array.isArray(d.achats)?d.achats:[]).filter(ok).slice(0,3000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant),note:cleanStr(x.note).slice(0,60)}; if(/^\d{4}-\d{2}-\d{2}$/.test(x.remb||'')) o.remb=x.remb; return o; })
+      meals:(Array.isArray(d.meals)?d.meals:[]).filter(ok).slice(0,5000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant),note:cleanStr(x.note).slice(0,40)}; if(payOk(x.pay)) o.pay=x.pay; return o; }),
+      fuel:(Array.isArray(d.fuel)?d.fuel:[]).filter(ok).slice(0,2000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant)}; if(payOk(x.pay)) o.pay=x.pay; var l=cleanAmt(x.litres); if(l) o.litres=l; if(/^\d{4}-\d{2}-\d{2}$/.test(x.remb||'')) o.remb=x.remb; return o; }),
+      achats:(Array.isArray(d.achats)?d.achats:[]).filter(ok).slice(0,3000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant),note:cleanStr(x.note).slice(0,60)}; if(payOk(x.pay)) o.pay=x.pay; if(/^\d{4}-\d{2}-\d{2}$/.test(x.remb||'')) o.remb=x.remb; return o; })
     };
   }
+  var PAYS={esp:'💶 Espèces',cb:'💳 CB',tr:'🍽️ Ticket resto'}, PAYS_S={esp:'Espèces',cb:'CB',tr:'Ticket resto'}, PAY_ORDER=['esp','cb','tr'];
+  function payOk(v){ return PAYS[v]?v:''; }
+  function payBadge(x){ return PAYS[x.pay]?'<span class="paybd">'+PAYS[x.pay]+'</span>':''; }
+  function payOpts(val){ return '<option value="">Non précisé</option>'+PAY_ORDER.map(function(k){ return '<option value="'+k+'"'+(val===k?' selected':'')+'>'+PAYS[k]+'</option>'; }).join(''); }
+  function paySel(id,val){ return '<select id="'+id+'" class="paysel">'+payOpts(val)+'</select>'; }
+  function payLast(k){ try{ return payOk((JSON.parse(localStorage.getItem('hs_pay_v1')||'{}'))[k]); }catch(e){ return ''; } }
+  function paySetLast(k,v){ try{ var o=JSON.parse(localStorage.getItem('hs_pay_v1')||'{}'); o[k]=v; localStorage.setItem('hs_pay_v1',JSON.stringify(o)); }catch(e){} }
+  function paySplit(list){ var t={}; list.forEach(function(x){ var k=PAYS[x.pay]?x.pay:'none'; t[k]=(t[k]||0)+x.montant; });
+    return PAY_ORDER.concat(['none']).filter(function(k){ return t[k]; }).map(function(k){ return {k:k,name:(k==='none'?'Non précisé':PAYS_S[k]),total:t[k]}; }); }
+  function paySplitTxt(list){ var a=paySplit(list); if(!a.length||(a.length===1&&a[0].k==='none')) return ''; return a.map(function(r){ return r.name+' '+eur(r.total); }).join(' · '); }
+  function payInit(sel,key){ var e=$(sel); e.innerHTML=payOpts(payLast(key)); e.addEventListener('change',function(){ paySetLast(key,e.value); }); }
   function saveDep(){ store(KEY_DEP,dep); }
   function dMondayOf(k){ var d=new Date(k+'T12:00:00'); var w=(d.getDay()+6)%7; d.setDate(d.getDate()-w); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   function dShort(k){ return (+k.slice(8))+' '+['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][+k.slice(5,7)-1]; }
@@ -1379,7 +1395,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var d=$('mDate').value, m=cleanAmt($('mMont').value);
     if(!d){ fMsg('mMsg','Choisis une date.'); return; }
     if(!m){ fMsg('mMsg','Mets le montant du repas.'); return; }
-    dep.meals.push({id:uid(),date:d,montant:m,note:$('mNote').value.trim().slice(0,40)}); saveDep();
+    var mo1={id:uid(),date:d,montant:m,note:$('mNote').value.trim().slice(0,40)}; if(payOk($('mPay').value)) mo1.pay=$('mPay').value; dep.meals.push(mo1); saveDep();
     $('mMont').value=''; $('mNote').value=''; $('dMois').value=d.slice(0,7);
     fMsg('mMsg','Repas ajouté : '+eur(m)+' le '+dShort(d)+' Total du jour : '+eur(dSum(dep.meals.filter(function(x){return x.date===d;})))+'.'); renderDep();
   });
@@ -1387,7 +1403,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var d=$('fDate').value, m=cleanAmt($('fMont').value);
     if(!d){ fMsg('fMsg','Choisis la date du plein.'); return; }
     if(!m){ fMsg('fMsg','Mets le montant du ticket.'); return; }
-    var o={id:uid(),date:d,montant:m}, l=cleanAmt($('fLitres').value); if(l) o.litres=l;
+    var o={id:uid(),date:d,montant:m}, l=cleanAmt($('fLitres').value); if(l) o.litres=l; if(payOk($('fPay').value)) o.pay=$('fPay').value;
     var ph=asList(PH[fPhKey]);
     dep.fuel.push(o); saveDep();
     var job=ph.length?setPhotos('fuel|'+o.id,ph).then(function(){ return setPhotos(fPhKey,[]); }):Promise.resolve();
@@ -1408,7 +1424,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     else if(ds.pes){ var g=dep.fuel.filter(function(x){return x.id===ds.pes;})[0]; if(!g) return;
       var nd=$('efDate').value, nm=cleanAmt($('efMont').value), nl=cleanAmt($('efLit').value);
       if(!/^\d{4}-\d{2}-\d{2}$/.test(nd)||!nm){ $('efMsg').style.color='var(--warn)'; $('efMsg').textContent='Mets une date et un montant.'; return; }
-      g.date=nd; g.montant=nm; if(nl) g.litres=nl; else delete g.litres; dEditF=null; $('dMois').value=nd.slice(0,7); saveDep(); renderDep(); }
+      g.date=nd; g.montant=nm; if(nl) g.litres=nl; else delete g.litres; if(payOk($('efPay').value)) g.pay=$('efPay').value; else delete g.pay; dEditF=null; $('dMois').value=nd.slice(0,7); saveDep(); renderDep(); }
     else if(ds.pdel){ var pi=+ds.pi; ask('Retirer cette photo ?','Elle sera supprimée de ce plein.',['Retirer','Garder']).then(function(k){ if(k!==0) return; loadPhotos(['fuel|'+ds.pdel]).then(function(){ var l=asList(PH['fuel|'+ds.pdel]); l.splice(pi,1); return setPhotos('fuel|'+ds.pdel,l); }).then(renderDep); }); }
     else if(e.target.closest&&e.target.closest('[data-dfx]')&&!e.target.closest('.dpx')){ var id=e.target.closest('[data-dfx]').dataset.dfx; dEdit=(dEdit===id)?null:id; renderDep(); }
   });
@@ -1442,7 +1458,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       var byD={}; meals.forEach(function(x){ (byD[x.date]=byD[x.date]||[]).push(x); });
       Object.keys(byD).sort().reverse().forEach(function(d){
         h+='<div class="dpi" style="background:var(--bg);border-radius:10px;padding:8px 10px;margin-top:8px;border-top:0"><div class="t"><b>'+esc(longDate(d))+'</b></div><div class="m">'+eur(dSum(byD[d]))+'</div></div>';
-        byD[d].forEach(function(x){ h+='<div class="dpi" style="padding-left:10px"><div class="t">'+(x.note?esc(x.note):'<small>Repas</small>')+'</div><div class="m">'+eur(x.montant)+'</div><button type="button" class="del" data-dm="'+x.id+'" aria-label="Supprimer">🗑️</button></div>'; });
+        byD[d].forEach(function(x){ h+='<div class="dpi" style="padding-left:10px"><div class="t">'+(x.note?esc(x.note):'<small>Repas</small>')+' '+payBadge(x)+'</div><div class="m">'+eur(x.montant)+'</div><button type="button" class="del" data-dm="'+x.id+'" aria-label="Supprimer">🗑️</button></div>'; });
       });
       h+='</div>';
     }
@@ -1452,11 +1468,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       var nrL=fuel.filter(function(x){return !x.remb;}), okL=fuel.filter(function(x){return x.remb;});
       h=h.replace('<div class="dph3">Pleins d\'essence</div><div class="dpl">','<div class="dph3">Pleins d\'essence</div><div class="dpsum2">'+(nrL.length?'<span class="r">🔴 À rembourser : '+eur(dSum(nrL))+' ('+nrL.length+')</span>':'')+(okL.length?'<span class="g">🟢 Remboursé : '+eur(dSum(okL))+' ('+okL.length+')</span>':'')+'</div><div class="dpl">');
       fuel.forEach(function(x){ var pl=asList(PH['fuel|'+x.id]), ok=!!x.remb, open=(dEdit===x.id), cl=ok?'ok':('nr'+(lateOf(x)?' late':''));
-        h+='<div class="dpi dpf '+cl+'"'+lateAttr(x)+' data-dfx="'+x.id+'" style="'+(open?'border-radius:14px 14px 0 0':'')+'">'+(pl.length?'<img src="'+pl[0].d+'" alt="Ticket" data-dv="'+x.id+'">':'')+'<div class="t"><b>'+esc(longDate(x.date))+'</b><small>'+(x.litres?(x.litres+'').replace('.',',')+' L':'ticket')+(pl.length>1?' · '+pl.length+' photos':'')+'</small><span class="st">'+(ok?'✓ Remboursé le '+esc(dShort(x.remb)):'À rembourser')+'</span></div><div class="m">'+eur(x.montant)+'</div><button type="button" class="del" data-df="'+x.id+'" aria-label="Supprimer">🗑️</button></div>';
+        h+='<div class="dpi dpf '+cl+'"'+lateAttr(x)+' data-dfx="'+x.id+'" style="'+(open?'border-radius:14px 14px 0 0':'')+'">'+(pl.length?'<img src="'+pl[0].d+'" alt="Ticket" data-dv="'+x.id+'">':'')+'<div class="t"><b>'+esc(longDate(x.date))+'</b><small>'+(x.litres?(x.litres+'').replace('.',',')+' L':'ticket')+(pl.length>1?' · '+pl.length+' photos':'')+'</small>'+payBadge(x)+'<span class="st">'+(ok?'✓ Remboursé le '+esc(dShort(x.remb)):'À rembourser')+'</span></div><div class="m">'+eur(x.montant)+'</div><button type="button" class="del" data-df="'+x.id+'" aria-label="Supprimer">🗑️</button></div>';
         if(open){
           h+='<div class="dpx '+cl+'">'+(pl.length?'<div class="phs">'+pl.map(function(o,i){ return '<span class="pth"><img src="'+o.d+'" alt="Ticket" data-dv="'+x.id+'" data-di="'+i+'"><button type="button" class="px" data-pdel="'+x.id+'" data-pi="'+i+'" aria-label="Retirer cette photo">×</button></span>'; }).join('')+'</div>':'<div class="nophoto">Pas de photo de ticket pour ce plein.</div>')
             +'<div class="acts">'+(pl.length<3?'<button type="button" data-pa="'+x.id+'">📷 '+(pl.length?'Ajouter une photo':'Ajouter la photo du ticket')+'</button>':'')+'<button type="button" data-pe="'+x.id+'">✏️ '+(dEditF===x.id?'Fermer la modification':'Modifier le plein')+'</button></div>'
-            +(dEditF===x.id?'<div class="edf"><div class="row"><div class="field"><label>Date</label><input type="date" id="efDate" value="'+x.date+'"></div><div class="field"><label>Montant (€)</label><input type="number" id="efMont" min="0" step="0.01" inputmode="decimal" value="'+x.montant+'"></div></div><div class="row" style="margin-top:10px"><div class="field"><label>Litres (facultatif)</label><input type="number" id="efLit" min="0" step="0.01" inputmode="decimal" value="'+(x.litres||'')+'"></div></div><button type="button" class="primary" data-pes="'+x.id+'" style="margin-top:12px">Enregistrer</button><div class="msg" id="efMsg"></div></div>':'')
+            +(dEditF===x.id?'<div class="edf"><div class="row"><div class="field"><label>Date</label><input type="date" id="efDate" value="'+x.date+'"></div><div class="field"><label>Montant (€)</label><input type="number" id="efMont" min="0" step="0.01" inputmode="decimal" value="'+x.montant+'"></div></div><div class="row" style="margin-top:10px"><div class="field"><label>Litres (facultatif)</label><input type="number" id="efLit" min="0" step="0.01" inputmode="decimal" value="'+(x.litres||'')+'"></div></div><div class="row" style="margin-top:10px"><div class="field"><label>Paiement</label>'+paySel('efPay',x.pay)+'</div></div><button type="button" class="primary" data-pes="'+x.id+'" style="margin-top:12px">Enregistrer</button><div class="msg" id="efMsg"></div></div>':'')
             +'<label class="rbrow'+(ok?' on':'')+'"><input type="checkbox" data-rb="'+x.id+'"'+(ok?' checked':'')+'> Remboursé par l\'entreprise</label>'
             +(ok?'<div class="field rbd"><label>Date du remboursement</label><input type="date" data-rbd="'+x.id+'" value="'+x.remb+'"></div>':'')+'</div>';
         }
@@ -1503,11 +1519,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     h+='<div class="dph3">Par semaine</div><table class="dpt"><tr><th>Semaine</th><th>'+(fuel?'Pleins':'Repas')+'</th><th>Montant</th></tr>';
     t.push('','PAR SEMAINE');
     o.weeks.forEach(function(w){ h+='<tr><td>'+esc(wkLabel(w.k))+'</td><td>'+w.n+'</td><td>'+eur(w.total)+'</td></tr>'; t.push(wkLabel(w.k)+' : '+eur(w.total)+' ('+w.n+')'); });
-    h+='</table><div class="dph3">Détail</div><table class="dpt"><tr><th>Date</th><th>'+(fuel?'Litres':'Repas')+'</th><th>Montant</th></tr>';
+    h+='</table><div class="dph3">Détail</div><table class="dpt"><tr><th>Date</th><th>'+(fuel?'Litres':'Repas')+'</th>'+(fuel?'<th>Paiement</th>':'')+'<th>Montant</th></tr>';
     t.push('','DETAIL');
-    if(fuel) o.list.forEach(function(x){ h+='<tr><td>'+esc(longDate(x.date))+'</td><td>'+(x.litres?litStr(x.litres)+' L':'–')+'</td><td>'+eur(x.montant)+'</td></tr>'; t.push(fmtDate(x.date)+' : '+eur(x.montant)+(x.litres?' ('+litStr(x.litres)+' L)':'')); });
-    else o.days.forEach(function(d){ h+='<tr><td>'+esc(longDate(d.date))+'</td><td>'+esc(d.items.map(function(x){ return x.note||'repas'; }).join(', '))+'</td><td>'+eur(d.total)+'</td></tr>'; t.push(fmtDate(d.date)+' : '+eur(d.total)+' ('+d.items.map(function(x){ return (x.note||'repas')+' '+eur(x.montant); }).join(', ')+')'); });
+    if(fuel) o.list.forEach(function(x){ h+='<tr><td>'+esc(longDate(x.date))+'</td><td>'+(x.litres?litStr(x.litres)+' L':'–')+'</td><td>'+esc(PAYS_S[x.pay]||'–')+'</td><td>'+eur(x.montant)+'</td></tr>'; t.push(fmtDate(x.date)+' : '+eur(x.montant)+(x.litres?' ('+litStr(x.litres)+' L)':'')+(PAYS_S[x.pay]?' - '+PAYS_S[x.pay]:'')); });
+    else o.days.forEach(function(d){ h+='<tr><td>'+esc(longDate(d.date))+'</td><td>'+esc(d.items.map(function(x){ return (x.note||'repas')+(PAYS_S[x.pay]?' ('+PAYS_S[x.pay]+')':''); }).join(', '))+'</td><td>'+eur(d.total)+'</td></tr>'; t.push(fmtDate(d.date)+' : '+eur(d.total)+' ('+d.items.map(function(x){ return (x.note||'repas')+' '+eur(x.montant)+(PAYS_S[x.pay]?' '+PAYS_S[x.pay]:''); }).join(', ')+')'); });
     h+='</table>';
+    var ps=paySplitTxt(fuel?o.list:[].concat.apply([],o.days.map(function(d){ return d.items; })));
+    if(ps){ h+='<div class="dpnote"><b>Par paiement :</b> '+esc(ps)+'</div>'; t.push('','PAR PAIEMENT : '+ps); }
     return {html:h,text:t.join('\n'),empty:false};
   }
   function pdfDep(o,noSave){
@@ -1525,15 +1543,17 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var y2=doc.lastAutoTable.finalY+12; if(y2>220){ doc.addPage(); y2=24; }
     y2=pdfSection(doc,y2,'Détail');
     var o2=tableBase(); o2.startY=y2+2;
-    if(fuel){ o2.head=[['Date','Litres','Prix / L','Montant']];
-      o2.body=o.list.map(function(x){ return [shortDay(x.date),x.litres?litStr(x.litres)+' L':'-',x.litres?(Math.round(x.montant/x.litres*1000)/1000+'').replace('.',','):'-',eur(x.montant,true)]; });
-      o2.columnStyles={1:{halign:'right'},2:{halign:'right'},3:{halign:'right',fontStyle:'bold'}};
+    if(fuel){ o2.head=[['Date','Litres','Prix / L','Montant','Paiement']];
+      o2.body=o.list.map(function(x){ return [shortDay(x.date),x.litres?litStr(x.litres)+' L':'-',x.litres?(Math.round(x.montant/x.litres*1000)/1000+'').replace('.',','):'-',eur(x.montant,true),ws(PAYS_S[x.pay]||'-')]; });
+      o2.columnStyles={1:{halign:'right'},2:{halign:'right'},3:{halign:'right',fontStyle:'bold'},4:{halign:'right'}};
     } else { o2.head=[['Date','Repas','Total du jour']];
-      o2.body=o.days.map(function(d){ return [shortDay(d.date),ws(d.items.map(function(x){ return (x.note||'repas')+' '+eur(x.montant,true); }).join('  |  ')),eur(d.total,true)]; });
+      o2.body=o.days.map(function(d){ return [shortDay(d.date),ws(d.items.map(function(x){ return (x.note||'repas')+' '+eur(x.montant,true)+(PAYS_S[x.pay]?' ('+PAYS_S[x.pay]+')':''); }).join('  |  ')),eur(d.total,true)]; });
       o2.columnStyles={2:{halign:'right',fontStyle:'bold'}};
     }
     o2.didParseCell=function(h){ if(h.section==='head'&&h.column.index>0&&(fuel||h.column.index===2)) h.cell.styles.halign='right'; };
     doc.autoTable(o2);
+    var psA=paySplit(fuel?o.list:[].concat.apply([],o.days.map(function(d){ return d.items; })));
+    if(psA.length&&!(psA.length===1&&psA[0].k==='none')){ var y3=doc.lastAutoTable.finalY+12; if(y3>235){ doc.addPage(); y3=24; } y3=pdfSection(doc,y3,'Par mode de paiement'); var o3=tableBase(); o3.startY=y3+2; o3.head=[['Mode','Montant']]; o3.body=psA.map(function(r){ return [ws(r.name),eur(r.total,true)]; }); o3.columnStyles={1:{halign:'right',fontStyle:'bold'}}; o3.didParseCell=function(h){ if(h.section==='head'&&h.column.index===1) h.cell.styles.halign='right'; }; doc.autoTable(o3); }
     if(fuel){
       var L=[]; o.list.forEach(function(x){ asList(PH['fuel|'+x.id]).forEach(function(ph,i,a){ L.push({x:x,o:ph,i:i,n:a.length}); }); });
       if(L.length){
@@ -1573,11 +1593,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   var aPhKey='ach|draft', aEdit=null, aEditF=null, aPhotoFor=null;
   function achatCard(x){
     var pl=asList(PH['ach|'+x.id]), ok=!!x.remb, open=(aEdit===x.id), cl=ok?'ok':('nr'+(lateOf(x)?' late':'')), h='';
-    h+='<div class="dpi dpf '+cl+'"'+lateAttr(x)+' data-ax="'+x.id+'" style="'+(open?'border-radius:14px 14px 0 0':'')+'">'+(pl.length?'<img src="'+pl[0].d+'" alt="Ticket" data-av="'+x.id+'">':'')+'<div class="t"><b>'+esc(longDate(x.date))+'</b><small>'+(x.note?esc(x.note):'achat matériel')+(pl.length>1?' · '+pl.length+' photos':'')+'</small><span class="st">'+(ok?'✓ Payé le '+esc(dShort(x.remb)):'Pas payé')+'</span></div><div class="m">'+eur(x.montant)+'</div><button type="button" class="del" data-da="'+x.id+'" aria-label="Supprimer">🗑️</button></div>';
+    h+='<div class="dpi dpf '+cl+'"'+lateAttr(x)+' data-ax="'+x.id+'" style="'+(open?'border-radius:14px 14px 0 0':'')+'">'+(pl.length?'<img src="'+pl[0].d+'" alt="Ticket" data-av="'+x.id+'">':'')+'<div class="t"><b>'+esc(longDate(x.date))+'</b><small>'+(x.note?esc(x.note):'achat matériel')+(pl.length>1?' · '+pl.length+' photos':'')+'</small>'+payBadge(x)+'<span class="st">'+(ok?'✓ Payé le '+esc(dShort(x.remb)):'Pas payé')+'</span></div><div class="m">'+eur(x.montant)+'</div><button type="button" class="del" data-da="'+x.id+'" aria-label="Supprimer">🗑️</button></div>';
     if(open){
       h+='<div class="dpx '+cl+'">'+(pl.length?'<div class="phs">'+pl.map(function(o,i){ return '<span class="pth"><img src="'+o.d+'" alt="Ticket" data-av="'+x.id+'" data-ai="'+i+'"><button type="button" class="px" data-apdel="'+x.id+'" data-pi="'+i+'" aria-label="Retirer cette photo">×</button></span>'; }).join('')+'</div>':'<div class="nophoto">Pas de photo de ticket pour cet achat.</div>')
         +'<div class="acts">'+(pl.length<3?'<button type="button" data-apa="'+x.id+'">📷 '+(pl.length?'Ajouter une photo':'Ajouter la photo du ticket')+'</button>':'')+'<button type="button" data-ape="'+x.id+'">✏️ '+(aEditF===x.id?'Fermer la modification':'Modifier l\'achat')+'</button></div>'
-        +(aEditF===x.id?'<div class="edf"><div class="row"><div class="field"><label>Date</label><input type="date" id="eaDate" value="'+x.date+'"></div><div class="field"><label>Montant (€)</label><input type="number" id="eaMont" min="0" step="0.01" inputmode="decimal" value="'+x.montant+'"></div></div><div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label>Achat</label><input type="text" id="eaNote" maxlength="60" value="'+esc(x.note||'')+'"></div></div><button type="button" class="primary" data-apes="'+x.id+'" style="margin-top:12px">Enregistrer</button><div class="msg" id="eaMsg"></div></div>':'')
+        +(aEditF===x.id?'<div class="edf"><div class="row"><div class="field"><label>Date</label><input type="date" id="eaDate" value="'+x.date+'"></div><div class="field"><label>Montant (€)</label><input type="number" id="eaMont" min="0" step="0.01" inputmode="decimal" value="'+x.montant+'"></div></div><div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label>Achat</label><input type="text" id="eaNote" maxlength="60" value="'+esc(x.note||'')+'"></div></div><div class="row" style="margin-top:10px"><div class="field"><label>Paiement</label>'+paySel('eaPay',x.pay)+'</div></div><button type="button" class="primary" data-apes="'+x.id+'" style="margin-top:12px">Enregistrer</button><div class="msg" id="eaMsg"></div></div>':'')
         +'<label class="rbrow'+(ok?' on':'')+'"><input type="checkbox" data-ab="'+x.id+'"'+(ok?' checked':'')+'> Payé / remboursé par l\'entreprise</label>'
         +(ok?'<div class="field rbd"><label>Date du paiement</label><input type="date" data-abd="'+x.id+'" value="'+x.remb+'"></div>':'')+'</div>';
     }
@@ -1612,7 +1632,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var d=$('aDate').value, m=cleanAmt($('aMont').value);
     if(!d){ fMsg('aMsg','Choisis une date.'); return; }
     if(!m){ fMsg('aMsg','Mets le montant du ticket.'); return; }
-    var o={id:uid(),date:d,montant:m,note:$('aNote').value.trim().slice(0,60)}, ph=asList(PH[aPhKey]);
+    var o={id:uid(),date:d,montant:m,note:$('aNote').value.trim().slice(0,60)}, ph=asList(PH[aPhKey]); if(payOk($('aPay').value)) o.pay=$('aPay').value;
     dep.achats.push(o); saveDep();
     var job=ph.length?setPhotos('ach|'+o.id,ph).then(function(){ return setPhotos(aPhKey,[]); }):Promise.resolve();
     job.then(function(){ renderAchatPhotoUI(); renderDep(); });
@@ -1634,7 +1654,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     else if(ds.apes){ g=achFind(ds.apes); if(!g) return;
       var nd=$('eaDate').value, nm=cleanAmt($('eaMont').value);
       if(!/^\d{4}-\d{2}-\d{2}$/.test(nd)||!nm){ $('eaMsg').style.color='var(--warn)'; $('eaMsg').textContent='Mets une date et un montant.'; return; }
-      g.date=nd; g.montant=nm; g.note=($('eaNote').value||'').trim().slice(0,60); aEditF=null; $('dMois').value=nd.slice(0,7); saveDep(); renderDep(); }
+      g.date=nd; g.montant=nm; g.note=($('eaNote').value||'').trim().slice(0,60); if(payOk($('eaPay').value)) g.pay=$('eaPay').value; else delete g.pay; aEditF=null; $('dMois').value=nd.slice(0,7); saveDep(); renderDep(); }
     else if(ds.apdel){ var pi=+ds.pi; ask('Retirer cette photo ?','Elle sera supprimée de cet achat.',['Retirer','Garder']).then(function(k){ if(k!==0) return; loadPhotos(['ach|'+ds.apdel]).then(function(){ var l=asList(PH['ach|'+ds.apdel]); l.splice(pi,1); return setPhotos('ach|'+ds.apdel,l); }).then(renderDep); }); }
     else if(e.target.closest&&e.target.closest('[data-ax]')&&!e.target.closest('.dpx')){ var id=e.target.closest('[data-ax]').dataset.ax; aEdit=(aEdit===id)?null:id; renderDep(); }
   });
@@ -1644,21 +1664,22 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     else if(ds.abd){ g=achFind(ds.abd); if(!g) return; if(/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)){ g.remb=e.target.value; saveDep(); renderDep(); } }
   });
   $('aDate').value=today();
+  payInit('mPay','m'); payInit('fPay','f'); payInit('aPay','a');
   // Récap achats (PDF + e-mail)
   function achMonth(mo){ var l=dep.achats.filter(function(x){ return x.date.slice(0,7)===mo; }).sort(function(a,b){ return a.date<b.date?-1:a.date>b.date?1:0; });
     var np=l.filter(function(x){return !x.remb;}), pd=l.filter(function(x){return x.remb;});
     return {mo:mo,list:l,total:dSum(l),n:l.length,np:np,pd:pd}; }
   function achText(o){ var p=o.mo.split('-'), t=['RECAP ACHATS MATERIEL - '+MOIS[+p[1]-1]+' '+p[0],'Total : '+eur(o.total)+' ('+o.n+' achat(s))','Pas encore payé : '+eur(dSum(o.np))+' ('+o.np.length+')','Payé : '+eur(dSum(o.pd))+' ('+o.pd.length+')','','DETAIL'];
-    o.list.forEach(function(x){ t.push(fmtDate(x.date)+' : '+eur(x.montant)+(x.note?' - '+x.note:'')+' ['+(x.remb?'payé le '+fmtDate(x.remb):'pas payé')+']'); }); return t.join('\n'); }
+    o.list.forEach(function(x){ t.push(fmtDate(x.date)+' : '+eur(x.montant)+(x.note?' - '+x.note:'')+(PAYS_S[x.pay]?' - '+PAYS_S[x.pay]:'')+' ['+(x.remb?'payé le '+fmtDate(x.remb):'pas payé')+']'); }); return t.join('\n'); }
   function pdfAchats(o,noSave){
     var doc=pdfLib(), p=o.mo.split('-'), titre=MOIS[+p[1]-1]+' '+p[0], np=dSum(o.np);
     var y=pdfHeader(doc,'Achats de matériel',titre);
     if(pst()!=='classic') y=pdfHero(doc,y,{label:'Reste à rembourser',value:eur(np,true),sub:o.np.length+' achat(s) pas encore payé(s)',tone:o.np.length?'yes':'no'});
     y=pdfCards(doc,y,[{label:'Total du mois',value:eur(o.total,true)},{label:'Achats',value:String(o.n)},{label:'Payés',value:eur(dSum(o.pd),true),sub:o.pd.length+' achat(s)',tone:o.pd.length?'no':null}]);
     y=pdfSection(doc,y,'Détail des achats');
-    var o1=tableBase(); o1.startY=y+2; o1.head=[['Date','Achat','Montant','Statut']];
-    o1.body=o.list.map(function(x){ return [shortDay(x.date),ws(x.note||'-'),eur(x.montant,true),x.remb?ws('Payé le '+shortDay(x.remb)):'Pas payé']; });
-    o1.foot=[['TOTAL','',eur(o.total,true),'']]; o1.showFoot='lastPage'; o1.footStyles={fillColor:C_NAVY,textColor:[255,255,255],fontStyle:'bold'};
+    var o1=tableBase(); o1.startY=y+2; o1.head=[['Date','Achat','Montant','Statut','Paiement']];
+    o1.body=o.list.map(function(x){ return [shortDay(x.date),ws(x.note||'-'),eur(x.montant,true),x.remb?ws('Payé le '+shortDay(x.remb)):'Pas payé',ws(PAYS_S[x.pay]||'-')]; });
+    o1.foot=[['TOTAL','',eur(o.total,true),'','']]; o1.showFoot='lastPage'; o1.footStyles={fillColor:C_NAVY,textColor:[255,255,255],fontStyle:'bold'};
     o1.columnStyles={2:{halign:'right',fontStyle:'bold'}};
     o1.didParseCell=function(h){ if((h.section==='head'||h.section==='foot')&&h.column.index===2) h.cell.styles.halign='right'; if(h.section==='body'&&h.column.index===3){ var q=o.list[h.row.index]; h.cell.styles.textColor=q.remb?C_OK:C_WARN; h.cell.styles.fontStyle='bold'; } };
     doc.autoTable(o1);
@@ -1686,7 +1707,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var h='<h3 style="margin:0 0 4px">🛒 Récap achats · '+esc(MOIS[+p[1]-1]+' '+p[0])+'</h3>';
     if(!o.n){ openDlg(h+'<div class="dpnote">Aucun achat de matériel ce mois-ci.</div>','Aucun achat ce mois-ci.',null,null); return; }
     h+='<div class="dpsum" style="grid-template-columns:1fr 1fr"><div class="tt"><small>Total</small><b>'+eur(o.total)+'</b></div><div><small>Reste à rembourser</small><b style="color:var(--warn)">'+eur(dSum(o.np))+'</b></div></div>';
-    h+='<table class="dpt"><tr><th>Date</th><th>Achat</th><th>Montant</th></tr>'+o.list.map(function(x){ return '<tr><td>'+esc(dShort(x.date))+'<br><small style="color:'+(x.remb?'#16a34a':'#e11d48')+';font-weight:700">'+(x.remb?'✓ Payé':'Pas payé')+'</small></td><td>'+esc(x.note||'–')+'</td><td>'+eur(x.montant)+'</td></tr>'; }).join('')+'</table>';
+    h+='<table class="dpt"><tr><th>Date</th><th>Achat</th><th>Montant</th></tr>'+o.list.map(function(x){ return '<tr><td>'+esc(dShort(x.date))+'<br><small style="color:'+(x.remb?'#16a34a':'#e11d48')+';font-weight:700">'+(x.remb?'✓ Payé':'Pas payé')+'</small></td><td>'+esc(x.note||'–')+(PAYS_S[x.pay]?'<br><small>'+esc(PAYS_S[x.pay])+'</small>':'')+'</td><td>'+eur(x.montant)+'</td></tr>'; }).join('')+'</table>'+(paySplitTxt(o.list)?'<div class="dpnote"><b>Par paiement :</b> '+esc(paySplitTxt(o.list))+'</div>':'');
     loadPhotos(o.list.map(function(x){ return 'ach|'+x.id; })).then(function(){
       openDlg(h,achText(o),function(){ pdfAchats(o); },function(notify){
         var out; try{ out=pdfAchats(o,true); }catch(er){ notify('Impossible de créer le PDF ('+(er&&er.message?er.message:er)+').'); return Promise.resolve('error'); }
@@ -4304,11 +4325,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     out.push({name:'Mois',rows:rm});
     var ra=[['Début','Fin','Zone','Prime (€)']]; periods.slice().sort(function(a,b){return a.debut<b.debut?-1:1;}).forEach(function(p){ ra.push([p.debut,p.fin,p.zone||'',primeOf(p)]); });
     out.push({name:'Astreintes',rows:ra});
-    var rf=[['Date','Montant (€)','Litres','Remboursé le']]; dep.fuel.slice().sort(function(a,b){return a.date<b.date?-1:1;}).forEach(function(x){ rf.push([x.date,x.montant,x.litres||'',x.remb||'']); });
+    var rf=[['Date','Montant (€)','Litres','Paiement','Remboursé le']]; dep.fuel.slice().sort(function(a,b){return a.date<b.date?-1:1;}).forEach(function(x){ rf.push([x.date,x.montant,x.litres||'',PAYS_S[x.pay]||'',x.remb||'']); });
     out.push({name:'Essence',rows:rf});
-    var rr=[['Date','Montant (€)','Note']]; dep.meals.slice().sort(function(a,b){return a.date<b.date?-1:1;}).forEach(function(x){ rr.push([x.date,x.montant,x.note||'']); });
+    var rr=[['Date','Montant (€)','Note','Paiement']]; dep.meals.slice().sort(function(a,b){return a.date<b.date?-1:1;}).forEach(function(x){ rr.push([x.date,x.montant,x.note||'',PAYS_S[x.pay]||'']); });
     out.push({name:'Repas',rows:rr});
-    var rc=[['Date','Montant (€)','Note','Remboursé le']]; dep.achats.slice().sort(function(a,b){return a.date<b.date?-1:1;}).forEach(function(x){ rc.push([x.date,x.montant,x.note||'',x.remb||'']); });
+    var rc=[['Date','Montant (€)','Note','Paiement','Remboursé le']]; dep.achats.slice().sort(function(a,b){return a.date<b.date?-1:1;}).forEach(function(x){ rc.push([x.date,x.montant,x.note||'',PAYS_S[x.pay]||'',x.remb||'']); });
     out.push({name:'Achats matériel',rows:rc});
     var rs=[['Catégorie','Pièce','Quantité','Unité','Seuil mini','Objectif']]; stock.items.slice().sort(function(a,b){ return (a.cat||'').localeCompare(b.cat||'','fr')||a.nom.localeCompare(b.nom,'fr'); }).forEach(function(x){ rs.push([x.cat||'',x.nom,x.qty,x.unit||'',x.min||'',x.obj||'']); });
     out.push({name:'Stock camion',rows:rs});
