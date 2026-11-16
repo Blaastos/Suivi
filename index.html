@@ -1448,6 +1448,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
   // ---------- Dépenses (repas + essence) : à part, jamais dans les PDF ----------
   var KEY_DEP='hs_dep_v1';
+  var PAYS={esp:'💶 Espèces',cb:'💳 CB',tr:'🍽️ Ticket resto'}, PAYS_S={esp:'Espèces',cb:'CB',tr:'Ticket resto'}, PAY_ORDER=['esp','cb','tr'];
   var dep=cleanDep(load(KEY_DEP,{meals:[],fuel:[],achats:[]}));
   function cleanAmt(v){ var n=num(v); return (n>0&&n<100000)?Math.round(n*100)/100:0; }
   function cleanDep(d){
@@ -1460,7 +1461,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       achats:(Array.isArray(d.achats)?d.achats:[]).filter(ok).slice(0,3000).map(function(x){ var o={id:id(x),date:x.date,montant:cleanAmt(x.montant),note:cleanStr(x.note).slice(0,60)}; if(payOk(x.pay)) o.pay=x.pay; if(/^\d{4}-\d{2}-\d{2}$/.test(x.remb||'')) o.remb=x.remb; return o; })
     };
   }
-  var PAYS={esp:'💶 Espèces',cb:'💳 CB',tr:'🍽️ Ticket resto'}, PAYS_S={esp:'Espèces',cb:'CB',tr:'Ticket resto'}, PAY_ORDER=['esp','cb','tr'];
   function payOk(v){ return PAYS[v]?v:''; }
   function payBadge(x){ return PAYS[x.pay]?'<span class="paybd">'+PAYS[x.pay]+'</span>':''; }
   function payOpts(val){ return '<option value="">Non précisé</option>'+PAY_ORDER.map(function(k){ return '<option value="'+k+'"'+(val===k?' selected':'')+'>'+PAYS[k]+'</option>'; }).join(''); }
