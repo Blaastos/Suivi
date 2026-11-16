@@ -44,7 +44,7 @@
   .pl-info{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.pl-info span{font-size:13px;font-weight:600;background:color-mix(in srgb,var(--c-int) 12%,var(--card));border-radius:999px;padding:4px 10px}
   .pl-r{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
   .pl-h{min-width:78px;font-weight:700;font-size:13px;color:var(--muted);padding-top:2px}
-  .pl-t{flex:1;min-width:0;font-size:15px;word-break:break-word}.pl-t b{color:var(--c-int)}
+  .pl-t{flex:1;min-width:0;font-size:15px;word-break:break-word}.pl-t b{color:var(--c-int)}.pl-t b.pl-tk{cursor:pointer;border-bottom:1px dashed currentColor;-webkit-tap-highlight-color:transparent}.pl-t b.pl-tk.cp{color:#16794c;border-bottom-style:solid}
   .pl-n{font-size:13px;color:var(--muted);margin-top:2px}
   .pl-p{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
   .pl-tel{display:inline-block;font-weight:700;font-size:14px;text-decoration:none;color:#fff;background:linear-gradient(135deg,#16a34a,#0d9488);border-radius:999px;padding:7px 14px}
@@ -2689,7 +2689,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       if(planSt.info.length) h+='<div class="pl-info">'+planSt.info.map(function(x){ return '<span>👥 '+esc(x)+'</span>'; }).join('')+'</div>';
       if(!planSt.items.length&&!planSt.err) h+='<div class="bkstat">Rien de prévu aujourd\'hui dans le planning.</div>';
       planSt.items.forEach(function(it){
-        h+='<div class="pl-r"><div class="pl-h">'+esc(it.heure)+'</div><div class="pl-t">'+(it.ticket?'<b>'+esc(it.ticket)+'</b> ':'')+esc(it.label)+
+        h+='<div class="pl-r"><div class="pl-h">'+esc(it.heure)+'</div><div class="pl-t">'+(it.ticket?'<b class="pl-tk" data-act="copytk" data-tk="'+esc(it.ticket)+'" role="button" title="Toucher pour copier">'+esc(it.ticket)+'</b> ':'')+esc(it.label)+
           (it.note?'<div class="pl-n">'+esc(it.note)+'</div>':'')+
           (it.phones.length?'<div class="pl-p">'+it.phones.map(function(p){ return '<a class="pl-tel" href="tel:'+p.replace(/\s/g,'')+'">📞 '+esc(p)+'</a>'; }).join('')+'</div>':'')+'</div></div>';
       });
@@ -4820,6 +4820,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     }
     var a=ds.act;
     if(a==='gmail'){ e.preventDefault(); openGmail(b.href); return; }
+    if(a==='copytk'){ var tk=ds.tk||'', old=b.textContent;
+      copyText(tk,function(okc){ b.textContent=okc?'✓ '+tk+' copié':tk; b.classList.add('cp'); setTimeout(function(){ b.textContent=old; b.classList.remove('cp'); },1400); }); return; }
     if(a==='plan'){ planLoad(true); }
     else if(a==='upd'){ applyUpdate(); }
     else if(a==='upd-check'){ b.disabled=true; b.textContent='Vérification…'; checkUpdate(false).then(function(i){ if(i&&i.newer) return; }); }
