@@ -833,6 +833,18 @@
     <button type="button" class="primary" id="stAdd" style="margin-top:12px">Ajouter au stock</button>
     <div class="msg" id="stMsg"></div>
   </section>
+  <section class="card out">
+    <h2>Retirer du stock</h2>
+    <div class="row"><div class="field" style="flex:1 1 100%"><label for="soPiece">Pièce utilisée</label><select id="soPiece"></select></div></div>
+    <div class="row" style="margin-top:10px">
+      <div class="field"><label for="soQty">Quantité</label><input type="number" id="soQty" min="0" step="any" inputmode="decimal" value="1"></div>
+      <div class="field"><label for="soDate">Date</label><input type="date" id="soDate"></div>
+    </div>
+    <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="soTicket">N° de ticket</label><input type="text" id="soTicket" maxlength="30" placeholder="ex. 220471" autocomplete="off"></div></div>
+    <button type="button" class="primary" id="soAdd" style="margin-top:12px">Retirer du stock</button>
+    <div class="msg" id="soMsg"></div>
+    <div id="soList"></div>
+  </section>
   <section class="card rp">
     <h2>Réapprovisionnement</h2>
     <div class="dpbtns"><button type="button" id="stRecap">📋 Liste à recompléter</button><button type="button" id="stAll">📄 Inventaire complet</button></div>
@@ -1859,7 +1871,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     d=(d&&typeof d==='object')?d:{};
     return {items:(Array.isArray(d.items)?d.items:[]).filter(function(x){ return x&&typeof x==='object'&&cleanStr(x.nom).trim(); }).slice(0,1500).map(function(x){
       return {id:(typeof x.id==='string'&&/^[\w-]{1,40}$/.test(x.id))?x.id:uid(),nom:cleanStr(x.nom).trim().slice(0,60),qty:cleanQty(x.qty),min:cleanQty(x.min),obj:cleanQty(x.obj),unit:cleanStr(x.unit).trim().slice(0,8),cat:cleanStr(x.cat).trim().slice(0,30)};
-    })};
+    }),out:cleanOut(d.out)};
+  }
+  function cleanOut(a){
+    return (Array.isArray(a)?a:[]).filter(function(o){ return o&&typeof o==='object'&&/^\d{4}-\d{2}-\d{2}$/.test(o.date||'')&&cleanQty(o.qty)>0&&cleanStr(o.nom).trim(); }).slice(0,3000).map(function(o){
+      return {id:(typeof o.id==='string'&&/^[\w-]{1,40}$/.test(o.id))?o.id:uid(),item:(typeof o.item==='string'&&/^[\w-]{1,40}$/.test(o.item))?o.item:'',nom:cleanStr(o.nom).trim().slice(0,60),qty:cleanQty(o.qty),unit:cleanStr(o.unit).trim().slice(0,8),ticket:cleanStr(o.ticket).trim().slice(0,30),date:o.date};
+    });
   }
   var stock=cleanStock(load(KEY_STOCK,{items:[]}));
   function saveStock(){ store(KEY_STOCK,stock); }
@@ -1871,7 +1888,17 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   function stNum(n){ return String(n).replace('.',','); }
   function stQtyTxt(x){ return stNum(x.qty)+(x.unit?' '+x.unit:''); }
   function stSorted(){ return stock.items.slice().sort(function(a,b){ var ca=(a.cat||'~').toLowerCase(), cb=(b.cat||'~').toLowerCase(); return ca<cb?-1:ca>cb?1:a.nom.toLowerCase()<b.nom.toLowerCase()?-1:1; }); }
+  function soUnit(it){ return it&&it.unit?' '+it.unit:''; }
+  function renderOut(){
+    var sel=$('soPiece'), cur0=sel.value, opts='<option value="">Choisis une pièce…</option>';
+    stSorted().forEach(function(x){ opts+='<option value="'+x.id+'">'+esc(x.nom)+' ('+esc(stQtyTxt(x))+')</option>'; });
+    sel.innerHTML=opts; if(cur0&&stock.items.some(function(x){return x.id===cur0;})) sel.value=cur0;
+    var l=stock.out.slice().sort(function(a,b){ return a.date<b.date?1:a.date>b.date?-1:0; }), h='';
+    l.slice(0,15).forEach(function(o){ h+='<div class="dpi"><div class="t"><b>'+esc(o.nom)+'</b><small>'+esc(fmtDate(o.date))+(o.ticket?' · ticket '+esc(o.ticket):' · sans ticket')+'</small></div><div class="m">−'+esc(stNum(o.qty))+esc(o.unit?' '+o.unit:'')+'</div><button type="button" class="del" data-sodel="'+o.id+'" aria-label="Annuler ce retrait">↩️</button></div>'; });
+    $('soList').innerHTML=(h?'<div class="dph3">Derniers retraits</div>'+h+(l.length>15?'<div class="dpnote">'+l.length+' retraits enregistrés (les 15 derniers sont affichés).</div>':''):'');
+  }
   function renderStock(){
+    renderOut();
     var low=stock.items.filter(stLow).length, tot=stock.items.length;
     $('stSum').innerHTML='<span>'+tot+' référence'+(tot>1?'s':'')+'</span>'+(low?'<span class="bad">⚠️ '+low+' en stock bas</span>':(tot?'<span>✓ Aucun stock bas</span>':''));
     var pc=$('stCat').value, pu=$('stUnit').value||'pcs';
@@ -1910,6 +1937,27 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   function stReadCat(sid,nid){ var v=$(sid).value; return v==='__new'?($(nid).value||'').trim().slice(0,30):v; }
   function stFind(id){ for(var i=0;i<stock.items.length;i++) if(stock.items[i].id===id) return stock.items[i]; return null; }
   $('tabStock').addEventListener('change',function(e){ var t=e.target; if(t.classList&&t.classList.contains('stcatsel')){ var n=$(t.dataset.n); n.style.display=(t.value==='__new')?'':'none'; if(t.value==='__new') n.focus(); } });
+  $('soAdd').addEventListener('click',function(){
+    var id=$('soPiece').value, it=stock.items.filter(function(x){return x.id===id;})[0], q=cleanQty($('soQty').value), d=$('soDate').value, t=$('soTicket').value.trim().slice(0,30);
+    if(!it){ fMsg('soMsg','Choisis la pièce.'); return; }
+    if(!q){ fMsg('soMsg','Mets la quantité.'); return; }
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(d)){ fMsg('soMsg','Choisis la date.'); return; }
+    function go(){
+      var was=stLow(it); it.qty=Math.max(0,r2(it.qty-q));
+      stock.out.push({id:uid(),item:it.id,nom:it.nom,qty:q,unit:it.unit||'',ticket:t,date:d}); saveStock();
+      $('soQty').value='1'; $('soTicket').value='';
+      fMsg('soMsg',it.nom+' : −'+stNum(q)+soUnit(it)+(t?' (ticket '+t+')':'')+'. Reste '+stQtyTxt(it)+'.'+(!was&&stLow(it)?' ⚠️ Stock bas, pense au réappro.':'')); renderStock();
+    }
+    if(q>it.qty) ask('Stock insuffisant','Il reste '+stQtyTxt(it)+' de « '+it.nom+' » : le stock passera à 0. Retirer quand même ?',['Retirer','Annuler']).then(function(i){ if(i===0) go(); });
+    else go();
+  });
+  $('soList').addEventListener('click',function(e){
+    var b=e.target.closest('[data-sodel]'); if(!b) return; var o=stock.out.filter(function(x){return x.id===b.dataset.sodel;})[0]; if(!o) return;
+    ask('Annuler ce retrait ?','« '+o.nom+' » : '+stNum(o.qty)+' sera remis en stock.',['Annuler le retrait','Garder']).then(function(i){
+      if(i!==0) return; var it=stock.items.filter(function(x){return x.id===o.item;})[0]; if(it) it.qty=r2(it.qty+o.qty);
+      stock.out=stock.out.filter(function(x){return x.id!==o.id;}); saveStock(); renderStock(); });
+  });
+  $('soDate').value=today();
   $('stSearch').addEventListener('input',renderStock);
   $('stList').addEventListener('toggle',function(e){ var d=e.target; if(!d||!d.classList||!d.classList.contains('stc')) return; if($('stSearch').value.trim()||stFilter==='low') return; var g=d.getAttribute('data-g'); if(d.open) stOpen[g]=1; else delete stOpen[g]; saveStOpen(); },true);
   function stSetAll(v){ stock.items.forEach(function(x){ var c=x.cat||'Sans catégorie'; if(v) stOpen[c]=1; else delete stOpen[c]; }); saveStOpen(); renderStock(); }
@@ -3153,7 +3201,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(!TABS[name]) name='saisie';
     Object.keys(TABS).forEach(function(k){ var on=(k===name); $(TABS[k][0]).style.display=on?'':'none'; $(TABS[k][1]).className='tab'+(on?' on':''); });
     if(name==='home') renderHome();
-    if(name==='stock') renderStock();
+    if(name==='stock'){ if(!$('soDate').value||$('soDate').dataset.t!==today()){ $('soDate').value=today(); $('soDate').dataset.t=today(); } renderStock(); }
     if(name==='veh') renderVeh();
     if(name==='dep') renderDep();
     if(name==='journees') renderHist();
@@ -4267,6 +4315,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       if(data.stock&&typeof data.stock==='object'){
         var cs=cleanStock(data.stock), hn={}; stock.items.forEach(function(y){ hn[y.id]=1; hn['n:'+y.nom.toLowerCase()]=1; });
         cs.items.forEach(function(y){ if(!hn[y.id]&&!hn['n:'+y.nom.toLowerCase()]){ stock.items.push(y); nst++; } });
+        var ho={}; stock.out.forEach(function(y){ ho[y.id]=1; }); cs.out.forEach(function(y){ if(!ho[y.id]) stock.out.push(y); });
         saveStock(); renderStock();
       }
       var nv=0, vJobs=[];
