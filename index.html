@@ -1391,6 +1391,17 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   if(!settings.mode) settings.mode='retour';
   var days=load(KEY_DAYS,{});
   var cur=load(KEY_DRAFT,null)||blank();
+  // tri chronologique des interventions (par heure T3) ; les lignes sans T3 restent à la fin
+  function intKey(it){ var m=it&&it.debut?toMin(it.debut):null; if(m===null||isNaN(m)) return null; return m<240?m+1440:m; }
+  function sortInts(arr){
+    if(!Array.isArray(arr)||arr.length<2) return arr;
+    var a=arr.map(function(it,i){ return {it:it,i:i,k:intKey(it)}; });
+    a.sort(function(x,y){ if(x.k===null&&y.k===null) return x.i-y.i; if(x.k===null) return 1; if(y.k===null) return -1; return x.k-y.k||x.i-y.i; });
+    for(var j=0;j<a.length;j++) arr[j]=a[j].it;
+    return arr;
+  }
+  Object.keys(days).forEach(function(k){ if(days[k]&&days[k].interventions) sortInts(days[k].interventions); });
+  if(cur.interventions) sortInts(cur.interventions);
   if(!cur.interventions||!cur.interventions.length) cur.interventions=[{id:uid(),ticket:'',debut:'',fin:''}];
 
   var CG_LABEL={cp:'Congé payé',css:'Congé sans solde',fe:'Jour férié'};
@@ -1405,7 +1416,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var total=diff(d.depart,d.retour);
     var pause=Math.max(0,Math.round(num(d.pause)));
     var interv=0, firstT3=null, lastT6=null;
-    d.interventions.forEach(function(it){
+    sortInts(d.interventions).forEach(function(it){
       var x=diff(it.debut,it.fin); if(x!==null) interv+=x;
       if(it.debut&&firstT3===null) firstT3=it.debut;
       if(it.fin) lastT6=it.fin;
@@ -2626,6 +2637,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var t=e.target; if(!t.dataset.id) return;
     var it=cur.interventions.filter(function(x){return x.id===t.dataset.id})[0]; if(!it) return;
     it[t.dataset.k]=t.value; saveDraft(); renderResult();
+  });
+  $('list').addEventListener('change',function(e){
+    var t=e.target; if(!t.dataset.id||(t.dataset.k!=='debut'&&t.dataset.k!=='fin')) return;
+    var it=cur.interventions.filter(function(x){return x.id===t.dataset.id})[0]; if(!it||!it.debut||!it.fin) return;
+    var before=Array.prototype.map.call($('list').querySelectorAll('input[data-k="ticket"]'),function(x){return x.dataset.id;}).join();
+    sortInts(cur.interventions);
+    if(cur.interventions.map(function(x){return x.id;}).join()!==before){ saveDraft(); renderList(); renderResult(); }
   });
   $('list').addEventListener('click',function(e){
     var cid=e.target.dataset&&e.target.dataset.cr; if(cid){ crOpen(cid); return; }
@@ -4196,6 +4214,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var its=Array.isArray(d.interventions)?d.interventions:[];
     its=its.filter(function(i){return i&&typeof i==='object'}).map(function(i){ var o={id:uid(),ticket:cleanStr(i.ticket),debut:cleanTime(i.debut),fin:cleanTime(i.fin)}; var c=cleanCr(i.cr); if(c) o.cr=c; var pcs=cleanPieces(i.pieces); if(pcs.length) o.pieces=pcs; return o; });
     if(!its.length) its=[{id:uid(),ticket:'',debut:'',fin:''}];
+    sortInts(its);
     return {date:key,conge:congeOf(d),depart:cleanTime(d.depart),kmAller:cleanStr(d.kmAller),retour:cleanTime(d.retour),kmRetour:cleanStr(d.kmRetour),pause:cleanStr(d.pause),interventions:its,astreinte:cleanAst(d.astreinte),hors:cleanHors(d.hors)};
   }
   $('restoreFile').addEventListener('change',function(){
