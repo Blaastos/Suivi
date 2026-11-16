@@ -261,7 +261,7 @@
   #tabDep .card.fu h2::before{content:"⛽";background:color-mix(in srgb,var(--c-ast) 22%,transparent)}
   #tabDep .card.rc h2::before{content:"📊";background:color-mix(in srgb,var(--accent) 20%,transparent)}
   .dpnote{font-size:13px;color:var(--muted);margin-top:6px}
-  #tabBtnStock{flex:0 0 46px;font-size:17px;padding:8px 0}
+  #tabBtnStock,#tabBtnVeh{flex:0 0 46px;font-size:17px;padding:8px 0}
   #tabStock .card{border-left-color:var(--c-hp)}
   #tabStock .card h2::before{content:"📦";background:color-mix(in srgb,var(--c-hp) 20%,transparent)}
   #tabStock .card.add{border-left-color:var(--c-dep)} #tabStock .card.add h2::before{content:"➕";background:color-mix(in srgb,var(--c-dep) 20%,transparent)}
@@ -337,6 +337,20 @@
   .dpsum2 span{border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:700}
   .dpsum2 .r{background:color-mix(in srgb,#e11d48 14%,transparent);color:#e11d48}
   .dpsum2 .g{background:color-mix(in srgb,#16a34a 14%,transparent);color:#16a34a}
+  .vph{margin-top:12px}.vph .ph-label{font-size:13px;color:var(--muted);margin-bottom:6px}
+  .vph .ph-row,.vit .ph-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .vph .ph-row img,.vit .ph-row img{width:76px;height:76px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:zoom-in;display:block}
+  .vit{border-top:1px solid var(--line);padding:6px 0 8px}.vit .ph-row{margin:2px 0 0}.vit .ph-row button:not(.x){padding:6px 10px;font-size:13px}
+  .vbig{font-size:30px;font-weight:800;letter-spacing:-.02em}.vsub{font-size:13px;color:var(--muted);margin-bottom:8px}
+  .vlast{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 10px}
+  .vlast div{background:var(--bg);border-radius:12px;padding:10px;text-align:center}
+  .vlast small{display:block;font-size:12px;color:var(--muted)}.vlast b{display:block;font-size:16px;margin:2px 0}.vlast span{font-size:12px;color:var(--muted)}
+  .vfl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 10px}
+  .vfl div{background:var(--bg);border-radius:12px;padding:9px 10px}.vfl b{display:block;font-size:14px}.vfl small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+  .dpi .t small.vst{font-weight:700}.dpi .t small.vst.ok{color:#16794c}.dpi .t small.vst.warn{color:#d97706}.dpi .t small.vst.late{color:#b4380f}
+  #tabVeh textarea{font:inherit;color:var(--text);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:11px;width:100%;resize:vertical}
+  .vdet{white-space:pre-wrap;font-size:14px;background:var(--bg);border-radius:10px;padding:8px 10px;margin:4px 0 6px}
+  .vst{font-size:12.5px;font-weight:700}.vst.ok{color:var(--ok,#16794c)}.vst.warn{color:#d97706}.vst.late{color:var(--warn,#b4380f)}
   .dph3{font-size:13px;font-weight:700;color:var(--muted);margin:16px 0 0;text-transform:uppercase;letter-spacing:.04em}
   .cgrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
   .cgrow label{flex:1 1 140px;display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--card);font-size:14px;font-weight:600}
@@ -404,7 +418,7 @@
   details.astm .astn{margin-left:auto;font-size:13px;color:var(--muted);font-weight:600}
   details.astm[open]>summary{border-bottom:1px solid var(--line)}
   details.astm>*:not(summary){margin:10px 12px}
-  @media(max-width:384px){ .tab{font-size:12.5px;padding:11px 1px} #tabBtnDep,#tabBtnTheme,#tabBtnStock{flex:0 0 38px} .tabs{gap:3px;padding:4px} }
+  @media(max-width:384px){ .tab{font-size:12.5px;padding:11px 1px} #tabBtnDep,#tabBtnTheme,#tabBtnStock,#tabBtnVeh{flex:0 0 36px} .tabs{gap:3px;padding:4px} }
   /* ===== v2 ===== */
   .dpf{position:relative}
   .dpf.nr.late{border-color:#9f1239;background:color-mix(in srgb,#9f1239 20%,var(--card));box-shadow:0 0 0 3px color-mix(in srgb,#e11d48 28%,transparent),0 0 26px 5px color-mix(in srgb,#e11d48 62%,transparent);animation:lateP 2.2s ease-in-out infinite}
@@ -479,7 +493,7 @@
   .lk-alt{margin-top:18px;border:none;background:none;color:var(--muted);text-decoration:underline}
   .lk-box.shake{animation:shk .35s}@keyframes shk{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
   #tabBtnAstreinte .lbl{display:inline}
-  @media(max-width:440px){ #tabBtnHome,#tabBtnAstreinte{flex:0 0 40px} #tabBtnAstreinte .lbl{display:none} #tabBtnDep,#tabBtnTheme,#tabBtnStock{flex:0 0 40px} }
+  @media(max-width:440px){ #tabBtnHome,#tabBtnAstreinte{flex:0 0 40px} #tabBtnAstreinte .lbl{display:none} #tabBtnDep,#tabBtnTheme,#tabBtnStock,#tabBtnVeh{flex:0 0 34px;font-size:16px} #tabBtnHome,#tabBtnAstreinte{flex:0 0 34px} .tabs{gap:2px;padding:4px} .tab{font-size:13px;min-width:0} }
 
 </style>
 </head>
@@ -512,6 +526,7 @@
     <button class="tab" id="tabBtnJournees" type="button">Journées</button>
     <button class="tab" id="tabBtnAstreinte" type="button" aria-label="Astreintes" title="Astreintes">🚨<span class="lbl"> Astreintes</span></button>
     <button class="tab" id="tabBtnDep" type="button" aria-label="Dépenses" title="Dépenses">💶</button>
+    <button class="tab" id="tabBtnVeh" type="button" aria-label="Véhicule" title="Véhicule">🚗</button>
     <button class="tab" id="tabBtnStock" type="button" aria-label="Stock camion" title="Stock camion">📦</button>
     <button class="tab" id="tabBtnTheme" type="button" aria-label="Apparence" title="Apparence">🎨</button>
   </div>
@@ -687,6 +702,112 @@
   </section>
   </div>
 
+  <div id="tabVeh" style="display:none">
+  <section class="card">
+    <h2>Mon véhicule</h2>
+    <div class="row">
+      <div class="field"><label for="vPlate">Plaque d'immatriculation</label><input type="text" id="vPlate" maxlength="12" placeholder="AB-123-CD" autocomplete="off" autocapitalize="characters"></div>
+      <div class="field"><label for="vModel">Véhicule (facultatif)</label><input type="text" id="vModel" maxlength="60" placeholder="ex. Kangoo blanc" autocomplete="off"></div>
+    </div>
+    <div class="vph"><div class="ph-label">📷 Extérieur</div><div id="vPhExt"></div></div>
+    <div class="vph"><div class="ph-label">📷 Intérieur</div><div id="vPhInt"></div></div>
+    <input type="file" id="vFile" accept="image/*" multiple style="display:none">
+    <div class="msg" id="vMsg"></div>
+    <div class="tools"><button type="button" class="primary" id="vReport">📄 Rapport PDF du véhicule</button></div>
+    <div class="dpnote">Le rapport reprend la plaque, le kilométrage, les entretiens, les lavages et toutes les photos. Il s'ouvre avec PDF et envoi par e-mail.</div>
+  </section>
+  <section class="card">
+    <h2>Kilométrage</h2>
+    <div id="vKmNow"></div>
+    <div class="row">
+      <div class="field"><label for="vkDate">Date du relevé</label><input type="date" id="vkDate"></div>
+      <div class="field"><label for="vkKm">Kilométrage (km)</label><input type="number" id="vkKm" min="0" step="1" inputmode="numeric" placeholder="0"></div>
+    </div>
+    <button type="button" class="primary" id="vkAdd" style="margin-top:12px">Enregistrer le relevé</button>
+    <div class="msg" id="vkMsg"></div>
+    <div id="vkList"></div>
+  </section>
+  <section class="card">
+    <h2>Lavage</h2>
+    <div id="vwLast"></div>
+    <div class="field" style="max-width:220px"><label for="vwDate">Date du lavage</label><input type="date" id="vwDate"></div>
+    <div class="tools"><button type="button" class="primary" id="vwExt">🚿 Lavage extérieur fait</button><button type="button" class="primary" id="vwInt">🧽 Lavage intérieur fait</button></div>
+    <div class="msg" id="vwMsg"></div>
+    <div id="vwList"></div>
+  </section>
+  <section class="card">
+    <h2>Entretiens à prévoir</h2>
+    <div id="vtList"></div>
+    <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="vtLabel">Entretien</label><input type="text" id="vtLabel" maxlength="60" placeholder="ex. Vidange, contrôle technique, courroie…" autocomplete="off"></div></div>
+    <div class="row" style="margin-top:10px">
+      <div class="field"><label for="vtKm">À (km)</label><input type="number" id="vtKm" min="0" step="1" inputmode="numeric" placeholder="ex. 120000"></div>
+      <div class="field"><label for="vtDate">Ou avant le (facultatif)</label><input type="date" id="vtDate"></div>
+    </div>
+    <button type="button" class="primary" id="vtAdd" style="margin-top:12px">Ajouter à prévoir</button>
+    <div class="msg" id="vtMsg"></div>
+  </section>
+  <section class="card">
+    <h2>Plaquettes de frein</h2>
+    <div class="row">
+      <div class="field"><label for="vbDate">Date du changement</label><input type="date" id="vbDate"></div>
+      <div class="field"><label for="vbKm">Kilométrage (km)</label><input type="number" id="vbKm" min="0" step="1" inputmode="numeric" placeholder="0"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="field"><label for="vbPos">Position</label><select id="vbPos"><option value="av">Avant</option><option value="ar">Arrière</option><option value="avar">Avant + arrière</option></select></div>
+      <div class="field"><label for="vbNext">Prochain à (km, facultatif)</label><input type="number" id="vbNext" min="0" step="1" inputmode="numeric" placeholder="ex. 80000"></div>
+    </div>
+    <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="vbNote">Remarque (facultatif)</label><input type="text" id="vbNote" maxlength="60" placeholder="marque, garage…" autocomplete="off"></div></div>
+    <button type="button" class="primary" id="vbAdd" style="margin-top:12px">Ajouter</button>
+    <div class="msg" id="vbMsg"></div>
+    <div id="vbList"></div>
+  </section>
+  <section class="card">
+    <h2>Pneus</h2>
+    <div class="row">
+      <div class="field"><label for="vyDate">Date du changement</label><input type="date" id="vyDate"></div>
+      <div class="field"><label for="vyKm">Kilométrage (km)</label><input type="number" id="vyKm" min="0" step="1" inputmode="numeric" placeholder="0"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="field"><label for="vyPos">Position</label><select id="vyPos"><option value="all">Les 4</option><option value="av">Avant</option><option value="ar">Arrière</option></select></div>
+      <div class="field"><label for="vySeas">Type</label><select id="vySeas"><option value="">Non précisé</option><option value="ete">Été</option><option value="hiv">Hiver</option><option value="q4">4 saisons</option></select></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div class="field"><label for="vyNext">Prochain à (km, facultatif)</label><input type="number" id="vyNext" min="0" step="1" inputmode="numeric" placeholder="ex. 70000"></div>
+      <div class="field"><label for="vyNote">Remarque (facultatif)</label><input type="text" id="vyNote" maxlength="60" placeholder="marque, taille…" autocomplete="off"></div>
+    </div>
+    <button type="button" class="primary" id="vyAdd" style="margin-top:12px">Ajouter</button>
+    <div class="msg" id="vyMsg"></div>
+    <div id="vyList"></div>
+  </section>
+  <section class="card">
+    <h2>Problèmes et pannes</h2>
+    <div class="row">
+      <div class="field"><label for="vpDate">Date</label><input type="date" id="vpDate"></div>
+      <div class="field"><label for="vpKm">Kilométrage (facultatif)</label><input type="number" id="vpKm" min="0" step="1" inputmode="numeric" placeholder="0"></div>
+    </div>
+    <div class="field"><label for="vpTitle">Problème</label><input type="text" id="vpTitle" maxlength="60" placeholder="ex. Voyant moteur, bruit au freinage…" autocomplete="off"></div>
+    <div class="field"><label for="vpDetail">Détail</label><textarea id="vpDetail" rows="4" maxlength="2000" placeholder="Décris la panne : quand ça arrive, symptômes, garage contacté…"></textarea></div>
+    <div class="tools"><button type="button" class="primary" id="vpAdd">Ajouter le problème</button></div>
+    <div class="msg" id="vpMsg"></div>
+    <div id="vpList"></div>
+  </section>
+  <section class="card">
+    <h2>Niveaux (huile…)</h2>
+    <div id="vlLast"></div>
+    <div class="row">
+      <div class="field"><label for="vlWhat">Niveau contrôlé</label><select id="vlWhat"></select></div>
+      <div class="field"><label for="vlDate">Date</label><input type="date" id="vlDate"></div>
+    </div>
+    <div class="row" id="vlOtherRow" style="margin-top:10px;display:none"><div class="field" style="flex:1 1 100%"><label for="vlOther">Lequel ?</label><input type="text" id="vlOther" maxlength="40" placeholder="ex. Liquide de direction" autocomplete="off"></div></div>
+    <div class="row" style="margin-top:10px">
+      <div class="field"><label for="vlSt">Résultat</label><select id="vlSt"><option value="ok">✓ Niveau OK</option><option value="fill">🔧 Rempli</option></select></div>
+      <div class="field"><label for="vlNote">Remarque (facultatif)</label><input type="text" id="vlNote" maxlength="60" placeholder="ex. +0,5 L" autocomplete="off"></div>
+    </div>
+    <button type="button" class="primary" id="vlAdd" style="margin-top:12px">Ajouter le contrôle</button>
+    <div class="msg" id="vlMsg"></div>
+    <div id="vlList"></div>
+  </section>
+  </div>
   <div id="tabStock" style="display:none">
   <section class="card">
     <h2>Stock du camion</h2>
@@ -3006,12 +3127,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
 
   // ---------- Onglets ----------
-  var TABS={home:['tabHome','tabBtnHome'],saisie:['tabSaisie','tabBtnSaisie'],journees:['tabJournees','tabBtnJournees'],astreinte:['tabAstreinte','tabBtnAstreinte'],dep:['tabDep','tabBtnDep'],stock:['tabStock','tabBtnStock'],theme:['tabTheme','tabBtnTheme']};
+  var TABS={home:['tabHome','tabBtnHome'],saisie:['tabSaisie','tabBtnSaisie'],journees:['tabJournees','tabBtnJournees'],astreinte:['tabAstreinte','tabBtnAstreinte'],dep:['tabDep','tabBtnDep'],stock:['tabStock','tabBtnStock'],veh:['tabVeh','tabBtnVeh'],theme:['tabTheme','tabBtnTheme']};
   function showTab(name){
     if(!TABS[name]) name='saisie';
     Object.keys(TABS).forEach(function(k){ var on=(k===name); $(TABS[k][0]).style.display=on?'':'none'; $(TABS[k][1]).className='tab'+(on?' on':''); });
     if(name==='home') renderHome();
     if(name==='stock') renderStock();
+    if(name==='veh') renderVeh();
     if(name==='dep') renderDep();
     if(name==='journees') renderHist();
     if(name==='astreinte') renderAgenda();
@@ -3025,6 +3147,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   $('tabBtnTheme').addEventListener('click',function(){ showTab('theme'); });
   $('tabBtnDep').addEventListener('click',function(){ showTab('dep'); });
   $('tabBtnStock').addEventListener('click',function(){ showTab('stock'); });
+  $('tabBtnVeh').addEventListener('click',function(){ showTab('veh'); });
 
   // ---------- Récaps ----------
   function esc(x){ return String(x).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
@@ -3763,9 +3886,272 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
   // ---------- Sauvegarde / import ----------
   function flash2(t){ $('msg2').textContent=t; setTimeout(function(){ $('msg2').textContent=''; },5000); }
+  // ---------- Véhicule : kilométrage, lavages, entretiens, niveaux, photos, rapport PDF ----------
+  var KEY_VEH='hs_veh_v1';
+  function vDate(x){ return /^\d{4}-\d{2}-\d{2}$/.test(x||'')?x:''; }
+  function vKm(x){ var n=Math.round(parseFloat(String(x==null?'':x).replace(/[\s ]/g,'').replace(',','.'))); return (isFinite(n)&&n>0&&n<10000000)?n:0; }
+  function vId(x){ return (x&&typeof x.id==='string'&&/^[\w-]{1,40}$/.test(x.id))?x.id:uid(); }
+  function vKmTxt(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' km'; }
+  var V_POS={av:'Avant',ar:'Arrière',avar:'Avant + arrière'}, V_POS4={all:'Les 4',av:'Avant',ar:'Arrière'}, V_SEAS={ete:'Été',hiv:'Hiver',q4:'4 saisons'};
+  var V_FLUIDS=['Huile moteur','Liquide de refroidissement','Liquide de frein','Lave-glace'];
+  var V_KIND={w:'washes',b:'brakes',t:'tyres',f:'fluids',k:'kms',td:'todo',p:'pannes'}, V_PHK=['w','b','t','f','k','td','p'];
+  function cleanVeh(v){
+    v=(v&&typeof v==='object')?v:{};
+    function arr(a,f,max){ return (Array.isArray(a)?a:[]).slice(0,max).filter(function(o){ return o&&typeof o==='object'; }).map(f).filter(Boolean); }
+    return {
+      plate:cleanStr(v.plate).toUpperCase().slice(0,12), model:cleanStr(v.model).slice(0,60),
+      kms:arr(v.kms,function(o){ var d=vDate(o.date),k=vKm(o.km); return d&&k?{id:vId(o),date:d,km:k}:null; },3000),
+      washes:arr(v.washes,function(o){ var d=vDate(o.date); return d&&(o.type==='int'||o.type==='ext')?{id:vId(o),date:d,type:o.type}:null; },3000),
+      todo:arr(v.todo,function(o){ var l=cleanStr(o.label); return l?{id:vId(o),label:l,km:vKm(o.km),date:vDate(o.date)}:null; },300),
+      brakes:arr(v.brakes,function(o){ var d=vDate(o.date); return d?{id:vId(o),date:d,km:vKm(o.km),pos:V_POS[o.pos]?o.pos:'av',note:cleanStr(o.note)}:null; },600),
+      tyres:arr(v.tyres,function(o){ var d=vDate(o.date); return d?{id:vId(o),date:d,km:vKm(o.km),pos:V_POS4[o.pos]?o.pos:'all',seas:V_SEAS[o.seas]?o.seas:'',note:cleanStr(o.note)}:null; },600),
+      pannes:arr(v.pannes,function(o){ var d=vDate(o.date),t=cleanStr(o.title).slice(0,60),dt=(typeof o.detail==='string'?o.detail:'').slice(0,2000); return d&&(t||dt)?{id:vId(o),date:d,km:vKm(o.km),title:t,detail:dt,done:!!o.done}:null; },1000),
+      fluids:arr(v.fluids,function(o){ var d=vDate(o.date),w=cleanStr(o.what).slice(0,40); return d&&w?{id:vId(o),date:d,what:w,st:o.st==='fill'?'fill':'ok',note:cleanStr(o.note)}:null; },3000)
+    };
+  }
+  var veh=cleanVeh(load(KEY_VEH,{}));
+  function saveVeh(){ store(KEY_VEH,veh); }
+  function vDesc(a,b){ return a.date<b.date?1:a.date>b.date?-1:0; }
+  function vCurKm(){ var m=null; veh.kms.forEach(function(k){ if(!m||k.date>m.date||(k.date===m.date&&k.km>m.km)) m=k; }); return m; }
+  function vDaysAgo(d){ return Math.round((Date.parse(today()+'T12:00:00')-Date.parse(d+'T12:00:00'))/864e5); }
+  function vAgo(d){ var n=vDaysAgo(d); return n<=0?'aujourd\'hui':n===1?'hier':'il y a '+n+' j'; }
+  function vLastWash(t){ var l=veh.washes.filter(function(x){ return x.type===t; }).sort(vDesc); return l[0]||null; }
+  function vKey(kind,id){ return 'veh|'+kind+'|'+id; }
+  function vAllKeys(){
+    var ks=['veh|ext','veh|int'];
+    V_PHK.forEach(function(k){ veh[V_KIND[k]].forEach(function(x){ ks.push(vKey(k,x.id)); }); });
+    return ks;
+  }
+  // état d'un entretien à prévoir
+  function vTodoState(x){
+    var cm=vCurKm(), parts=[], lvl=0;
+    if(x.km){
+      parts.push('à '+vKmTxt(x.km));
+      if(cm){ var r=x.km-cm.km; if(r>0){ parts.push('dans '+vKmTxt(r)); if(r<=1000) lvl=Math.max(lvl,1); } else { parts.push('dépassé de '+vKmTxt(-r)); lvl=2; } }
+    }
+    if(x.date){
+      var n=-vDaysAgo(x.date); parts.push('avant le '+fmtDate(x.date)+(n>=0?' (dans '+n+' j)':' (dépassé de '+(-n)+' j)'));
+      if(n<0) lvl=2; else if(n<=30) lvl=Math.max(lvl,1);
+    }
+    return {txt:parts.join(' · '),lvl:lvl};
+  }
+  var V_LVL=['ok','warn','late'];
+  // photos
+  function vPhHtml(key,max,label){
+    var list=asList(PH[key]), h='<div class="ph-row">';
+    list.forEach(function(o,i){ h+='<span class="thumb"><img src="'+o.d+'" alt="Photo" data-vv="'+key+'" data-vi="'+i+'"><button type="button" class="x" data-vx="'+key+'" data-vi="'+i+'" aria-label="Retirer la photo">×</button></span>'; });
+    if(list.length<max) h+='<button type="button" data-vp="'+key+'" data-vm="'+max+'">'+(list.length?'+ Photo':'📷 '+(label||'Ajouter une photo'))+'</button>';
+    return h+'</div>';
+  }
+  function vItem(kind,x,title,sub,right){
+    return '<div class="vit"><div class="dpi" style="border-top:0;padding:4px 0"><div class="t"><b>'+title+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</div>'+(right?'<div class="m">'+right+'</div>':'')+
+      '<button type="button" class="del" data-vdel="'+kind+'" data-vid="'+x.id+'" aria-label="Supprimer">🗑️</button></div>'+vPhHtml(vKey(kind,x.id),3,'Ajouter des photos')+'</div>';
+  }
+  var vRenderT=0;
+  function renderVeh(){
+    if(!$('tabVeh')) return;
+    var need=vAllKeys().filter(function(k){ return PH[k]===undefined; });
+    if(need.length&&!vRenderT){ vRenderT=1; loadPhotos(need).then(function(){ vRenderT=0; if($('tabVeh').style.display!=='none') renderVeh(); }); }
+    if(document.activeElement!==$('vPlate')) $('vPlate').value=veh.plate;
+    if(document.activeElement!==$('vModel')) $('vModel').value=veh.model;
+    $('vPhExt').innerHTML=vPhHtml('veh|ext',6,'Ajouter des photos de l\'extérieur');
+    $('vPhInt').innerHTML=vPhHtml('veh|int',6,'Ajouter des photos de l\'intérieur');
+    var cm=vCurKm(), h='';
+    $('vKmNow').innerHTML=cm?'<div class="vbig">'+vKmTxt(cm.km)+'</div><div class="vsub">relevé du '+fmtDate(cm.date)+' ('+vAgo(cm.date)+')</div>':'<div class="dpnote">Aucun relevé pour l\'instant : note ton kilométrage ci-dessous.</div>';
+    $('vkKm').placeholder=cm?'ex. '+(cm.km+100):'0';
+    ['vbKm','vyKm','vpKm'].forEach(function(id){ $(id).placeholder=cm?'ex. '+cm.km:'0'; });
+    var ks=veh.kms.slice().sort(function(a,b){ return a.date<b.date?1:a.date>b.date?-1:b.km-a.km; });
+    h=''; ks.slice(0,6).forEach(function(k,i){ var p=ks[i+1]; h+=vItem('k',k,esc(fmtDate(k.date)),p?'+'+vKmTxt(Math.max(0,k.km-p.km))+' depuis le relevé précédent':'',vKmTxt(k.km)); });
+    $('vkList').innerHTML=(h?'<div class="dph3">Derniers relevés</div>':'')+h+(ks.length>6?'<div class="dpnote">'+ks.length+' relevés enregistrés (les 6 derniers sont affichés).</div>':'');
+    // lavages
+    var le=vLastWash('ext'), li=vLastWash('int');
+    $('vwLast').innerHTML='<div class="vlast"><div><small>🚿 Extérieur</small><b>'+(le?esc(fmtDate(le.date)):'–')+'</b><span>'+(le?vAgo(le.date):'jamais noté')+'</span></div><div><small>🧽 Intérieur</small><b>'+(li?esc(fmtDate(li.date)):'–')+'</b><span>'+(li?vAgo(li.date):'jamais noté')+'</span></div></div>';
+    h=''; veh.washes.slice().sort(vDesc).forEach(function(x){ h+=vItem('w',x,esc(fmtDate(x.date)),x.type==='ext'?'🚿 Lavage extérieur':'🧽 Lavage intérieur',''); });
+    $('vwList').innerHTML=(h?'<div class="dph3">Historique des lavages</div>':'')+h;
+    // à prévoir
+    var td=veh.todo.slice().sort(function(a,b){ var sa=vTodoState(a).lvl, sb=vTodoState(b).lvl; if(sa!==sb) return sb-sa; return (a.km||1e9)-(b.km||1e9); });
+    h=''; td.forEach(function(x){ var s=vTodoState(x); h+='<div class="vit"><div class="dpi" style="border-top:0;padding:4px 0"><div class="t"><b>'+esc(x.label)+'</b><small class="vst '+V_LVL[s.lvl]+'">'+esc(s.txt||'sans échéance')+'</small></div><button type="button" data-vdone="'+x.id+'">✓ Fait</button><button type="button" class="del" data-vdel="td" data-vid="'+x.id+'" aria-label="Supprimer">🗑️</button></div>'+vPhHtml(vKey('td',x.id),3,'Ajouter des photos')+'</div>'; });
+    $('vtList').innerHTML=h||'<div class="dpnote">Rien de prévu. Ajoute un entretien avec son kilométrage ci-dessous.</div>';
+    // plaquettes / pneus
+    h=''; veh.brakes.slice().sort(vDesc).forEach(function(x){ h+=vItem('b',x,esc(fmtDate(x.date)),esc(V_POS[x.pos])+(x.note?' · '+esc(x.note):''),x.km?vKmTxt(x.km):''); });
+    $('vbList').innerHTML=(h?'<div class="dph3">Historique</div>':'')+h;
+    h=''; veh.tyres.slice().sort(vDesc).forEach(function(x){ h+=vItem('t',x,esc(fmtDate(x.date)),esc(V_POS4[x.pos])+(x.seas?' · '+esc(V_SEAS[x.seas]):'')+(x.note?' · '+esc(x.note):''),x.km?vKmTxt(x.km):''); });
+    $('vyList').innerHTML=(h?'<div class="dph3">Historique</div>':'')+h;
+    // pannes
+    var pn=veh.pannes.slice().sort(function(a,b){ return (a.done?1:0)-(b.done?1:0)||vDesc(a,b); });
+    h=''; pn.forEach(function(x){
+      h+='<div class="vit"><div class="dpi" style="border-top:0;padding:4px 0"><div class="t"><b>'+esc(x.title||'Problème')+'</b><small class="vst '+(x.done?'ok':'late')+'">'+(x.done?'✓ Résolu':'⚠️ En cours')+'</small><small>'+esc(fmtDate(x.date))+(x.km?' · '+vKmTxt(x.km):'')+'</small></div><button type="button" data-vpdone="'+x.id+'">'+(x.done?'Rouvrir':'✓ Résolu')+'</button><button type="button" class="del" data-vdel="p" data-vid="'+x.id+'" aria-label="Supprimer">🗑️</button></div>'+(x.detail?'<div class="vdet">'+esc(x.detail)+'</div>':'')+vPhHtml(vKey('p',x.id),6,'Ajouter des photos')+'</div>'; });
+    $('vpList').innerHTML=h||'<div class="dpnote">Aucun problème noté.</div>';
+    // niveaux
+    var seen={}, last=[]; veh.fluids.slice().sort(vDesc).forEach(function(x){ if(!seen[x.what]){ seen[x.what]=1; last.push(x); } });
+    $('vlLast').innerHTML=last.length?'<div class="vfl">'+last.map(function(x){ return '<div><b>'+esc(x.what)+'</b><span class="vst '+(x.st==='ok'?'ok':'warn')+'">'+(x.st==='ok'?'✓ OK':'🔧 Rempli')+'</span><small>'+esc(fmtDate(x.date))+' · '+vAgo(x.date)+'</small></div>'; }).join('')+'</div>':'';
+    h=''; veh.fluids.slice().sort(vDesc).forEach(function(x){ h+=vItem('f',x,esc(x.what),esc(fmtDate(x.date))+(x.note?' · '+esc(x.note):''),x.st==='ok'?'✓ OK':'🔧 Rempli'); });
+    $('vlList').innerHTML=(h?'<div class="dph3">Historique des contrôles</div>':'')+h;
+  }
+  function vInit(){
+    ['vkDate','vwDate','vbDate','vyDate','vlDate','vpDate'].forEach(function(id){ $(id).value=today(); });
+    $('vlWhat').innerHTML=V_FLUIDS.map(function(f){ return '<option>'+esc(f)+'</option>'; }).join('')+'<option value="__other">Autre…</option>';
+    $('vlWhat').addEventListener('change',function(){ $('vlOtherRow').style.display=this.value==='__other'?'':'none'; });
+    $('vPlate').addEventListener('input',function(){ veh.plate=this.value.toUpperCase().slice(0,12); saveVeh(); });
+    $('vModel').addEventListener('input',function(){ veh.model=this.value.slice(0,60); saveVeh(); });
+  }
+  vInit();
+  var vPick={key:null,max:3};
+  function vAddPhotos(key,max,files){
+    return loadPhotos([key]).then(function(){
+      var room=max-asList(PH[key]).length; if(room<=0) return 'max';
+      var acc=[], chain=Promise.resolve();
+      files.slice(0,room).forEach(function(f){ chain=chain.then(function(){ return compressImage(f).then(function(o){ acc.push(o); },function(){}); }); });
+      return chain.then(function(){ if(!acc.length) return 'err'; return setPhotos(key,asList(PH[key]).concat(acc)).then(function(){ return 'ok'; }); });
+    }).catch(function(){ return 'err'; });
+  }
+  $('vFile').addEventListener('change',function(){
+    var inp=this, files=Array.prototype.slice.call(inp.files||[]); if(!files.length||!vPick.key) return;
+    fMsg('vMsg','Traitement…');
+    vAddPhotos(vPick.key,vPick.max,files).then(function(r){ fMsg('vMsg',r==='ok'?'Photo ajoutée.':r==='max'?'Maximum atteint.':'Impossible de lire cette image.'); inp.value=''; renderVeh(); });
+  });
+  function vFind(kind,id){ return veh[V_KIND[kind]].filter(function(x){ return x.id===id; })[0]; }
+  $('tabVeh').addEventListener('click',function(e){
+    var b=e.target.closest('[data-vv],[data-vx],[data-vp],[data-vdel],[data-vdone],[data-vpdone]'); if(!b) return; var ds=b.dataset;
+    if(ds.vv!==undefined){ loadPhotos([ds.vv]).then(function(){ viewPhotos(PH[ds.vv],+ds.vi||0,'Véhicule'); }); }
+    else if(ds.vp){ vPick={key:ds.vp,max:+ds.vm||3}; $('vFile').click(); }
+    else if(ds.vx){ var i=+ds.vi; ask('Retirer cette photo ?','Elle sera supprimée.',['Retirer','Garder']).then(function(k){ if(k!==0) return; loadPhotos([ds.vx]).then(function(){ var l=asList(PH[ds.vx]); l.splice(i,1); return setPhotos(ds.vx,l); }).then(renderVeh); }); }
+    else if(ds.vpdone){ var q=vFind('p',ds.vpdone); if(q){ q.done=!q.done; saveVeh(); renderVeh(); } }
+    else if(ds.vdone){ var t=veh.todo.filter(function(x){ return x.id===ds.vdone; })[0]; if(!t) return;
+      ask('Entretien fait ?','« '+t.label+' » sera retiré de la liste. Pense à noter le changement (plaquettes, pneus…) dans sa section.',['Retirer','Garder']).then(function(k){ if(k!==0) return; veh.todo=veh.todo.filter(function(x){ return x.id!==ds.vdone; }); saveVeh(); renderVeh(); }); }
+    else if(ds.vdel){ var x=vFind(ds.vdel,ds.vid); if(!x) return; var hasPh=V_PHK.indexOf(ds.vdel)>-1;
+      ask('Supprimer cette ligne ?',hasPh?'Ses photos seront supprimées aussi.':'Elle sera retirée.',['Supprimer','Garder']).then(function(k){ if(k!==0) return;
+        veh[V_KIND[ds.vdel]]=veh[V_KIND[ds.vdel]].filter(function(y){ return y.id!==ds.vid; }); saveVeh();
+        if(hasPh) setPhotos(vKey(ds.vdel,ds.vid),[]); renderVeh(); }); }
+  });
+  $('vkAdd').addEventListener('click',function(){
+    var d=$('vkDate').value, k=vKm($('vkKm').value);
+    if(!vDate(d)){ fMsg('vkMsg','Choisis une date.'); return; }
+    if(!k){ fMsg('vkMsg','Mets le kilométrage.'); return; }
+    var c=vCurKm();
+    function go(){ veh.kms.push({id:uid(),date:d,km:k}); saveVeh(); $('vkKm').value=''; fMsg('vkMsg','Relevé enregistré : '+vKmTxt(k)+' le '+fmtDate(d)+'.'); renderVeh(); }
+    if(c&&d>=c.date&&k<c.km) ask('Kilométrage plus bas ?','Le dernier relevé est de '+vKmTxt(c.km)+' ('+fmtDate(c.date)+'). Enregistrer quand même ?',['Enregistrer','Annuler']).then(function(i){ if(i===0) go(); });
+    else go();
+  });
+  function vWash(type){
+    var d=$('vwDate').value; if(!vDate(d)){ fMsg('vwMsg','Choisis une date.'); return; }
+    veh.washes.push({id:uid(),date:d,type:type}); saveVeh();
+    fMsg('vwMsg','Lavage '+(type==='ext'?'extérieur':'intérieur')+' noté le '+fmtDate(d)+'. Tu peux ajouter des photos dans l\'historique.'); renderVeh();
+  }
+  $('vwExt').addEventListener('click',function(){ vWash('ext'); });
+  $('vwInt').addEventListener('click',function(){ vWash('int'); });
+  $('vtAdd').addEventListener('click',function(){
+    var l=$('vtLabel').value.trim().slice(0,60), k=vKm($('vtKm').value), d=vDate($('vtDate').value);
+    if(!l){ fMsg('vtMsg','Dis quel entretien est à prévoir.'); return; }
+    veh.todo.push({id:uid(),label:l,km:k,date:d}); saveVeh(); $('vtLabel').value=''; $('vtKm').value=''; $('vtDate').value='';
+    fMsg('vtMsg','Ajouté.'); renderVeh();
+  });
+  $('vbAdd').addEventListener('click',function(){
+    var d=$('vbDate').value; if(!vDate(d)){ fMsg('vbMsg','Choisis une date.'); return; }
+    var pos=$('vbPos').value, nx=vKm($('vbNext').value);
+    veh.brakes.push({id:uid(),date:d,km:vKm($('vbKm').value),pos:V_POS[pos]?pos:'av',note:$('vbNote').value.trim().slice(0,60)});
+    if(nx) veh.todo.push({id:uid(),label:'Plaquettes de frein ('+V_POS[pos].toLowerCase()+')',km:nx,date:''});
+    saveVeh(); $('vbKm').value=''; $('vbNext').value=''; $('vbNote').value='';
+    fMsg('vbMsg','Changement noté le '+fmtDate(d)+(nx?' · prochain prévu à '+vKmTxt(nx):'')+'. Photos possibles dans l\'historique.'); renderVeh();
+  });
+  $('vyAdd').addEventListener('click',function(){
+    var d=$('vyDate').value; if(!vDate(d)){ fMsg('vyMsg','Choisis une date.'); return; }
+    var pos=$('vyPos').value, se=$('vySeas').value, nx=vKm($('vyNext').value);
+    veh.tyres.push({id:uid(),date:d,km:vKm($('vyKm').value),pos:V_POS4[pos]?pos:'all',seas:V_SEAS[se]?se:'',note:$('vyNote').value.trim().slice(0,60)});
+    if(nx) veh.todo.push({id:uid(),label:'Pneus ('+V_POS4[pos].toLowerCase()+(V_SEAS[se]?', '+V_SEAS[se].toLowerCase():'')+')',km:nx,date:''});
+    saveVeh(); $('vyKm').value=''; $('vyNext').value=''; $('vyNote').value='';
+    fMsg('vyMsg','Changement noté le '+fmtDate(d)+(nx?' · prochain prévu à '+vKmTxt(nx):'')+'. Photos possibles dans l\'historique.'); renderVeh();
+  });
+  $('vlAdd').addEventListener('click',function(){
+    var d=$('vlDate').value; if(!vDate(d)){ fMsg('vlMsg','Choisis une date.'); return; }
+    var w=$('vlWhat').value==='__other'?$('vlOther').value.trim().slice(0,40):$('vlWhat').value;
+    if(!w){ fMsg('vlMsg','Dis quel niveau tu as contrôlé.'); return; }
+    veh.fluids.push({id:uid(),date:d,what:w,st:$('vlSt').value==='fill'?'fill':'ok',note:$('vlNote').value.trim().slice(0,60)});
+    saveVeh(); $('vlNote').value=''; $('vlOther').value='';
+    fMsg('vlMsg',w+' : '+($('vlSt').value==='fill'?'rempli':'niveau OK')+' le '+fmtDate(d)+'.'); renderVeh();
+  });
+  $('vpAdd').addEventListener('click',function(){
+    var d=$('vpDate').value, t=$('vpTitle').value.trim().slice(0,60), dt=$('vpDetail').value.trim().slice(0,2000);
+    if(!vDate(d)){ fMsg('vpMsg','Choisis une date.'); return; }
+    if(!t&&!dt){ fMsg('vpMsg','Décris le problème ou la panne.'); return; }
+    veh.pannes.push({id:uid(),date:d,km:vKm($('vpKm').value),title:t,detail:dt,done:false}); saveVeh();
+    $('vpTitle').value=''; $('vpDetail').value=''; $('vpKm').value='';
+    fMsg('vpMsg','Problème noté. Tu peux ajouter des photos dans la liste.'); renderVeh();
+  });
+  // ----- rapport -----
+  function vehText(){
+    var t=['RAPPORT VEHICULE'+(veh.plate?' - '+veh.plate:'')+(veh.model?' ('+veh.model+')':'')], cm=vCurKm();
+    t.push(cm?'Kilometrage : '+vKmTxt(cm.km)+' (au '+fmtDate(cm.date)+')':'Kilometrage : non releve');
+    var le=vLastWash('ext'), li=vLastWash('int');
+    t.push('Dernier lavage exterieur : '+(le?fmtDate(le.date):'-')+' / interieur : '+(li?fmtDate(li.date):'-'));
+    if(veh.todo.length){ t.push('','A PREVOIR'); veh.todo.forEach(function(x){ t.push('- '+x.label+' : '+(vTodoState(x).txt||'sans echeance')); }); }
+    if(veh.brakes.length){ t.push('','PLAQUETTES DE FREIN'); veh.brakes.slice().sort(vDesc).forEach(function(x){ t.push(fmtDate(x.date)+' - '+V_POS[x.pos]+(x.km?' - '+vKmTxt(x.km):'')+(x.note?' - '+x.note:'')); }); }
+    if(veh.tyres.length){ t.push('','PNEUS'); veh.tyres.slice().sort(vDesc).forEach(function(x){ t.push(fmtDate(x.date)+' - '+V_POS4[x.pos]+(x.seas?' - '+V_SEAS[x.seas]:'')+(x.km?' - '+vKmTxt(x.km):'')+(x.note?' - '+x.note:'')); }); }
+    if(veh.pannes.length){ t.push('','PROBLEMES ET PANNES'); veh.pannes.slice().sort(vDesc).forEach(function(x){ t.push(fmtDate(x.date)+' - '+(x.title||'Probleme')+(x.km?' - '+vKmTxt(x.km):'')+' ['+(x.done?'resolu':'en cours')+']'+(x.detail?'\n   '+x.detail.replace(/\n/g,'\n   '):'')); }); }
+    if(veh.fluids.length){ t.push('','NIVEAUX'); veh.fluids.slice().sort(vDesc).forEach(function(x){ t.push(fmtDate(x.date)+' - '+x.what+' : '+(x.st==='ok'?'OK':'rempli')+(x.note?' - '+x.note:'')); }); }
+    if(veh.washes.length){ t.push('','LAVAGES'); veh.washes.slice().sort(vDesc).forEach(function(x){ t.push(fmtDate(x.date)+' - '+(x.type==='ext'?'exterieur':'interieur')); }); }
+    return t.join('\n');
+  }
+  function pdfVeh(noSave){
+    var doc=pdfLib(), cm=vCurKm(), le=vLastWash('ext'), li=vLastWash('int');
+    var y=pdfHeader(doc,'Rapport véhicule',(veh.plate||'Plaque non renseignée')+(veh.model?'  -  '+veh.model:''));
+    y=pdfCards(doc,y,[{label:'Immatriculation',value:veh.plate||'-',small:true},{label:'Kilométrage',value:cm?vKmTxt(cm.km):'-',sub:cm?'relevé du '+fmtDate(cm.date):'',small:true},{label:'Derniers lavages',value:'Ext. '+(le?fmtDate(le.date):'-'),sub:'Int. '+(li?fmtDate(li.date):'-'),small:true}]);
+    function tbl(title,head,body,styles,cellFn){
+      if(!body.length) return;
+      if(y>235){ doc.addPage(); y=24; }
+      y=pdfSection(doc,y,title); var o=tableBase(); o.startY=y+2; o.head=[head]; o.body=body; if(styles) o.columnStyles=styles; if(cellFn) o.didParseCell=cellFn;
+      doc.autoTable(o); y=doc.lastAutoTable.finalY+12;
+    }
+    var td=veh.todo.slice().sort(function(a,b){ return vTodoState(b).lvl-vTodoState(a).lvl||(a.km||1e9)-(b.km||1e9); });
+    tbl('Entretiens à prévoir',['Entretien','Échéance'],td.map(function(x){ return [ws(x.label),ws(vTodoState(x).txt||'-')]; }),null,function(h){ if(h.section==='body'&&h.column.index===1){ var l=vTodoState(td[h.row.index]).lvl; if(l===2){ h.cell.styles.textColor=C_WARN; h.cell.styles.fontStyle='bold'; } else if(l===1){ h.cell.styles.textColor=[217,119,6]; } } });
+    tbl('Problèmes et pannes',['Date','Problème','Statut','Détail'],veh.pannes.slice().sort(vDesc).map(function(x){ return [shortDay(x.date)+'/'+x.date.slice(2,4),ws(x.title||'-')+(x.km?'\n'+ws(vKmTxt(x.km)):''),x.done?'Résolu':'En cours',(x.detail||'-').split('\n').map(ws).join('\n')]; }),{3:{cellWidth:70}},function(h){ if(h.section==='body'&&h.column.index===2){ h.cell.styles.textColor=veh.pannes.slice().sort(vDesc)[h.row.index].done?C_OK:C_WARN; h.cell.styles.fontStyle='bold'; } });
+    tbl('Plaquettes de frein',['Date','Kilométrage','Position','Remarque'],veh.brakes.slice().sort(vDesc).map(function(x){ return [shortDay(x.date)+'/'+x.date.slice(2,4),x.km?vKmTxt(x.km):'-',ws(V_POS[x.pos]),ws(x.note||'-')]; }));
+    tbl('Pneus',['Date','Kilométrage','Position','Type','Remarque'],veh.tyres.slice().sort(vDesc).map(function(x){ return [shortDay(x.date)+'/'+x.date.slice(2,4),x.km?vKmTxt(x.km):'-',ws(V_POS4[x.pos]),ws(x.seas?V_SEAS[x.seas]:'-'),ws(x.note||'-')]; }));
+    tbl('Niveaux',['Date','Élément','Résultat','Remarque'],veh.fluids.slice().sort(vDesc).map(function(x){ return [shortDay(x.date)+'/'+x.date.slice(2,4),ws(x.what),x.st==='ok'?'OK':'Rempli',ws(x.note||'-')]; }));
+    tbl('Lavages',['Date','Type'],veh.washes.slice().sort(vDesc).map(function(x){ return [shortDay(x.date)+'/'+x.date.slice(2,4),x.type==='ext'?'Extérieur':'Intérieur']; }));
+    var ks=veh.kms.slice().sort(function(a,b){ return a.date<b.date?1:a.date>b.date?-1:b.km-a.km; });
+    tbl('Relevés kilométriques',['Date','Kilométrage','Écart'],ks.slice(0,15).map(function(k,i){ var p=ks[i+1]; return [shortDay(k.date)+'/'+k.date.slice(2,4),vKmTxt(k.km),p?'+'+vKmTxt(Math.max(0,k.km-p.km)):'-']; }),{1:{halign:'right',fontStyle:'bold'},2:{halign:'right'}},function(h){ if(h.section==='head'&&h.column.index>0) h.cell.styles.halign='right'; });
+    var L=[];
+    asList(PH['veh|ext']).forEach(function(p,i,a){ L.push({o:p,c:'Extérieur'+(a.length>1?' ('+(i+1)+'/'+a.length+')':'')}); });
+    asList(PH['veh|int']).forEach(function(p,i,a){ L.push({o:p,c:'Intérieur'+(a.length>1?' ('+(i+1)+'/'+a.length+')':'')}); });
+    [['p','pannes',function(x){ return 'Problème : '+(x.title||'-'); }],['w','washes',function(x){ return 'Lavage '+(x.type==='ext'?'extérieur':'intérieur'); }],['b','brakes',function(){ return 'Plaquettes'; }],['t','tyres',function(){ return 'Pneus'; }],['f','fluids',function(x){ return x.what; }],['k','kms',function(x){ return 'Relevé '+vKmTxt(x.km); }],['td','todo',function(x){ return 'À prévoir : '+x.label; }]].forEach(function(g){
+      veh[g[1]].slice().sort(function(a,b){ return (b.date||'')<(a.date||'')?-1:1; }).forEach(function(x){ asList(PH[vKey(g[0],x.id)]).forEach(function(p,i,a){ L.push({o:p,c:g[2](x)+(x.date?' - '+fmtDate(x.date):'')+(a.length>1?' ('+(i+1)+'/'+a.length+')':'')}); }); });
+    });
+    if(L.length){
+      var W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), gap=8, colW=(W-28-gap)/2, bottom=H-20, yy=pdfSectionPage(doc,true,'Photos'), col=0, rowH=0;
+      L.forEach(function(it){
+        var w=colW, h=w/(it.o.w/it.o.h); if(h>115) h=115;
+        if(col===0&&yy+h+12>bottom){ yy=pdfSectionPage(doc,false,'Photos'); }
+        if(h>bottom-yy-12) h=bottom-yy-12; w=h*(it.o.w/it.o.h); if(w>colW){ w=colW; h=w/(it.o.w/it.o.h); }
+        var x=14+col*(colW+gap);
+        doc.setFont('helvetica','bold'); doc.setFontSize(10); tcol(doc,C_NAVY); doc.text(ws(it.c),x,yy);
+        dcol(doc,C_LINE); doc.setLineWidth(0.3); doc.roundedRect(x-0.6,yy+3.4,w+1.2,h+1.2,1.5,1.5,'S'); doc.addImage(it.o.d,'JPEG',x,yy+4,w,h);
+        rowH=Math.max(rowH,h+12);
+        if(col===1){ yy+=rowH; rowH=0; col=0; } else col=1;
+      });
+    }
+    pdfFooter(doc);
+    var name='rapport_vehicule_'+(veh.plate?veh.plate.replace(/[^A-Z0-9]/g,'')+'_':'')+today()+'.pdf';
+    if(!noSave) doc.save(name);
+    return {doc:doc,name:name};
+  }
+  $('vReport').addEventListener('click',function(){
+    var cm=vCurKm(), h='<h3 style="margin:0 0 4px">🚗 Rapport véhicule'+(veh.plate?' · '+esc(veh.plate):'')+'</h3>';
+    h+='<div class="dpsum" style="grid-template-columns:1fr 1fr"><div class="tt"><small>Kilométrage</small><b>'+(cm?esc(vKmTxt(cm.km)):'–')+'</b></div><div><small>À prévoir</small><b>'+veh.todo.length+'</b></div></div>';
+    var np=asList(PH['veh|ext']).length+asList(PH['veh|int']).length; vAllKeys().forEach(function(k){ if(k!=='veh|ext'&&k!=='veh|int') np+=asList(PH[k]).length; });
+    h+='<div class="dpnote">'+veh.brakes.length+' plaquettes · '+veh.tyres.length+' pneus · '+veh.fluids.length+' contrôles de niveaux · '+veh.pannes.length+' problème(s) · '+veh.washes.length+' lavages · '+np+' photo(s)</div>';
+    loadPhotos(vAllKeys()).then(function(){
+      openDlg(h,vehText(),function(){ pdfVeh(); },function(notify){
+        var out; try{ out=pdfVeh(true); }catch(er){ notify('Impossible de créer le PDF ('+(er&&er.message?er.message:er)+').'); return Promise.resolve('error'); }
+        return deliverDoc(out,'Rapport véhicule'+(veh.plate?' '+veh.plate:'')+' '+fmtDate(today()),vehText(),notify);
+      });
+    });
+  });
+
   function buildPayload(withPhotos){
     var ks=[];
     if(withPhotos){
+      vAllKeys().forEach(function(k){ ks.push(k); });
       Object.keys(days).forEach(function(dk){ KINDS.forEach(function(kind){ ks.push(dk+'|'+kind); }); });
       dep.fuel.forEach(function(f){ ks.push('fuel|'+f.id); });
       dep.achats.forEach(function(f){ ks.push('ach|'+f.id); });
@@ -3773,7 +4159,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     return loadPhotos(ks).then(function(){
       var photos={}, n=0;
       ks.forEach(function(k){ var l=asList(PH[k]); if(l.length){ photos[k]=l; n+=l.length; } });
-      return {app:'suivi-journee',version:3,exportedAt:new Date().toISOString(),settings:backupSettings(),days:days,draft:cur,photos:photos,astreintes:periods,depenses:dep,stock:stock,_n:n};
+      return {app:'suivi-journee',version:3,exportedAt:new Date().toISOString(),settings:backupSettings(),days:days,draft:cur,photos:photos,astreintes:periods,depenses:dep,stock:stock,vehicule:veh,_n:n};
     });
   }
   $('backup').addEventListener('click',function(){
@@ -3861,6 +4247,18 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         cs.items.forEach(function(y){ if(!hn[y.id]&&!hn['n:'+y.nom.toLowerCase()]){ stock.items.push(y); nst++; } });
         saveStock(); renderStock();
       }
+      var nv=0, vJobs=[];
+      if(data.vehicule&&typeof data.vehicule==='object'){
+        var cv=cleanVeh(data.vehicule);
+        if(!veh.plate&&cv.plate) veh.plate=cv.plate; if(!veh.model&&cv.model) veh.model=cv.model;
+        [['kms','k'],['washes','w'],['todo','td'],['brakes','b'],['tyres','t'],['fluids','f'],['pannes','p']].forEach(function(g){
+          var have={}; veh[g[0]].forEach(function(x){ have[x.id]=1; });
+          cv[g[0]].forEach(function(x){ if(have[x.id]) return; veh[g[0]].push(x); nv++;
+            if(V_PHK.indexOf(g[1])>-1){ var l=asList((data.photos||{})[vKey(g[1],x.id)]); if(l.length) vJobs.push(setPhotos(vKey(g[1],x.id),l)); } });
+        });
+        ['veh|ext','veh|int'].forEach(function(k){ var l=asList((data.photos||{})[k]); if(l.length) vJobs.push(loadPhotos([k]).then(function(){ if(!asList(PH[k]).length) return setPhotos(k,l); })); });
+        saveVeh(); renderVeh();
+      }
       var np=0;
       if(Array.isArray(data.astreintes)){
         data.astreintes.forEach(function(q){
@@ -3876,7 +4274,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         var l=asList(ph[dk+'|'+kind]);
         if(l.length){ jobs.push(setPhotos(dk+'|'+kind,l)); nph+=l.length; }
       }); });
-      Promise.all(jobs.concat(fuelJobs)).then(function(rs){
+      Promise.all(jobs.concat(fuelJobs,vJobs)).then(function(rs){
         renderHist();
         flash2(keys.length+' journée(s) importée(s)'+(nph?' avec '+nph+' photo(s)':'')+(np?' et '+np+' astreinte(s)':'')+(ndep?' + '+ndep+' dépense(s)':'')+'.'+(rs.indexOf(false)>-1?' Certaines photos n\'ont pas pu être conservées (stockage indisponible).':''));
       });
@@ -4169,7 +4567,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   var KEY_BK='hs_bk_v1', bkBusy=false, bkNote={t:'',bad:false};
   function bkState(){ var s=load(KEY_BK,{}); return (s&&typeof s==='object')?s:{}; }
   function bkSig(){
-    var s=''; [KEY_DAYS,KEY_DEP,KEY_STOCK,KEY_AST,KEY_SET].forEach(function(k){ try{ s+=(localStorage.getItem(k)||'')+'|'; }catch(e){} });
+    var s=''; [KEY_DAYS,KEY_DEP,KEY_STOCK,KEY_AST,KEY_SET,KEY_VEH].forEach(function(k){ try{ s+=(localStorage.getItem(k)||'')+'|'; }catch(e){} });
     try{ s+=(localStorage.getItem('hs_phv')||'0'); }catch(e){}
     var h=5381; for(var i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0;
     return s.length+':'+h;
