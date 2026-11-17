@@ -42,14 +42,14 @@
   .pl-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
   .pl-rf{min-width:44px;font-size:18px;padding:6px 12px}
   .pl-info{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.pl-info span{font-size:13px;font-weight:600;background:color-mix(in srgb,var(--c-int) 12%,var(--card));border-radius:999px;padding:4px 10px}
-  .pl-r{display:flex;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
-  .pl-h{min-width:78px;font-weight:700;font-size:13px;color:var(--muted);padding-top:2px}
+  .pl-r{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+  .pl-h{min-width:70px;font-weight:700;font-size:13px;color:var(--muted);padding-top:2px}
   .pl-t{flex:1;min-width:0;font-size:15px;word-break:break-word}.pl-t b{color:var(--c-int)}.pl-t b.pl-tk{cursor:pointer;border-bottom:1px dashed currentColor;-webkit-tap-highlight-color:transparent}.pl-t b.pl-tk.cp{color:#16794c;border-bottom-style:solid}
   .pl-n{font-size:13px;color:var(--muted);margin-top:2px}
   .pl-p{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
   .pl-pg{display:inline-flex;align-items:center;gap:6px;margin:0 8px 6px 0}
   .pl-sms{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:999px;text-decoration:none;font-size:16px;background:linear-gradient(135deg,#2563eb,#0891b2);box-shadow:0 1px 4px rgba(0,0,0,.18)}
-  .pl-tel{display:inline-block;font-weight:700;font-size:14px;text-decoration:none;color:#fff;background:linear-gradient(135deg,#16a34a,#0d9488);border-radius:999px;padding:7px 14px}
+  .pl-tel{display:inline-block;white-space:nowrap;font-weight:700;font-size:13.5px;text-decoration:none;color:#fff;background:linear-gradient(135deg,#16a34a,#0d9488);border-radius:999px;padding:7px 11px}
   .pl-up{font-size:12px;color:var(--muted);margin-top:6px;text-align:right}
 
   .result{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
@@ -536,6 +536,13 @@
   .dph3.dfd.cl::after{transform:rotate(-90deg)}
   .dfold.cl{display:none}
   #cardHsx>h2::before{content:"⏳"!important}
+  .pl-ck{flex:none;align-self:flex-start;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;box-shadow:none;padding:2px 0 0 4px;cursor:pointer;color:var(--muted);font-size:11px;font-weight:700;-webkit-tap-highlight-color:transparent}
+  .pl-ck .bx{width:30px;height:30px;border-radius:9px;border:2px solid var(--line);display:grid;place-items:center;font-size:18px;font-weight:800;color:#fff;background:var(--card);transition:all .2s}
+  .pl-r.dn .pl-ck{color:#16a34a}.pl-r.dn .pl-ck .bx{background:#16a34a;border-color:#16a34a}
+  .pl-r.dn .pl-t b.pl-tk{color:#15803d;background:rgba(34,197,94,.16);border-radius:8px;padding:1px 7px;border-bottom:none;box-shadow:0 0 0 2px rgba(34,197,94,.55),0 0 14px 3px rgba(34,197,94,.55);animation:plGlow 2.4s ease-in-out infinite}
+  .pl-r.dn .pl-h,.pl-r.dn .pl-t{opacity:.85}
+  @keyframes plGlow{50%{box-shadow:0 0 0 2px rgba(34,197,94,.7),0 0 20px 6px rgba(34,197,94,.7)}}
+  @media(prefers-reduced-motion:reduce){.pl-r.dn .pl-t b.pl-tk{animation:none}}
 </style>
 </head>
 <body>
@@ -2873,6 +2880,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       renderHomeIfVisible();
     });
   }
+  var planDone={};
+  try{ planDone=JSON.parse(localStorage.getItem('hs_plandone_v1')||'{}')||{}; }catch(e){ planDone={}; }
+  function planKey(it){ return (it.ticket||'')+'|'+it.heure+'|'+(it.label||'').slice(0,30); }
+  function planIsDone(it){ return !!(planDone[today()]&&planDone[today()][planKey(it)]); }
+  function planToggle(k){
+    var t=today(), o={}; o[t]=planDone[t]||{}; if(o[t][k]) delete o[t][k]; else o[t][k]=1; planDone=o;
+    try{ localStorage.setItem('hs_plandone_v1',JSON.stringify(planDone)); }catch(e){}
+  }
   function planCard(){
     var t=today(), mine=(planSt.date===t), h='<section class="card"><div class="pl-hd"><h2 style="margin:0">📅 Planning du jour</h2>'+(relayUrl()?'<button type="button" class="pl-rf" data-act="plan" aria-label="Actualiser"'+(planSt.busy?' disabled':'')+'>'+(planSt.busy?'⏳':'↻')+'</button>':'')+'</div>';
     if(!relayUrl()) return h+'<div class="bkstat">Branche d\'abord ton script Google (Saisie → réglages) pour voir ton planning ici.</div></section>';
@@ -2882,9 +2897,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       if(planSt.info.length) h+='<div class="pl-info">'+planSt.info.map(function(x){ return '<span>👥 '+esc(x)+'</span>'; }).join('')+'</div>';
       if(!planSt.items.length&&!planSt.err) h+='<div class="bkstat">Rien de prévu aujourd\'hui dans le planning.</div>';
       planSt.items.forEach(function(it){
-        h+='<div class="pl-r"><div class="pl-h">'+esc(it.heure)+'</div><div class="pl-t">'+(it.ticket?'<b class="pl-tk" data-act="copytk" data-tk="'+esc(it.ticket)+'" role="button" title="Toucher pour copier">'+esc(it.ticket)+'</b> ':'')+esc(it.label)+
+        var dn=planIsDone(it);
+        h+='<div class="pl-r'+(dn?' dn':'')+'"><div class="pl-h">'+esc(it.heure)+'</div><div class="pl-t">'+(it.ticket?'<b class="pl-tk" data-act="copytk" data-tk="'+esc(it.ticket)+'" role="button" title="Toucher pour copier">'+esc(it.ticket)+'</b> ':'')+esc(it.label)+
           (it.note?'<div class="pl-n">'+esc(it.note)+'</div>':'')+
-          (it.phones.length?'<div class="pl-p">'+it.phones.map(function(p){ var n=p.replace(/[^\d+]/g,''); return '<span class="pl-pg"><a class="pl-tel" href="tel:'+n+'">📞 '+esc(p)+'</a><a class="pl-sms" href="sms:'+n+'" aria-label="Envoyer un message à '+esc(p)+'" title="Envoyer un SMS">✉️</a></span>'; }).join('')+'</div>':'')+'</div></div>';
+          (it.phones.length?'<div class="pl-p">'+it.phones.map(function(p){ var n=p.replace(/[^\d+]/g,''); return '<span class="pl-pg"><a class="pl-tel" href="tel:'+n+'">📞 '+esc(p)+'</a><a class="pl-sms" href="sms:'+n+'" aria-label="Envoyer un message à '+esc(p)+'" title="Envoyer un SMS">✉️</a></span>'; }).join('')+'</div>':'')+'</div><button type="button" class="pl-ck" role="checkbox" aria-checked="'+(dn?'true':'false')+'" data-act="plandone" data-pk="'+esc(planKey(it))+'" aria-label="Fait"><span class="bx">'+(dn?'✓':'')+'</span><span class="lb">Fait</span></button></div>';
       });
       if(planSt.at) h+='<div class="pl-up">Mis à jour à '+hhmm(planSt.at).replace('h',':')+'</div>';
     }
@@ -5041,6 +5057,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(a==='gmail'){ e.preventDefault(); openGmail(b.href); return; }
     if(a==='copytk'){ var tk=ds.tk||'', old=b.textContent;
       copyText(tk,function(okc){ b.textContent=okc?'✓ '+tk+' copié':tk; b.classList.add('cp'); setTimeout(function(){ b.textContent=old; b.classList.remove('cp'); },1400); }); return; }
+    if(a==='plandone'){ planToggle(ds.pk||''); renderHome(); return; }
     if(a==='plan'){ planLoad(true); }
     else if(a==='upd'){ applyUpdate(); }
     else if(a==='upd-check'){ b.disabled=true; b.textContent='Vérification…'; checkUpdate(false).then(function(i){ if(i&&i.newer) return; }); }
