@@ -526,6 +526,15 @@
   #tabSaisie .card.vclosed>h2::after{transform:rotate(-90deg)}
   #tabSaisie .card:not(.vclosed)>h2{margin-bottom:14px}
   #tabSaisie .card.vclosed>.vbody{display:none}
+  #tabDep .card>h2{cursor:pointer;margin-bottom:0;user-select:none;-webkit-tap-highlight-color:transparent}
+  #tabDep .card>h2::after{content:"▾";margin-left:auto;font-size:16px;color:var(--muted);transition:transform .2s}
+  #tabDep .card.vclosed>h2::after{transform:rotate(-90deg)}
+  #tabDep .card:not(.vclosed)>h2{margin-bottom:14px}
+  #tabDep .card.vclosed>.vbody{display:none}
+  .dph3.dfd{cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none;-webkit-tap-highlight-color:transparent;padding:4px 0}
+  .dph3.dfd::after{content:"▾";margin-left:auto;font-size:15px;transition:transform .2s}
+  .dph3.dfd.cl::after{transform:rotate(-90deg)}
+  .dfold.cl{display:none}
 </style>
 </head>
 <body>
@@ -1669,8 +1678,42 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       if(needA.length) loadPhotos(needA).then(function(){ if($('tabDep').style.display!=='none') renderDep(); });
     }
     if(!meals.length&&!fuel.length&&!ach.length) h+='<div class="dpnote">Rien de saisi pour ce mois pour l\'instant.</div>';
-    $('dRecap').innerHTML=h;
+    $('dRecap').innerHTML=h; depFold();
   }
+  var dFold={};
+  try{ dFold=JSON.parse(localStorage.getItem('hs_dfold_v1')||'{}')||{}; }catch(e){ dFold={}; }
+  var DFOLD_DEF={'Par semaine':1};
+  function depFold(){
+    var root=$('dRecap'), kids=Array.prototype.slice.call(root.children);
+    kids.forEach(function(el,i){
+      if(!el.classList||!el.classList.contains('dph3')||el.classList.contains('dfd')) return;
+      var key=el.textContent.trim(), w=document.createElement('div'), n=el.nextSibling;
+      if(!n) return;
+      while(n&&!(n.classList&&n.classList.contains('dph3'))){ var nx=n.nextSibling; w.appendChild(n); n=nx; }
+      w.className='dfold'; root.insertBefore(w,n);
+      var open=dFold[key]===undefined?!!DFOLD_DEF[key]:!!dFold[key];
+      el.classList.add('dfd'); el.dataset.fk=key; if(!open){ el.classList.add('cl'); w.classList.add('cl'); }
+    });
+  }
+  $('dRecap').addEventListener('click',function(e){
+    var h=e.target.closest('.dfd'); if(!h||!$('dRecap').contains(h)) return;
+    var w=h.nextElementSibling, cl=!h.classList.contains('cl'); h.classList.toggle('cl',cl); if(w&&w.classList.contains('dfold')) w.classList.toggle('cl',cl);
+    dFold[h.dataset.fk]=!cl; try{ localStorage.setItem('hs_dfold_v1',JSON.stringify(dFold)); }catch(er){}
+  });
+  (function(){
+    var DEF={'Récap dépenses':1}, st={};
+    try{ st=JSON.parse(localStorage.getItem('hs_dopen_v1')||'{}')||{}; }catch(e){ st={}; }
+    Array.prototype.forEach.call(document.querySelectorAll('#tabDep > section.card'),function(c){
+      var h=c.querySelector(':scope > h2'); if(!h) return; var key=h.textContent.trim();
+      h.setAttribute('role','button'); h.setAttribute('tabindex','0');
+      var b=document.createElement('div'); b.className='vbody'; while(h.nextSibling) b.appendChild(h.nextSibling); c.appendChild(b);
+      function isOpen(){ return st[key]===undefined?!!DEF[key]:!!st[key]; }
+      function ap(){ var o=isOpen(); c.classList.toggle('vclosed',!o); h.setAttribute('aria-expanded',o?'true':'false'); }
+      function tg(){ st[key]=!isOpen(); ap(); try{ localStorage.setItem('hs_dopen_v1',JSON.stringify(st)); }catch(e){} }
+      h.addEventListener('click',tg); h.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); tg(); } });
+      ap();
+    });
+  })();
   $('mDate').value=today(); $('fDate').value=today(); $('dMois').value=today().slice(0,7);
 
   // ---------- Récaps dépenses (essence / repas), PDF + e-mail ----------
