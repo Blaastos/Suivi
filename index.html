@@ -519,6 +519,11 @@
   .ihd .it{font-weight:700;flex:none}.ihd .ih{color:var(--muted);font-size:14px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ihd .ik{font-size:12px;font-weight:700;color:var(--ok,#16794c);flex:none}
   .interv .ibody{margin-top:8px}.interv.ic .ibody{display:none}
+  #tabSaisie .card>h2{cursor:pointer;margin-bottom:0;user-select:none;-webkit-tap-highlight-color:transparent}
+  #tabSaisie .card>h2::after{content:"▾";margin-left:auto;font-size:16px;color:var(--muted);transition:transform .2s}
+  #tabSaisie .card.vclosed>h2::after{transform:rotate(-90deg)}
+  #tabSaisie .card:not(.vclosed)>h2{margin-bottom:14px}
+  #tabSaisie .card.vclosed>.vbody{display:none}
 </style>
 </head>
 <body>
@@ -2654,6 +2659,20 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     copyText(crSynthese(cur,it),function(okc){ crSay(okc?'Synthèse copiée.':'Copie impossible.'); });
   });
 
+  (function(){
+    var DEF={'Interventions':1,'Résultat de la journée':1}, st={};
+    try{ st=JSON.parse(localStorage.getItem('hs_sopen_v1')||'{}')||{}; }catch(e){ st={}; }
+    Array.prototype.forEach.call(document.querySelectorAll('#tabSaisie > section.card'),function(c){
+      var h=c.querySelector(':scope > h2'); if(!h) return; var key=h.textContent.trim();
+      h.setAttribute('role','button'); h.setAttribute('tabindex','0');
+      var b=document.createElement('div'); b.className='vbody'; while(h.nextSibling) b.appendChild(h.nextSibling); c.appendChild(b);
+      function isOpen(){ return st[key]===undefined?!!DEF[key]:!!st[key]; }
+      function ap(){ var o=isOpen(); c.classList.toggle('vclosed',!o); h.setAttribute('aria-expanded',o?'true':'false'); }
+      function tg(){ st[key]=!isOpen(); ap(); try{ localStorage.setItem('hs_sopen_v1',JSON.stringify(st)); }catch(e){} }
+      h.addEventListener('click',tg); h.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); tg(); } });
+      ap();
+    });
+  })();
   var intOpen={};
   function ihdRefresh(){
     Array.prototype.forEach.call($('list').querySelectorAll('.interv'),function(box){
