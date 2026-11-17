@@ -535,6 +535,7 @@
   .dph3.dfd::after{content:"▾";margin-left:auto;font-size:15px;transition:transform .2s}
   .dph3.dfd.cl::after{transform:rotate(-90deg)}
   .dfold.cl{display:none}
+  #cardHsx>h2::before{content:"⏳"!important}
 </style>
 </head>
 <body>
@@ -599,6 +600,17 @@
       <div class="field"><label for="pause">Pause à déduire (min)</label><input type="number" id="pause" min="0" step="1" inputmode="numeric" placeholder="0"></div>
     </div>
     <div class="photo"><div id="ph-retour"></div><input type="file" id="file-retour" accept="image/*" multiple style="display:none"><div class="msg" id="phmsg-retour"></div></div>
+  </section>
+
+  <section class="card" id="cardHsx">
+    <h2>Heures supplémentaires</h2>
+    <div class="dpnote" style="margin:0 0 10px">Heures à ajouter à la main : elles sont comptées en plus dans le total de la journée.</div>
+    <div class="row">
+      <div class="field"><label for="xh">Heures supp. à compter (h)</label><input type="number" id="xh" min="0" max="24" step="1" inputmode="numeric" placeholder="0"></div>
+      <div class="field"><label for="xm">Minutes</label><input type="number" id="xm" min="0" max="59" step="1" inputmode="numeric" placeholder="0"></div>
+    </div>
+    <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="xmotif">Motif</label><input type="text" id="xmotif" maxlength="140" placeholder="ex. Chargement au dépôt, réunion, formation…" autocomplete="off"></div></div>
+    <div class="msg" id="xInfo"></div>
   </section>
 
   <section class="card" id="cardAst">
@@ -1483,9 +1495,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var hs=counted===null?null:Math.max(0,counted-seuilMin);
     var A0=astOf(d), astTrip=null, hsBase=hs;
     if(A0&&A0.zoneDep&&A0.maison){ var tr0=diff(A0.zoneDep,A0.maison); if(tr0!==null&&tr0>0){ astTrip=tr0; hs=(hs||0)+tr0; } }
+    var extra=Math.min(1440,Math.max(0,Math.round(num(d.xh)*60)+Math.round(num(d.xm))));
+    if(extra>0) hs=(hs||0)+extra;
     var autre=(counted===null||total===null)?null:Math.max(0,total-counted);
     var km=num(d.kmAller)+num(d.kmRetour);
-    return {total:total,interv:interv,firstT3:firstT3,lastT6:lastT6,pause:pause,span:span,retourTrip:retourTrip,counted:counted,hs:hs,hsBase:hsBase,astTrip:astTrip,autre:autre,km:km,seuilMin:seuilMin,mode:mode};
+    return {extra:extra,total:total,interv:interv,firstT3:firstT3,lastT6:lastT6,pause:pause,span:span,retourTrip:retourTrip,counted:counted,hs:hs,hsBase:hsBase,astTrip:astTrip,autre:autre,km:km,seuilMin:seuilMin,mode:mode};
   }
 
   function saveDraft(){ cur.t=Date.now(); store(KEY_DRAFT,cur); }
@@ -1500,7 +1514,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var box=$('rHs');
     if(r.hs===null&&congeOf(cur)){ box.className='hs no'; box.textContent='🏖️ '+CG_LABEL[congeOf(cur)]+' : pas de calcul d\'heures sup ce jour-là.'; }
     else if(r.hs===null){ box.className='hs no'; box.textContent=(r.mode==='retour')?'Renseigne le premier T3, le dernier T6 et l\'heure de retour pour voir les heures sup.':(r.mode==='aucun'?'Renseigne le premier T3 et le dernier T6 pour voir les heures sup.':'Renseigne le départ et le retour pour voir les heures sup.'); }
-    else if(r.hs>0){ box.className='hs yes'; box.innerHTML='Heures sup : <b>'+fmt(r.hs)+'</b> <span style="white-space:nowrap">= <b>'+eur(hsEur(r.hs))+'</b></span> <small>'+(r.astTrip?'dont trajet retour d\'astreinte '+fmt(r.astTrip)+(r.hsBase?' + '+fmt(r.hsBase)+' au-dessus de '+fmt(r.seuilMin):''):r.hs+' min au-dessus de '+fmt(r.seuilMin))+' · '+eur(taux())+'/h'+(r.astTrip?'':' · temps compté : '+fmt(r.counted))+'</small>'; }
+    else if(r.hs>0){ box.className='hs yes'; box.innerHTML='Heures sup : <b>'+fmt(r.hs)+'</b> <span style="white-space:nowrap">= <b>'+eur(hsEur(r.hs))+'</b></span> <small>'+(r.astTrip?'dont trajet retour d\'astreinte '+fmt(r.astTrip)+(r.hsBase?' + '+fmt(r.hsBase)+' au-dessus de '+fmt(r.seuilMin):''):(r.hsBase?r.hsBase+' min au-dessus de '+fmt(r.seuilMin):''))+(r.extra?(r.hs>r.extra?' · ':'')+'dont '+fmt(r.extra)+' ajoutées à la main'+(cur.xmotif?' ('+esc(cur.xmotif)+')':''):'')+' · '+eur(taux())+'/h'+((r.astTrip||r.extra)?'':' · temps compté : '+fmt(r.counted))+'</small>'; }
     else { box.className='hs no'; box.innerHTML='Pas d\'heures sup <small>Temps compté : '+fmt(r.counted)+' sur '+fmt(r.seuilMin)+'</small>'; }
     // durée par intervention
     cur.interventions.forEach(function(it){
@@ -2774,13 +2788,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     renderConge();
     $('date').value=cur.date||''; $('depart').value=cur.depart||''; $('kmAller').value=cur.kmAller||'';
     $('retour').value=cur.retour||''; $('kmRetour').value=cur.kmRetour||''; $('pause').value=cur.pause||'';
+    $('xh').value=cur.xh||''; $('xm').value=cur.xm||''; $('xmotif').value=cur.xmotif||'';
     $('seuil').value=settings.seuil; $('tauxHs').value=(settings.tauxHs===undefined?20:settings.tauxHs); $('primeAst').value=(settings.primeAst===undefined?120:settings.primeAst); $('salaire').value=(settings.salaire>0?settings.salaire:''); $('mode').value=settings.mode; $('nom').value=settings.nom||''; $('email').value=settings.email||''; $('relay').value=settings.relay||''; $('relaySecret').value=settings.relaySecret||'';
   }
 
   function renderAll(){ fillStatic(); renderList(); renderAstUI(); renderHors(); renderResult(); renderPhotoUI(); }
 
   // champs fixes
-  ['date','depart','kmAller','retour','kmRetour','pause'].forEach(function(id){
+  ['date','depart','kmAller','retour','kmRetour','pause','xh','xm','xmotif'].forEach(function(id){
     $(id).addEventListener('input',function(){ cur[id]=this.value; saveDraft(); renderResult(); });
   });
   $('tauxHs').addEventListener('input',function(){ settings.tauxHs=num(this.value); store(KEY_SET,settings); renderResult(); renderHist(); });
@@ -3058,14 +3073,20 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   function pushTrash(date,rec,why){
     var t=loadTrash(); t.unshift({k:date,at:new Date().toISOString(),why:why,day:recOf(rec)}); store(KEY_TRASH,t.slice(0,60));
   }
+  function hsSubTxt(r,d){
+    var a=r.astTrip?'dont trajet astreinte '+fmt(r.astTrip):(r.hsBase>0?r.hsBase+' min au-dessus de '+fmt(r.seuilMin):((r.hs===0)?'sous le seuil de '+fmt(r.seuilMin):''));
+    if(r.extra) a+=(a?' · ':'')+'dont '+fmt(r.extra)+' ajoutées'+(cur0motif(d)?' ('+ws(cur0motif(d))+')':'');
+    return a;
+  }
+  function cur0motif(d){ return String(d.xmotif||'').trim(); }
   function norm(d){
-    return JSON.stringify([congeOf(d),d.depart||'',String(d.kmAller||''),d.retour||'',String(d.kmRetour||''),String(d.pause||''),
+    return JSON.stringify([congeOf(d),d.depart||'',String(d.kmAller||''),d.retour||'',String(d.kmRetour||''),String(d.pause||''),String(d.xh||''),String(d.xm||''),String(d.xmotif||''),
       (d.interventions||[]).filter(function(i){return i&&(i.ticket||i.debut||i.fin||crFilled(i));}).map(function(i){return [i.ticket||'',i.debut||'',i.fin||'',crKey(i),JSON.stringify(i.pieces||[]),i.comment||''];}),
       astOf(d)?[String(d.astreinte.zone||''),String(d.astreinte.portes||''),String(d.astreinte.prix||''),d.astreinte.zoneArr||'',d.astreinte.zoneDep||'',d.astreinte.maison||'']:null,
       horsOf(d)?horsItems(d).map(function(i){return [i.zone||'',i.ticket||'',i.t3||'',i.t6||'',String(i.prix||'')];}):null]);
   }
   function hasContent(d){
-    return !!(congeOf(d)||d.depart||d.retour||String(d.kmAller||'').trim()||String(d.kmRetour||'').trim()||String(d.pause||'').trim()||
+    return !!(congeOf(d)||d.depart||d.retour||String(d.kmAller||'').trim()||String(d.kmRetour||'').trim()||String(d.pause||'').trim()||String(d.xh||'').trim()||String(d.xm||'').trim()||
       (d.interventions||[]).some(function(i){return i.ticket||i.debut||i.fin||crFilled(i);})||!!astOf(d)||!!horsOf(d)||KINDS.some(function(k){return nbPhotos('draft|'+k)>0;}));
   }
   function photosSame(date){
@@ -3402,11 +3423,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       '<div class="stat"><small>Km total</small><b>'+(r.km?Math.round(r.km*10)/10+' km':'–')+'</b></div></div>';
     if(r.hs===null){ if(!cg) h+='<div class="hs no">Heures sup : à calculer (il manque des horaires).</div>'; }
     else if(false) h+='<div class="hs no">Heures sup : à calculer (il manque des horaires).</div>';
-    else h+='<div class="hs '+(r.hs>0?'yes':'no')+'">'+(r.hs>0?'Heures sup : <b>'+fmt(r.hs)+'</b> = <b>'+eur(hsEur(r.hs))+'</b> <small>'+r.hs+' min · '+eur(taux())+'/h</small>':'Pas d\'heures sup')+'</div>';
+    else h+='<div class="hs '+(r.hs>0?'yes':'no')+'">'+(r.hs>0?'Heures sup : <b>'+fmt(r.hs)+'</b> = <b>'+eur(hsEur(r.hs))+'</b> <small>'+r.hs+' min · '+eur(taux())+'/h</small>'+(r.extra?'<br><small>dont '+fmt(r.extra)+' ajoutées à la main'+(cur0motif(d)?' : '+esc(cur0motif(d)):'')+'</small>':''):'Pas d\'heures sup')+'</div>';
     var jt=hsEur(r.hs||0)+(A?astTotal(A):0)+horsTotal(d);
     if(jt>0&&(A||horsItems(d).length)) h+='<div class="hs no">💶 Total du jour : <b>'+eur(jt)+'</b> <small>heures sup '+eur(hsEur(r.hs||0))+(A?' · astreinte '+eur(astTotal(A)):'')+(horsItems(d).length?' · portes hors astreinte '+eur(horsTotal(d)):'')+'</small></div>';
     t.push('1er T3 → dernier T6 : '+fmt(r.span)+' | Trajet retour : '+fmt(r.retourTrip)+' | Temps compté : '+fmt(r.counted));
-    t.push('Heures sup : '+(r.hs===null?'à calculer':fmt(r.hs)+' ('+r.hs+' min) = '+eur(hsEur(r.hs))+' à '+eur(taux())+'/h')+' | Km total : '+(r.km?Math.round(r.km*10)/10:0));
+    t.push('Heures sup : '+(r.hs===null?'à calculer':fmt(r.hs)+' ('+r.hs+' min) = '+eur(hsEur(r.hs))+' à '+eur(taux())+'/h')+(r.extra?' | dont '+fmt(r.extra)+' ajoutées'+(cur0motif(d)?' ('+cur0motif(d)+')':''):'')+' | Km total : '+(r.km?Math.round(r.km*10)/10:0));
     if(jt>0&&(A||horsItems(d).length)) t.push('Total du jour : '+eur(jt)+' (heures sup '+eur(hsEur(r.hs||0))+(A?' + astreinte '+eur(astTotal(A)):'')+(horsItems(d).length?' + portes hors astreinte '+eur(horsTotal(d)):'')+')');
     return {html:h,text:t.join('\n')};
   }
@@ -3669,14 +3690,14 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var its=d.interventions.filter(function(i){return i.ticket||i.debut||i.fin});
     var y=pdfHeader(doc,'Récap de la journée',longDate(d.date||today()));
     var hsTxt=r.hs===null?'À calculer':(r.hs>0?fmt(r.hs):'Aucune');
-    var hsTone=r.hs===null?null:(r.hs>0?'yes':'no'), hsSub=r.astTrip?'dont trajet astreinte '+fmt(r.astTrip):r.hs>0?r.hs+' min au-dessus de '+fmt(r.seuilMin):(r.hs===0?'sous le seuil de '+fmt(r.seuilMin):'');
+    var hsTone=r.hs===null?null:(r.hs>0?'yes':'no'), hsSub=hsSubTxt(r,d);
     if(pst()!=='classic'){
       y=pdfHero(doc,y,{label:'Heures supplémentaires',value:hsTxt,right:r.hs>0?eur(hsEur(r.hs),true):'',sub:hsSub,tone:hsTone});
       y=pdfCards(doc,y,[{label:'Temps compté',value:fmt(r.counted)},{label:'Tickets',value:String(its.length)},{label:'Km parcourus',value:r.km?(Math.round(r.km*10)/10)+' km':'–'}]);
     } else
     y=pdfCards(doc,y,[
       {label:'Temps compté',value:fmt(r.counted)},
-      {label:'Heures supplémentaires',value:hsTxt,sub:r.astTrip?'dont trajet astreinte '+fmt(r.astTrip):r.hs>0?r.hs+' min au-dessus de '+fmt(r.seuilMin):(r.hs===0?'sous le seuil de '+fmt(r.seuilMin):''),tone:r.hs===null?null:(r.hs>0?'yes':'no')},
+      {label:'Heures supplémentaires',value:hsTxt,sub:hsSubTxt(r,d),tone:r.hs===null?null:(r.hs>0?'yes':'no')},
       {label:'Tickets',value:String(its.length)},
       {label:'Km parcourus',value:r.km?(Math.round(r.km*10)/10)+' km':'–'}
     ]);
@@ -3707,6 +3728,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     rows.push(['Temps compté',fmt(r.counted)]);
     rows.push(['Seuil journalier',fmt(r.seuilMin)]);
     if(r.astTrip) rows.push(['Trajet retour d\'astreinte (zone à maison)',fmt(r.astTrip)+'  ('+(AST0.zoneDep||'?')+' - '+(AST0.maison||'?')+')']);
+    if(r.extra) rows.push(['Heures supplémentaires ajoutées',fmt(r.extra)+(cur0motif(d)?'  -  '+ws(cur0motif(d)):'')]);
     rows.push(['Heures supplémentaires',r.hs===null?'À calculer':fmt(r.hs)+'  ('+r.hs+' min)  =  '+eur(hsEur(r.hs),true)]);
     var o2=tableBase(); o2.startY=y+2; o2.body=rows; o2.theme='plain';
     o2.columnStyles={0:{cellWidth:95,textColor:C_GREY},1:{halign:'right',fontStyle:'bold'}};
@@ -4392,7 +4414,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     its=its.filter(function(i){return i&&typeof i==='object'}).map(function(i){ var o={id:uid(),ticket:cleanStr(i.ticket),debut:cleanTime(i.debut),fin:cleanTime(i.fin)}; var cm=cleanStr(i.comment).trim().slice(0,140); if(cm) o.comment=cm; var c=cleanCr(i.cr); if(c) o.cr=c; var pcs=cleanPieces(i.pieces); if(pcs.length) o.pieces=pcs; return o; });
     if(!its.length) its=[{id:uid(),ticket:'',debut:'',fin:''}];
     sortInts(its);
-    return {date:key,conge:congeOf(d),depart:cleanTime(d.depart),kmAller:cleanStr(d.kmAller),retour:cleanTime(d.retour),kmRetour:cleanStr(d.kmRetour),pause:cleanStr(d.pause),interventions:its,astreinte:cleanAst(d.astreinte),hors:cleanHors(d.hors)};
+    return {date:key,conge:congeOf(d),depart:cleanTime(d.depart),kmAller:cleanStr(d.kmAller),retour:cleanTime(d.retour),kmRetour:cleanStr(d.kmRetour),pause:cleanStr(d.pause),xh:cleanStr(d.xh),xm:cleanStr(d.xm),xmotif:cleanStr(d.xmotif).slice(0,140),interventions:its,astreinte:cleanAst(d.astreinte),hors:cleanHors(d.hors)};
   }
   $('restoreFile').addEventListener('change',function(){
     var f=this.files&&this.files[0]; var input=this; if(!f) return;
