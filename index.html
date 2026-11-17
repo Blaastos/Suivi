@@ -2661,7 +2661,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       var t=String(it.ticket||'').trim(), d=$('dur-'+it.id), dt=d?d.textContent.replace(/^Durée\s*:\s*/,'').trim():''; if(dt==='–') dt='';
       box.querySelector('.it').textContent=t?'🎫 '+t:'Intervention';
       var tm=(it.debut||it.fin)?((it.debut||'?')+' → '+(it.fin||'?')):'heures à saisir';
-      box.querySelector('.ih').textContent=tm+(dt?' · '+dt:'');
+      box.querySelector('.ih').textContent=tm+(dt?' · '+dt:'')+(it.comment?' · '+it.comment:'');
       var k=[]; if(crFilled(it)) k.push('✓ CR'); if((it.pieces||[]).length) k.push('🔩'+it.pieces.length);
       box.querySelector('.ik').textContent=k.join(' ');
     });
@@ -2686,6 +2686,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
           '<div class="dur" id="dur-'+it.id+'"></div>'+
           '<button type="button" class="danger" data-del="'+it.id+'" title="Supprimer cette intervention">Supprimer</button>'+
         '</div>'+
+        '<div class="row" style="margin-top:8px"><div class="field" style="flex:1 1 100%"><label>Commentaire (apparaît dans le PDF)</label><input type="text" data-k="comment" data-id="'+it.id+'" maxlength="140" placeholder="ex. Récupération d\'une boîte au dépôt" autocomplete="off"></div></div>'+
         '<div class="pcline" data-pcl="'+it.id+'" style="display:none"></div>'+
         '<div class="crline"><button type="button" class="crbtn'+(crFilled(it)?' done':'')+'" data-cr="'+it.id+'">'+(crFilled(it)?'✓ Compte rendu':'📝 Compte rendu')+'</button><span class="crstat"></span></div></div>';
       list.appendChild(box);
@@ -2995,7 +2996,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   }
   function norm(d){
     return JSON.stringify([congeOf(d),d.depart||'',String(d.kmAller||''),d.retour||'',String(d.kmRetour||''),String(d.pause||''),
-      (d.interventions||[]).filter(function(i){return i&&(i.ticket||i.debut||i.fin||crFilled(i));}).map(function(i){return [i.ticket||'',i.debut||'',i.fin||'',crKey(i),JSON.stringify(i.pieces||[])];}),
+      (d.interventions||[]).filter(function(i){return i&&(i.ticket||i.debut||i.fin||crFilled(i));}).map(function(i){return [i.ticket||'',i.debut||'',i.fin||'',crKey(i),JSON.stringify(i.pieces||[]),i.comment||''];}),
       astOf(d)?[String(d.astreinte.zone||''),String(d.astreinte.portes||''),String(d.astreinte.prix||''),d.astreinte.zoneArr||'',d.astreinte.zoneDep||'',d.astreinte.maison||'']:null,
       horsOf(d)?horsItems(d).map(function(i){return [i.zone||'',i.ticket||'',i.t3||'',i.t6||'',String(i.prix||'')];}):null]);
   }
@@ -3316,8 +3317,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(!its.length){ h+='<tr><td colspan="3" style="color:var(--muted)">Aucune intervention saisie</td></tr>'; t.push('Aucune intervention saisie'); }
     its.forEach(function(i,n){
       var x=diff(i.debut,i.fin);
-      h+='<tr><td>'+(i.ticket?'Ticket '+esc(i.ticket):'Intervention '+(n+1))+'</td><td class="num">T3 '+esc(i.debut||'?')+' → T6 '+esc(i.fin||'?')+'</td><td class="num">'+(x===null?'–':fmt(x))+'</td></tr>';
-      t.push('- '+(i.ticket?'Ticket '+i.ticket:'Intervention '+(n+1))+' : '+'T3 '+(i.debut||'?')+' → T6 '+(i.fin||'?')+' ('+(x===null?'–':fmt(x))+')');
+      h+='<tr><td>'+(i.ticket?'Ticket '+esc(i.ticket):'Intervention '+(n+1))+(i.comment?'<br><small style="color:var(--muted)">'+esc(i.comment)+'</small>':'')+'</td><td class="num">T3 '+esc(i.debut||'?')+' → T6 '+esc(i.fin||'?')+'</td><td class="num">'+(x===null?'–':fmt(x))+'</td></tr>';
+      t.push('- '+(i.ticket?'Ticket '+i.ticket:'Intervention '+(n+1))+' : '+'T3 '+(i.debut||'?')+' → T6 '+(i.fin||'?')+' ('+(x===null?'–':fmt(x))+')'+(i.comment?' - '+i.comment:''));
       if(crFilled(i)){ var cc=crOf(i); var ci=[cc.lieu,num(cc.soudures)?cc.soudures+' soudure(s)':'',cc.nacelle?'nacelle':''].filter(Boolean).join(', '); t.push('   Compte rendu joint au PDF'+(ci?' ('+ci+')':'')); h+='<tr><td colspan="3" style="color:var(--muted);font-size:13px">📝 Compte rendu'+(ci?' : '+esc(ci):'')+'</td></tr>'; }
     });
     h+='<tr><td>Retour maison</td><td class="num">'+esc(d.retour||'–')+'</td><td class="num">'+(num(d.kmRetour)?num(d.kmRetour)+' km':'')+'</td></tr>';
@@ -3620,7 +3621,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(!its.length) body.push(['Aucun ticket saisi','','']);
     its.forEach(function(i,n){
       var x=diff(i.debut,i.fin);
-      body.push([(i.ticket?'Ticket '+ws(i.ticket):'Intervention '+(n+1)),'T3 '+(i.debut||'?')+'   -   T6 '+(i.fin||'?'),x===null?'–':fmt(x)]);
+      body.push([(i.ticket?'Ticket '+ws(i.ticket):'Intervention '+(n+1))+(i.comment?'\n'+ws(i.comment):''),'T3 '+(i.debut||'?')+'   -   T6 '+(i.fin||'?'),x===null?'–':fmt(x)]);
     });
     body.push(['Retour à la maison',d.retour||'–',kmTxt(d.kmRetour)]);
     var o=tableBase(); o.startY=y+2; o.head=[['Étape','Horaire','Durée / km']]; o.body=body;
@@ -4324,7 +4325,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   }
   function cleanDay(key,d){
     var its=Array.isArray(d.interventions)?d.interventions:[];
-    its=its.filter(function(i){return i&&typeof i==='object'}).map(function(i){ var o={id:uid(),ticket:cleanStr(i.ticket),debut:cleanTime(i.debut),fin:cleanTime(i.fin)}; var c=cleanCr(i.cr); if(c) o.cr=c; var pcs=cleanPieces(i.pieces); if(pcs.length) o.pieces=pcs; return o; });
+    its=its.filter(function(i){return i&&typeof i==='object'}).map(function(i){ var o={id:uid(),ticket:cleanStr(i.ticket),debut:cleanTime(i.debut),fin:cleanTime(i.fin)}; var cm=cleanStr(i.comment).trim().slice(0,140); if(cm) o.comment=cm; var c=cleanCr(i.cr); if(c) o.cr=c; var pcs=cleanPieces(i.pieces); if(pcs.length) o.pieces=pcs; return o; });
     if(!its.length) its=[{id:uid(),ticket:'',debut:'',fin:''}];
     sortInts(its);
     return {date:key,conge:congeOf(d),depart:cleanTime(d.depart),kmAller:cleanStr(d.kmAller),retour:cleanTime(d.retour),kmRetour:cleanStr(d.kmRetour),pause:cleanStr(d.pause),interventions:its,astreinte:cleanAst(d.astreinte),hors:cleanHors(d.hors)};
