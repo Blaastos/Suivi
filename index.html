@@ -698,6 +698,14 @@
       <div class="field"><label for="kmAller">Km (aller)</label><input type="number" id="kmAller" min="0" step="0.1" inputmode="decimal" placeholder="0"></div>
     </div>
     <div class="cgrow"><label id="cgCpL"><input type="checkbox" id="cgCp"> 🏖️ Congé payé</label><label id="cgCssL"><input type="checkbox" id="cgCss"> Congé sans solde</label><label id="cgFeL"><input type="checkbox" id="cgFe"> 🎌 Férié</label></div>
+    <label class="astchk" style="margin-top:12px"><input type="checkbox" id="dpOn"> 🏭 Passage au dépôt</label>
+    <div id="dpFields" style="display:none;margin-top:10px">
+      <div class="row">
+        <div class="field"><label for="dpA">Arrivée au dépôt</label><input type="time" id="dpA"></div>
+        <div class="field"><label for="dpD">Départ du dépôt</label><input type="time" id="dpD"></div>
+      </div>
+      <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="dpMotif">Motif</label><input type="text" id="dpMotif" maxlength="140" placeholder="ex. Récupération de matériel, retour de pièces…" autocomplete="off"></div></div>
+    </div>
     <div class="photo"><div id="ph-depart"></div><input type="file" id="file-depart" accept="image/*" multiple style="display:none"><div class="msg" id="phmsg-depart"></div></div>
   </section>
 
@@ -2903,6 +2911,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     renderConge();
     $('date').value=cur.date||''; $('depart').value=cur.depart||''; $('kmAller').value=cur.kmAller||'';
     $('retour').value=cur.retour||''; $('kmRetour').value=cur.kmRetour||''; $('pause').value=cur.pause||'';
+    $('dpOn').checked=!!cur.dp; $('dpFields').style.display=cur.dp?'':'none'; $('dpA').value=cur.dpA||''; $('dpD').value=cur.dpD||''; $('dpMotif').value=cur.dpMotif||'';
     $('xh').value=cur.xh||''; $('xm').value=cur.xm||''; $('xmotif').value=cur.xmotif||'';
     $('seuil').value=settings.seuil; $('tauxHs').value=(settings.tauxHs===undefined?20:settings.tauxHs); $('primeAst').value=(settings.primeAst===undefined?120:settings.primeAst); $('salaire').value=(settings.salaire>0?settings.salaire:''); $('mode').value=settings.mode; $('nom').value=settings.nom||''; $('email').value=settings.email||''; $('relay').value=settings.relay||''; $('relaySecret').value=settings.relaySecret||'';
   }
@@ -2910,7 +2919,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   function renderAll(){ fillStatic(); renderList(); renderAstUI(); renderHors(); renderResult(); renderPhotoUI(); }
 
   // champs fixes
-  ['date','depart','kmAller','retour','kmRetour','pause','xh','xm','xmotif'].forEach(function(id){
+  $('dpOn').addEventListener('change',function(){ cur.dp=this.checked?'1':''; $('dpFields').style.display=this.checked?'':'none'; saveDraft(); renderResult(); });
+  ['date','depart','kmAller','retour','kmRetour','pause','xh','xm','xmotif','dpA','dpD','dpMotif'].forEach(function(id){
     $(id).addEventListener('input',function(){ cur[id]=this.value; saveDraft(); renderResult(); });
   });
   $('tauxHs').addEventListener('input',function(){ settings.tauxHs=num(this.value); store(KEY_SET,settings); renderResult(); renderHist(); });
@@ -3202,15 +3212,19 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(r.extra) a+=(a?' · ':'')+'dont '+fmt(r.extra)+' ajoutées'+(cur0motif(d)?' ('+ws(cur0motif(d))+')':'');
     return a;
   }
+  function depotTxt(d){
+    if(!d||!d.dp) return '';
+    return 'Arrivée '+(d.dpA||'?')+' → départ '+(d.dpD||'?')+(String(d.dpMotif||'').trim()?' - '+String(d.dpMotif).trim():'');
+  }
   function cur0motif(d){ return String(d.xmotif||'').trim(); }
   function norm(d){
-    return JSON.stringify([congeOf(d),d.depart||'',String(d.kmAller||''),d.retour||'',String(d.kmRetour||''),String(d.pause||''),String(d.xh||''),String(d.xm||''),String(d.xmotif||''),
+    return JSON.stringify([congeOf(d),d.depart||'',String(d.kmAller||''),d.retour||'',String(d.kmRetour||''),String(d.pause||''),String(d.xh||''),String(d.xm||''),String(d.xmotif||''),d.dp?'1':'',d.dpA||'',d.dpD||'',d.dpMotif||'',
       (d.interventions||[]).filter(function(i){return i&&(i.ticket||i.debut||i.fin||crFilled(i));}).map(function(i){return [i.ticket||'',i.debut||'',i.fin||'',crKey(i),JSON.stringify(i.pieces||[]),i.comment||''];}),
       astOf(d)?[String(d.astreinte.zone||''),String(d.astreinte.portes||''),String(d.astreinte.prix||''),d.astreinte.zoneArr||'',d.astreinte.zoneDep||'',d.astreinte.maison||'']:null,
       horsOf(d)?horsItems(d).map(function(i){return [i.zone||'',i.ticket||'',i.t3||'',i.t6||'',String(i.prix||'')];}):null]);
   }
   function hasContent(d){
-    return !!(congeOf(d)||d.depart||d.retour||String(d.kmAller||'').trim()||String(d.kmRetour||'').trim()||String(d.pause||'').trim()||String(d.xh||'').trim()||String(d.xm||'').trim()||
+    return !!(congeOf(d)||d.depart||d.retour||String(d.kmAller||'').trim()||String(d.kmRetour||'').trim()||String(d.pause||'').trim()||String(d.xh||'').trim()||String(d.xm||'').trim()||d.dp||
       (d.interventions||[]).some(function(i){return i.ticket||i.debut||i.fin||crFilled(i);})||!!astOf(d)||!!horsOf(d)||KINDS.some(function(k){return nbPhotos('draft|'+k)>0;}));
   }
   function photosSame(date){
@@ -3523,6 +3537,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var cg=congeOf(d); if(cg){ h+='<tr><td colspan="3"><b>🏖️ '+CG_LABEL[cg]+'</b></td></tr>'; t.push('*** '+CG_LABEL[cg].toUpperCase()+' ***'); }
     h+='<tr><td>Départ maison</td><td class="num">'+esc(d.depart||'–')+'</td><td class="num">'+(num(d.kmAller)?num(d.kmAller)+' km':'')+'</td></tr>';
     t.push('Départ maison : '+(d.depart||'–')+(num(d.kmAller)?' ('+num(d.kmAller)+' km)':''));
+    if(d.dp){ h+='<tr><td>🏭 Passage au dépôt'+(String(d.dpMotif||'').trim()?'<br><small style="color:var(--muted)">'+esc(String(d.dpMotif).trim())+'</small>':'')+'</td><td class="num" colspan="2">Arrivée '+esc(d.dpA||'?')+' → départ '+esc(d.dpD||'?')+'</td></tr>'; t.push('Passage au dépôt : '+depotTxt(d).replace(/^Arrivée /,'arrivée ')); }
     if(!its.length){ h+='<tr><td colspan="3" style="color:var(--muted)">Aucune intervention saisie</td></tr>'; t.push('Aucune intervention saisie'); }
     its.forEach(function(i,n){
       var x=diff(i.debut,i.fin);
@@ -3827,6 +3842,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     ]);
     y=pdfSection(doc,y,'Déroulé de la journée');
     var body=[['Départ de la maison',d.depart||'–',kmTxt(d.kmAller)]];
+    if(d.dp) body.push(['Passage au dépôt'+(String(d.dpMotif||'').trim()?'\n'+ws(String(d.dpMotif).trim()):''),'Arrivée '+(d.dpA||'?')+'   -   Départ '+(d.dpD||'?'),'']);
     if(!its.length) body.push(['Aucun ticket saisi','','']);
     its.forEach(function(i,n){
       var x=diff(i.debut,i.fin);
@@ -4538,7 +4554,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     its=its.filter(function(i){return i&&typeof i==='object'}).map(function(i){ var o={id:uid(),ticket:cleanStr(i.ticket),debut:cleanTime(i.debut),fin:cleanTime(i.fin)}; var cm=cleanStr(i.comment).trim().slice(0,140); if(cm) o.comment=cm; var c=cleanCr(i.cr); if(c) o.cr=c; var pcs=cleanPieces(i.pieces); if(pcs.length) o.pieces=pcs; return o; });
     if(!its.length) its=[{id:uid(),ticket:'',debut:'',fin:''}];
     sortInts(its);
-    return {date:key,conge:congeOf(d),depart:cleanTime(d.depart),kmAller:cleanStr(d.kmAller),retour:cleanTime(d.retour),kmRetour:cleanStr(d.kmRetour),pause:cleanStr(d.pause),xh:cleanStr(d.xh),xm:cleanStr(d.xm),xmotif:cleanStr(d.xmotif).slice(0,140),interventions:its,astreinte:cleanAst(d.astreinte),hors:cleanHors(d.hors)};
+    return {date:key,conge:congeOf(d),depart:cleanTime(d.depart),kmAller:cleanStr(d.kmAller),retour:cleanTime(d.retour),kmRetour:cleanStr(d.kmRetour),pause:cleanStr(d.pause),xh:cleanStr(d.xh),xm:cleanStr(d.xm),xmotif:cleanStr(d.xmotif).slice(0,140),dp:d.dp?'1':'',dpA:cleanTime(d.dpA),dpD:cleanTime(d.dpD),dpMotif:cleanStr(d.dpMotif).slice(0,140),interventions:its,astreinte:cleanAst(d.astreinte),hors:cleanHors(d.hors)};
   }
   $('restoreFile').addEventListener('change',function(){
     var f=this.files&&this.files[0]; var input=this; if(!f) return;
