@@ -733,7 +733,6 @@
       <div class="field"><label for="xm">Minutes</label><input type="number" id="xm" min="0" max="59" step="1" inputmode="numeric" placeholder="0"></div>
     </div>
     <div class="row" style="margin-top:10px"><div class="field" style="flex:1 1 100%"><label for="xmotif">Motif</label><input type="text" id="xmotif" maxlength="140" placeholder="ex. Chargement au dépôt, réunion, formation…" autocomplete="off"></div></div>
-    <div class="crline"><button type="button" class="crbtn" id="xcrBtn">📝 Compte rendu</button><span class="crstat" id="xcrStat"></span></div>
     <div class="msg" id="xInfo"></div>
   </section>
 
@@ -747,6 +746,15 @@
         <div class="field"><label for="astPortes">Nombre de portes</label><input type="number" id="astPortes" min="0" step="1" inputmode="numeric" placeholder="0"></div>
         <div class="field"><label for="astPrix">Prix porte (€)</label><input type="number" id="astPrix" min="0" step="0.01" inputmode="decimal" placeholder="0"></div>
       </div>
+      <div class="dph3" style="margin-top:16px">Ticket pendant l'astreinte</div>
+      <div class="row" style="margin-top:6px">
+        <div class="field" style="flex:2 1 130px"><label for="astTk">N° de ticket</label><input type="text" id="astTk" maxlength="40" placeholder="ex. 220471" autocomplete="off"></div>
+        <div class="field"><label for="astT3">T3</label><input type="time" id="astT3"></div>
+        <div class="field"><label for="astT6">T6</label><input type="time" id="astT6"></div>
+      </div>
+      <div class="crline"><button type="button" class="crbtn" id="astCrBtn">📝 Compte rendu</button><span class="crstat" id="astCrStat"></span></div>
+      <div class="dpnote">Seul le temps entre le T3 et le T6 de ce ticket compte en heures sup.</div>
+      <div class="stat" style="margin-top:10px"><small>Ticket d'astreinte (en heures sup)</small><b id="astTkTxt">–</b></div>
       <div class="stat" style="margin-top:10px"><small>Total astreinte du jour</small><b id="astTotal">–</b></div>
     </div>
   </section>
@@ -1610,6 +1618,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var seuilMin=Math.round(num(settings.seuil)*60);
     var hs=counted===null?null:Math.max(0,counted-seuilMin);
     var A0=astOf(d), astTrip=null, hsBase=hs;
+    if(A0&&A0.t3&&A0.t6){ var tr0=diff(A0.t3,A0.t6); if(tr0!==null&&tr0>0){ astTrip=tr0; hs=(hs||0)+tr0; } }
     var extra=Math.min(1440,Math.max(0,Math.round(num(d.xh)*60)+Math.round(num(d.xm))));
     if(extra>0) hs=(hs||0)+extra;
     var autre=(counted===null||total===null)?null:Math.max(0,total-counted);
@@ -1629,7 +1638,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var box=$('rHs');
     if(r.hs===null&&congeOf(cur)){ box.className='hs no'; box.textContent='🏖️ '+CG_LABEL[congeOf(cur)]+' : pas de calcul d\'heures sup ce jour-là.'; }
     else if(r.hs===null){ box.className='hs no'; box.textContent=(r.mode==='retour')?'Renseigne le premier T3, le dernier T6 et l\'heure de retour pour voir les heures sup.':(r.mode==='aucun'?'Renseigne le premier T3 et le dernier T6 pour voir les heures sup.':'Renseigne le départ et le retour pour voir les heures sup.'); }
-    else if(r.hs>0){ box.className='hs yes'; box.innerHTML='Heures sup : <b>'+fmt(r.hs)+'</b> <span style="white-space:nowrap">= <b>'+eur(hsEur(r.hs))+'</b></span> <small>'+(r.astTrip?'dont trajet retour d\'astreinte '+fmt(r.astTrip)+(r.hsBase?' + '+fmt(r.hsBase)+' au-dessus de '+fmt(r.seuilMin):''):(r.hsBase?r.hsBase+' min au-dessus de '+fmt(r.seuilMin):''))+(r.extra?(r.hs>r.extra?' · ':'')+'dont '+fmt(r.extra)+' ajoutées à la main'+(cur.xmotif?' ('+esc(cur.xmotif)+')':''):'')+' · '+eur(taux())+'/h'+((r.astTrip||r.extra)?'':' · temps compté : '+fmt(r.counted))+'</small>'; }
+    else if(r.hs>0){ box.className='hs yes'; box.innerHTML='Heures sup : <b>'+fmt(r.hs)+'</b> <span style="white-space:nowrap">= <b>'+eur(hsEur(r.hs))+'</b></span> <small>'+(r.astTrip?'dont ticket d\'astreinte '+fmt(r.astTrip)+(r.hsBase?' + '+fmt(r.hsBase)+' au-dessus de '+fmt(r.seuilMin):''):(r.hsBase?r.hsBase+' min au-dessus de '+fmt(r.seuilMin):''))+(r.extra?(r.hs>r.extra?' · ':'')+'dont '+fmt(r.extra)+' ajoutées à la main'+(cur.xmotif?' ('+esc(cur.xmotif)+')':''):'')+' · '+eur(taux())+'/h'+((r.astTrip||r.extra)?'':' · temps compté : '+fmt(r.counted))+'</small>'; }
     else { box.className='hs no'; box.innerHTML='Pas d\'heures sup <small>Temps compté : '+fmt(r.counted)+' sur '+fmt(r.seuilMin)+'</small>'; }
     // durée par intervention
     cur.interventions.forEach(function(it){
@@ -2493,10 +2502,10 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   function renderAstUI(){
     var a=astOf(cur);
     $('astOn').checked=!!a; $('astFields').style.display=a?'':'none';
-    $('astZone').value=a?(a.zone||''):''; $('astPortes').value=a?(a.portes||''):''; $('astPrix').value=a?(a.prix||''):'';
+    $('astZone').value=a?(a.zone||''):''; $('astPortes').value=a?(a.portes||''):''; $('astPrix').value=a?(a.prix||''):''; $('astTk').value=a?(a.tk||''):''; $('astT3').value=a?(a.t3||''):''; $('astT6').value=a?(a.t6||''):'';
     renderAstTotal(); renderAstHint();
   }
-  function renderAstTotal(){ var a=astOf(cur); $('astTotal').textContent=a?(eur(astTotal(a))+'  ('+num(a.portes)+' × '+eur(num(a.prix))+')'):'–'; }
+  function renderAstTotal(){ var a=astOf(cur); var tq=a&&a.t3&&a.t6?diff(a.t3,a.t6):null; $('astTkTxt').textContent=(tq>0)?(fmt(tq)+'  =  '+eur(hsEur(tq))):'–'; updateAstCr(); $('astTotal').textContent=a?(eur(astTotal(a))+'  ('+num(a.portes)+' × '+eur(num(a.prix))+')'):'–'; }
   function renderAstHint(){
     var p=periodFor(cur.date||''), box=$('astHint');
     if(p&&!astOf(cur)){ $('astHintTxt').textContent='📅 Astreinte prévue dans ton agenda ('+perTxt(p)+(p.zone?' · '+p.zone:'')+').'; box.style.display='flex'; }
@@ -2505,13 +2514,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   function setAstOn(on){
     if(on){
       var p=periodFor(cur.date||'');
-      cur.astreinte={on:true,zone:(p&&p.zone)||(cur.astreinte&&cur.astreinte.zone)||'',portes:(cur.astreinte&&cur.astreinte.portes)||'',prix:(cur.astreinte&&cur.astreinte.prix)||(settings.prixPorte||'')};
+      cur.astreinte=Object.assign({},cur.astreinte||{},{on:true,zone:(p&&p.zone)||(cur.astreinte&&cur.astreinte.zone)||'',portes:(cur.astreinte&&cur.astreinte.portes)||'',prix:(cur.astreinte&&cur.astreinte.prix)||(settings.prixPorte||'')});
     } else if(cur.astreinte){ cur.astreinte.on=false; }
     saveDraft(); renderAstUI(); renderResult();
   }
   $('astOn').addEventListener('change',function(){ setAstOn(this.checked); });
   $('astHintBtn').addEventListener('click',function(){ setAstOn(true); });
-  [['astZone','zone'],['astPortes','portes'],['astPrix','prix']].forEach(function(x){
+  [['astZone','zone'],['astPortes','portes'],['astPrix','prix'],['astTk','tk'],['astT3','t3'],['astT6','t6']].forEach(function(x){
     $(x[0]).addEventListener('input',function(){
       if(!astOf(cur)) return; cur.astreinte[x[1]]=this.value;
       if(x[1]==='prix'&&this.value){ settings.prixPorte=this.value; store(KEY_SET,settings); }
@@ -2710,7 +2719,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   function crTechs(it){ var c=crOf(it), t=(c&&c.techs)||settings.techs||[]; return [0,1,2,3].map(function(k){ return t[k]||''; }); }
   function crSynthese(d,it){
     var c=crOf(it)||{};
-    var titre=it.xs?'Heures supp.':(String(it.ticket||'').trim()||'Sans titre');
+    var titre=String(it.ticket||'').trim()||'Sans titre';
     var techs=(c.techs||[]).filter(function(t){return t&&String(t).trim();}).join(', ');
     var t="========================================\n";
     t+="            RAPPORT D'INTERVENTION        \n";
@@ -2718,7 +2727,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     t+="Dossier : "+titre.toUpperCase()+"\n";
     t+="Date    : "+longDate(d.date||today())+"\n";
     t+="Lieu    : "+(c.lieu||'Non spécifié')+"\n";
-    t+=(it.xs?"Durée   : "+(xsDur(d)||'--'):"Horaire : "+(it.debut||'--:--')+" - "+(it.fin||'--:--'))+"\n";
+    t+="Horaire : "+(it.debut||'--:--')+" - "+(it.fin||'--:--')+"\n";
     t+="Soudures: "+(c.soudures||'0')+"\n";
     t+="Nacelle : "+(c.nacelle?'Oui':'Non')+"\n";
     if(techs) t+="Équipe  : "+techs+"\n";
@@ -2732,11 +2741,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   }
   function crBlock(doc,y,d,it){
     var c=crOf(it)||{}, x=diff(it.debut,it.fin), W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight();
-    y=pdfSection(doc,y,'Compte rendu - '+(it.xs?'Heures supplementaires':(it.ticket?'Ticket '+ws(it.ticket):'Intervention')));
+    y=pdfSection(doc,y,'Compte rendu - '+(it.ticket?'Ticket '+ws(it.ticket):'Intervention'));
     doc.setFont('helvetica','normal'); doc.setFontSize(10); tcol(doc,C_GREY); doc.text(ws(longDate(d.date||today())),14,y+5);
     y=pdfCards(doc,y+9,[
       {label:'Emplacement',value:ws(c.lieu||'-')},
-      it.xs?{label:'Heures supp.',value:xsDur(d)||'-'}:{label:'Horaire (T3 - T6)',value:(it.debut||'?')+' - '+(it.fin||'?'),sub:x===null?'':'Durée '+fmt(x),small:true},
+      {label:'Horaire (T3 - T6)',value:(it.debut||'?')+' - '+(it.fin||'?'),sub:x===null?'':'Durée '+fmt(x),small:true},
       {label:'Soudures',value:ws(c.soudures||'0'),tone:num(c.soudures)>0?'yes':null},
       {label:'Nacelle',value:c.nacelle?'OUI':'NON'}
     ]);
@@ -2760,23 +2769,21 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   }
   function pdfCr(d,it,noSave){
     var doc=pdfLib();
-    var y=pdfHeader(doc,'Compte rendu d\'intervention',(it.xs?'Heures supp.  ·  ':(it.ticket?'Ticket '+it.ticket+'  ·  ':''))+longDate(d.date||today()));
+    var y=pdfHeader(doc,'Compte rendu d\'intervention',(it.ticket?'Ticket '+it.ticket+'  ·  ':'')+longDate(d.date||today()));
     crBlock(doc,y,d,it); pdfFooter(doc);
-    var name='CR_'+String(it.xs?'heures_supp':(it.ticket||'intervention')).replace(/[^a-z0-9]/gi,'_').toLowerCase()+'_'+(d.date||today())+'.pdf';
+    var name='CR_'+String(it.ticket||'intervention').replace(/[^a-z0-9]/gi,'_').toLowerCase()+'_'+(d.date||today())+'.pdf';
     if(!noSave) doc.save(name);
     return {doc:doc,name:name};
   }
   var crId=null;
-  function xsOf(d){ var o={id:'xs',xs:true,ticket:'',debut:'',fin:''}; Object.defineProperty(o,'cr',{get:function(){ return d.xcr||null; },set:function(v){ d.xcr=v; }}); return o; }
-  function crTk(it){ return it&&it.xs?'Heures supp.':(it&&it.ticket?'Ticket '+it.ticket:''); }
-  function xsDur(d){ var e=compute(d).extra; return e?fmt(e):''; }
-  function updateXcr(){ var it=xsOf(cur), b=$('xcrBtn'), f=crFilled(it); b.className='crbtn'+(f?' done':''); b.textContent=f?'✓ Compte rendu':'📝 Compte rendu'; var c=crOf(it); $('xcrStat').textContent=f?[c.lieu,(num(c.soudures)?c.soudures+' soudure'+(num(c.soudures)>1?'s':''):''),c.nacelle?'nacelle':'',String(c.texte||'').trim().replace(/\s+/g,' ').slice(0,60)].filter(Boolean).join(' · '):''; }
-  function crItem(){ if(crId==='xs') return xsOf(cur); return cur.interventions.filter(function(x){return x.id===crId;})[0]; }
+  function astItem(d){ var a=astOf(d); if(!a) return null; var o={id:'ast',ast:true}; ['ticket:tk','debut:t3','fin:t6','cr:cr'].forEach(function(m){ var k=m.split(':'); Object.defineProperty(o,k[0],{get:function(){ return a[k[1]]||(k[0]==='cr'?null:''); },set:function(v){ a[k[1]]=v; }}); }); return o; }
+  function updateAstCr(){ var it=astItem(cur), b=$('astCrBtn'); if(!it){ return; } var f=crFilled(it), c=crOf(it); b.className='crbtn'+(f?' done':''); b.textContent=f?'✓ Compte rendu':'📝 Compte rendu'; $('astCrStat').textContent=f?[c.lieu,(num(c.soudures)?c.soudures+' soudure'+(num(c.soudures)>1?'s':''):''),c.nacelle?'nacelle':'',String(c.texte||'').trim().replace(/\s+/g,' ').slice(0,60)].filter(Boolean).join(' · '):''; }
+  function crItem(){ if(crId==='ast') return astItem(cur); return cur.interventions.filter(function(x){return x.id===crId;})[0]; }
   function crOpen(id){
     crId=id; var it=crItem(); if(!it) return;
     var c=crOf(it)||{}, x=diff(it.debut,it.fin);
-    $('crTitle').textContent='Compte rendu'+(crTk(it)?' - '+crTk(it):'');
-    $('crSub').innerHTML='<b>'+esc(longDate(cur.date||today()))+'</b> · '+(it.xs?'Heures supp.'+(xsDur(cur)?' '+esc(xsDur(cur)):''):'T3 '+esc(it.debut||'?')+' → T6 '+esc(it.fin||'?')+(x===null?'':' · '+fmt(x)));
+    $('crTitle').textContent='Compte rendu'+(it.ticket?' - Ticket '+it.ticket:'');
+    $('crSub').innerHTML='<b>'+esc(longDate(cur.date||today()))+'</b> · T3 '+esc(it.debut||'?')+' → T6 '+esc(it.fin||'?')+(x===null?'':' · '+fmt(x));
     $('crLieu').value=c.lieu||''; $('crSoud').value=c.soudures||''; $('crNacelle').checked=!!c.nacelle; $('crTexte').value=c.texte||'';
     var t=crTechs(it); [1,2,3,4].forEach(function(k){ $('crT'+k).value=t[k-1]; });
     $('crMsg').textContent='';
@@ -2787,7 +2794,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var techs=[1,2,3,4].map(function(k){ return $('crT'+k).value.trim(); });
     it.cr={lieu:$('crLieu').value,soudures:$('crSoud').value,nacelle:$('crNacelle').checked,techs:techs,texte:$('crTexte').value};
     settings.techs=techs; store(KEY_SET,settings);
-    saveDraft(); renderList(); renderResult(); updateXcr();
+    saveDraft(); renderList(); renderResult(); updateAstCr();
   }
   ['crLieu','crSoud','crNacelle','crT1','crT2','crT3','crT4','crTexte'].forEach(function(id){
     $(id).addEventListener('input',crCollect); $(id).addEventListener('change',crCollect);
@@ -2796,11 +2803,11 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   function synSay(t){ $('synMsg').textContent=t; setTimeout(function(){ $('synMsg').textContent=''; },4000); }
   function synOpen(){
     var it=crItem(); if(!it) return; var c=crOf(it)||{}, x=diff(it.debut,it.fin);
-    $('synTicket').textContent=it.xs?'Heures supp.':(it.ticket?'Ticket '+it.ticket:'Intervention');
+    $('synTicket').textContent=it.ticket?'Ticket '+it.ticket:'Intervention';
     $('synDate').textContent=longDate(cur.date||today());
     $('synChips').innerHTML=
       '<div class="chip lieu"><small>📍 Emplacement</small><b>'+esc(c.lieu||'–')+'</b></div>'+
-      (it.xs?'<div class="chip"><small>⏱ Heures supp.</small><b>'+esc(xsDur(cur)||'–')+'</b></div>':'<div class="chip"><small>⏱ '+esc(it.debut||'?')+' → '+esc(it.fin||'?')+'</small><b>'+(x===null?'–':fmt(x))+'</b></div>')+
+      '<div class="chip"><small>⏱ '+esc(it.debut||'?')+' → '+esc(it.fin||'?')+'</small><b>'+(x===null?'–':fmt(x))+'</b></div>'+
       '<div class="chip soud"><small>🔥 Soudures</small><b>'+esc(c.soudures||'0')+'</b></div>'+
       '<div class="chip nac'+(c.nacelle?' on':'')+'"><small>🏗️ Nacelle</small><b>'+(c.nacelle?'Oui':'Non')+'</b></div>';
     var tc=(c.techs||[]).filter(function(t){return t&&String(t).trim();});
@@ -2808,7 +2815,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     $('synTxt').textContent=String(c.texte||'').trim()||'Aucun détail saisi.';
     $('synDlg').showModal();
   }
-  $('xcrBtn').addEventListener('click',function(){ crOpen('xs'); });
+  $('astCrBtn').addEventListener('click',function(){ crOpen('ast'); });
   $('crView').addEventListener('click',synOpen);
   $('synClose').addEventListener('click',function(){ $('synDlg').close(); });
   $('synPdf').addEventListener('click',function(){ var it=crItem(); if(!it) return; try{ pdfCr(cur,it); synSay('PDF téléchargé.'); }catch(e){ synSay('Impossible de créer le PDF.'); } });
@@ -2821,7 +2828,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   });
   $('crTxt').addEventListener('click',function(){
     var it=crItem(); if(!it) return;
-    var text=crSynthese(cur,it), name='CR_'+String(it.xs?'heures_supp':(it.ticket||'rapport')).replace(/[^a-z0-9]/gi,'_').toLowerCase()+'.txt';
+    var text=crSynthese(cur,it), name='CR_'+String(it.ticket||'rapport').replace(/[^a-z0-9]/gi,'_').toLowerCase()+'.txt';
     function dl(){
       var u=URL.createObjectURL(new Blob([text],{type:'text/plain'})), a=document.createElement('a');
       a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(u); },4000);
@@ -2908,7 +2915,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     $('date').value=cur.date||''; $('depart').value=cur.depart||''; $('kmAller').value=cur.kmAller||'';
     $('retour').value=cur.retour||''; $('kmRetour').value=cur.kmRetour||''; $('pause').value=cur.pause||'';
     $('dpOn').checked=!!cur.dp; $('dpFields').style.display=cur.dp?'':'none'; $('dpA').value=cur.dpA||''; $('dpD').value=cur.dpD||''; $('dpMotif').value=cur.dpMotif||'';
-    $('xh').value=cur.xh||''; $('xm').value=cur.xm||''; $('xmotif').value=cur.xmotif||''; updateXcr();
+    $('xh').value=cur.xh||''; $('xm').value=cur.xm||''; $('xmotif').value=cur.xmotif||'';
     $('seuil').value=settings.seuil; $('tauxHs').value=(settings.tauxHs===undefined?20:settings.tauxHs); $('primeAst').value=(settings.primeAst===undefined?120:settings.primeAst); $('salaire').value=(settings.salaire>0?settings.salaire:''); $('mode').value=settings.mode; $('nom').value=settings.nom||''; $('email').value=settings.email||''; $('relay').value=settings.relay||''; $('relaySecret').value=settings.relaySecret||'';
   }
 
@@ -3204,7 +3211,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var t=loadTrash(); t.unshift({k:date,at:new Date().toISOString(),why:why,day:recOf(rec)}); store(KEY_TRASH,t.slice(0,60));
   }
   function hsSubTxt(r,d){
-    var a=r.astTrip?'dont trajet astreinte '+fmt(r.astTrip):(r.hsBase>0?r.hsBase+' min au-dessus de '+fmt(r.seuilMin):((r.hs===0)?'sous le seuil de '+fmt(r.seuilMin):''));
+    var a=r.astTrip?'dont ticket astreinte '+fmt(r.astTrip):(r.hsBase>0?r.hsBase+' min au-dessus de '+fmt(r.seuilMin):((r.hs===0)?'sous le seuil de '+fmt(r.seuilMin):''));
     if(r.extra) a+=(a?' · ':'')+'dont '+fmt(r.extra)+' ajoutées'+(cur0motif(d)?' ('+ws(cur0motif(d))+')':'');
     return a;
   }
@@ -3214,13 +3221,13 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   }
   function cur0motif(d){ return String(d.xmotif||'').trim(); }
   function norm(d){
-    return JSON.stringify([congeOf(d),d.depart||'',String(d.kmAller||''),d.retour||'',String(d.kmRetour||''),String(d.pause||''),String(d.xh||''),String(d.xm||''),String(d.xmotif||''),crKey(xsOf(d)),d.dp?'1':'',d.dpA||'',d.dpD||'',d.dpMotif||'',
+    return JSON.stringify([congeOf(d),d.depart||'',String(d.kmAller||''),d.retour||'',String(d.kmRetour||''),String(d.pause||''),String(d.xh||''),String(d.xm||''),String(d.xmotif||''),d.dp?'1':'',d.dpA||'',d.dpD||'',d.dpMotif||'',
       (d.interventions||[]).filter(function(i){return i&&(i.ticket||i.debut||i.fin||crFilled(i));}).map(function(i){return [i.ticket||'',i.debut||'',i.fin||'',crKey(i),JSON.stringify(i.pieces||[]),i.comment||''];}),
-      astOf(d)?[String(d.astreinte.zone||''),String(d.astreinte.portes||''),String(d.astreinte.prix||'')]:null,
+      astOf(d)?[String(d.astreinte.zone||''),String(d.astreinte.portes||''),String(d.astreinte.prix||''),d.astreinte.tk||'',d.astreinte.t3||'',d.astreinte.t6||'',crKey(astItem(d))]:null,
       horsOf(d)?horsItems(d).map(function(i){return [i.zone||'',i.ticket||'',i.t3||'',i.t6||'',String(i.prix||'')];}):null]);
   }
   function hasContent(d){
-    return !!(congeOf(d)||d.depart||d.retour||String(d.kmAller||'').trim()||String(d.kmRetour||'').trim()||String(d.pause||'').trim()||String(d.xh||'').trim()||String(d.xm||'').trim()||crFilled(xsOf(d))||d.dp||
+    return !!(congeOf(d)||d.depart||d.retour||String(d.kmAller||'').trim()||String(d.kmRetour||'').trim()||String(d.pause||'').trim()||String(d.xh||'').trim()||String(d.xm||'').trim()||d.dp||
       (d.interventions||[]).some(function(i){return i.ticket||i.debut||i.fin||crFilled(i);})||!!astOf(d)||!!horsOf(d)||KINDS.some(function(k){return nbPhotos('draft|'+k)>0;}));
   }
   function photosSame(date){
@@ -3533,7 +3540,6 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     var cg=congeOf(d); if(cg){ h+='<tr><td colspan="3"><b>🏖️ '+CG_LABEL[cg]+'</b></td></tr>'; t.push('*** '+CG_LABEL[cg].toUpperCase()+' ***'); }
     h+='<tr><td>Départ maison</td><td class="num">'+esc(d.depart||'–')+'</td><td class="num">'+(num(d.kmAller)?num(d.kmAller)+' km':'')+'</td></tr>';
     t.push('Départ maison : '+(d.depart||'–')+(num(d.kmAller)?' ('+num(d.kmAller)+' km)':''));
-    if(crFilled(xsOf(d))){ var xc=crOf(xsOf(d)); var xci=[xc.lieu,num(xc.soudures)?xc.soudures+' soudure(s)':'',xc.nacelle?'nacelle':''].filter(Boolean).join(', '); t.push('Heures supp. : compte rendu joint au PDF'+(xci?' ('+xci+')':'')); h+='<tr><td colspan="3" style="color:var(--muted);font-size:13px">📝 Compte rendu heures supp.'+(xci?' : '+esc(xci):'')+'</td></tr>'; }
     if(d.dp){ h+='<tr><td>🏭 Passage au dépôt'+(String(d.dpMotif||'').trim()?'<br><small style="color:var(--muted)">'+esc(String(d.dpMotif).trim())+'</small>':'')+'</td><td class="num" colspan="2">Arrivée '+esc(d.dpA||'?')+' → départ '+esc(d.dpD||'?')+'</td></tr>'; t.push('Passage au dépôt : '+depotTxt(d).replace(/^Arrivée /,'arrivée ')); }
     if(!its.length){ h+='<tr><td colspan="3" style="color:var(--muted)">Aucune intervention saisie</td></tr>'; t.push('Aucune intervention saisie'); }
     its.forEach(function(i,n){
@@ -3546,6 +3552,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     t.push('Retour maison : '+(d.retour||'–')+(num(d.kmRetour)?' ('+num(d.kmRetour)+' km)':''));
     var A=astOf(d);
     if(A){ var at=astTotal(A); h+='<tr><td>🚨 Astreinte'+(A.zone?' · '+esc(A.zone):'')+'</td><td class="num">'+num(A.portes)+' porte(s) × '+eur(num(A.prix))+'</td><td class="num"><b>'+eur(at)+'</b></td></tr>'; t.push('Astreinte'+(A.zone?' ('+A.zone+')':'')+' : '+num(A.portes)+' porte(s) × '+eur(num(A.prix))+' = '+eur(at)); }
+    if(A&&(A.tk||A.t3||A.t6||crFilled(astItem(d)))){ h+='<tr><td>🚨 Ticket astreinte'+(A.tk?' · '+esc(A.tk):'')+'</td><td class="num">T3 '+esc(A.t3||'?')+' → T6 '+esc(A.t6||'?')+'</td><td class="num">'+(r.astTrip?'<b>'+fmt(r.astTrip)+'</b>':'–')+'</td></tr>'; t.push('Ticket astreinte'+(A.tk?' '+A.tk:'')+' : T3 '+(A.t3||'?')+' → T6 '+(A.t6||'?')+(r.astTrip?' ('+fmt(r.astTrip)+' compté en heures sup)':'')+(crFilled(astItem(d))?' - compte rendu joint au PDF':'')); }
     horsItems(d).forEach(function(i){ var pr=num(i.prix); h+='<tr><td>🚪 Porte hors astreinte'+(i.ticket?' · '+esc(i.ticket):'')+(i.zone?' · '+esc(i.zone):'')+'</td><td class="num">T3 '+esc(i.t3||'?')+' → T6 '+esc(i.t6||'?')+'</td><td class="num"><b>'+(pr?eur(pr):'–')+'</b></td></tr>'; t.push('Porte hors astreinte'+(i.ticket?' '+i.ticket:'')+(i.zone?' ('+i.zone+')':'')+' : T3 '+(i.t3||'?')+' → T6 '+(i.t6||'?')+(pr?' = '+eur(pr):'')); });
     h+='</tbody></table>';
     h+='<div class="kv">'+
@@ -3860,6 +3867,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(r.pause) rows.push(['Pause déduite',r.pause+' min']);
     rows.push(['Temps compté',fmt(r.counted)]);
     rows.push(['Seuil journalier',fmt(r.seuilMin)]);
+    if(r.astTrip) rows.push(['Ticket d\'astreinte (T3 à T6)',fmt(r.astTrip)+'  ('+(AST0.t3||'?')+' - '+(AST0.t6||'?')+(AST0.tk?'  -  '+ws(AST0.tk):'')+')']);
     if(r.extra) rows.push(['Heures supplémentaires ajoutées',fmt(r.extra)+(cur0motif(d)?'  -  '+ws(cur0motif(d)):'')]);
     rows.push(['Heures supplémentaires',r.hs===null?'À calculer':fmt(r.hs)+'  ('+r.hs+' min)  =  '+eur(hsEur(r.hs),true)]);
     var o2=tableBase(); o2.startY=y+2; o2.body=rows; o2.theme='plain';
@@ -3891,7 +3899,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       o4.didParseCell=function(h){ if((h.section==='head'||h.section==='foot')&&h.column.index===4) h.cell.styles.halign='right'; };
       doc.autoTable(o4);
     }
-    if(!noCr){ d.interventions.filter(crFilled).forEach(function(it){ doc.addPage(); crBlock(doc,24,d,it); }); if(crFilled(xsOf(d))){ doc.addPage(); crBlock(doc,24,d,xsOf(d)); } }
+    if(!noCr){ d.interventions.filter(crFilled).forEach(function(it){ doc.addPage(); crBlock(doc,24,d,it); }); var ai=astItem(d); if(ai&&crFilled(ai)){ doc.addPage(); crBlock(doc,24,d,ai); } }
     var L1=asList(photos&&photos.depart), L2=asList(photos&&photos.retour);
     if(L1.length||L2.length) pdfPhotos(doc,d,L1,L2);
     var L3=asList(photos&&photos.portes);
@@ -4532,7 +4540,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   }
   function cleanAst(a){
     if(!a||typeof a!=='object'||!a.on) return null;
-    return {on:true,zone:cleanStr(a.zone),portes:cleanStr(a.portes),prix:cleanStr(a.prix)};
+    return {on:true,zone:cleanStr(a.zone),portes:cleanStr(a.portes),prix:cleanStr(a.prix),tk:cleanStr(a.tk),t3:cleanTime(a.t3),t6:cleanTime(a.t6),cr:cleanCr(a.cr)};
   }
   function cleanHors(h){
     if(!h||typeof h!=='object'||!h.on||!Array.isArray(h.items)) return null;
@@ -4545,7 +4553,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     its=its.filter(function(i){return i&&typeof i==='object'}).map(function(i){ var o={id:uid(),ticket:cleanStr(i.ticket),debut:cleanTime(i.debut),fin:cleanTime(i.fin)}; var cm=cleanStr(i.comment).trim().slice(0,140); if(cm) o.comment=cm; var c=cleanCr(i.cr); if(c) o.cr=c; var pcs=cleanPieces(i.pieces); if(pcs.length) o.pieces=pcs; return o; });
     if(!its.length) its=[{id:uid(),ticket:'',debut:'',fin:''}];
     sortInts(its);
-    return {date:key,conge:congeOf(d),depart:cleanTime(d.depart),kmAller:cleanStr(d.kmAller),retour:cleanTime(d.retour),kmRetour:cleanStr(d.kmRetour),pause:cleanStr(d.pause),xh:cleanStr(d.xh),xm:cleanStr(d.xm),xmotif:cleanStr(d.xmotif).slice(0,140),xcr:cleanCr(d.xcr),dp:d.dp?'1':'',dpA:cleanTime(d.dpA),dpD:cleanTime(d.dpD),dpMotif:cleanStr(d.dpMotif).slice(0,140),interventions:its,astreinte:cleanAst(d.astreinte),hors:cleanHors(d.hors)};
+    return {date:key,conge:congeOf(d),depart:cleanTime(d.depart),kmAller:cleanStr(d.kmAller),retour:cleanTime(d.retour),kmRetour:cleanStr(d.kmRetour),pause:cleanStr(d.pause),xh:cleanStr(d.xh),xm:cleanStr(d.xm),xmotif:cleanStr(d.xmotif).slice(0,140),dp:d.dp?'1':'',dpA:cleanTime(d.dpA),dpD:cleanTime(d.dpD),dpMotif:cleanStr(d.dpMotif).slice(0,140),interventions:its,astreinte:cleanAst(d.astreinte),hors:cleanHors(d.hors)};
   }
   $('restoreFile').addEventListener('change',function(){
     var f=this.files&&this.files[0]; var input=this; if(!f) return;
