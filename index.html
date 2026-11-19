@@ -239,7 +239,24 @@
   .fin .l.t{background:linear-gradient(135deg,#059669,#0891b2);color:#fff;font-size:17px;font-weight:700}
   .fin .l small{color:var(--muted);display:block;font-weight:400}
   .fin .l.t small{color:#fff;opacity:.85}
-  #tabBtnTheme{flex:0 0 46px;font-size:17px;padding:8px 0}
+  #tabBtnCodes{flex:0 0 46px;font-size:17px;padding:8px 0}
+  .hero{position:relative}
+  .herotheme{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:14px;width:40px;height:40px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.2);color:#fff;font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+  .herotheme.on{background:rgba(255,255,255,.4)}
+  #tabCodes .card{border-left-color:var(--c-dep)}
+  #tabCodes .card h2::before{content:"🔑";background:color-mix(in srgb,var(--c-dep) 20%,transparent)}
+  #tabCodes .card:nth-of-type(2) h2::before{content:"📍"}
+  .cdcity{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+  .cdcity>.cdhd{display:flex;align-items:center;gap:8px;padding:12px;cursor:pointer;font-weight:700;background:color-mix(in srgb,var(--accent) 8%,var(--card));user-select:none}
+  .cdcity>.cdhd small{margin-left:auto;color:var(--muted);font-weight:600}
+  .cdcity .ch{transition:transform .2s;color:var(--muted);font-size:14px}.cdcity.ic .ch{transform:rotate(-90deg)}.cdcity.ic .cdbody{display:none}
+  .cdbody{padding:8px 10px}
+  .cdad{border-top:1px dashed var(--line);padding:10px 0}.cdad:first-child{border-top:0}
+  .cdad b{display:block}.cdad .sub{color:var(--muted);font-size:13px}
+  .cdcode{display:flex;align-items:center;gap:8px;margin-top:6px}.cdcode span{flex:1;min-width:0;color:var(--muted)}
+  .cdcode button{font-family:ui-monospace,Menlo,monospace;font-weight:700;font-size:16px;padding:8px 12px}
+  .cdact{display:flex;gap:8px;margin-top:8px}
+  .cdrow{display:flex;gap:8px;align-items:flex-end;margin-bottom:8px}.cdrow .field{flex:1 1 0}
   #tabTheme .card{border-left-color:var(--accent)}
   #tabTheme .card h2::before{content:"🎨";background:color-mix(in srgb,var(--accent) 20%,transparent)}
   #tabTheme .card:nth-of-type(2) h2::before{content:"🌗"}
@@ -426,7 +443,7 @@
   details.astm .astn{margin-left:auto;font-size:13px;color:var(--muted);font-weight:600}
   details.astm[open]>summary{border-bottom:1px solid var(--line)}
   details.astm>*:not(summary){margin:10px 12px}
-  @media(max-width:384px){ .tab{font-size:12.5px;padding:11px 1px} #tabBtnDep,#tabBtnTheme,#tabBtnStock,#tabBtnVeh{flex:0 0 36px} .tabs{gap:3px;padding:4px} }
+  @media(max-width:384px){ .tab{font-size:12.5px;padding:11px 1px} #tabBtnDep,#tabBtnCodes,#tabBtnStock,#tabBtnVeh{flex:0 0 36px} .tabs{gap:3px;padding:4px} }
   /* ===== v2 ===== */
   .dpf{position:relative}
   .dpf.nr.late{border-color:#9f1239;background:color-mix(in srgb,#9f1239 20%,var(--card));box-shadow:0 0 0 3px color-mix(in srgb,#e11d48 28%,transparent),0 0 26px 5px color-mix(in srgb,#e11d48 62%,transparent);animation:lateP 2.2s ease-in-out infinite}
@@ -501,7 +518,7 @@
   .lk-alt{margin-top:18px;border:none;background:none;color:var(--muted);text-decoration:underline}
   .lk-box.shake{animation:shk .35s}@keyframes shk{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
   #tabBtnAstreinte .lbl{display:inline}
-  @media(max-width:440px){ #tabBtnHome,#tabBtnAstreinte{flex:0 0 40px} #tabBtnAstreinte .lbl{display:none} #tabBtnDep,#tabBtnTheme,#tabBtnStock,#tabBtnVeh{flex:0 0 34px;font-size:16px} #tabBtnHome,#tabBtnAstreinte{flex:0 0 34px} .tabs{gap:2px;padding:4px} .tab{font-size:13px;min-width:0} }
+  @media(max-width:440px){ #tabBtnHome,#tabBtnAstreinte{flex:0 0 40px} #tabBtnAstreinte .lbl{display:none} #tabBtnDep,#tabBtnCodes,#tabBtnStock,#tabBtnVeh{flex:0 0 34px;font-size:16px} #tabBtnHome,#tabBtnAstreinte{flex:0 0 34px} .tabs{gap:2px;padding:4px} .tab{font-size:13px;min-width:0} }
 
 
   /* ----- navigation en bas ----- */
@@ -612,7 +629,7 @@
   .lk-alt{margin-top:18px;border:none;background:none;color:var(--muted);text-decoration:underline}
   .lk-box.shake{animation:shk .35s}@keyframes shk{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
   #tabBtnAstreinte .lbl{display:inline}
-  @media(max-width:440px){ #tabBtnHome,#tabBtnAstreinte{flex:0 0 40px} #tabBtnAstreinte .lbl{display:none} #tabBtnDep,#tabBtnTheme,#tabBtnStock,#tabBtnVeh{flex:0 0 34px;font-size:16px} #tabBtnHome,#tabBtnAstreinte{flex:0 0 34px} .tabs{gap:2px;padding:4px} .tab{font-size:13px;min-width:0} }
+  @media(max-width:440px){ #tabBtnHome,#tabBtnAstreinte{flex:0 0 40px} #tabBtnAstreinte .lbl{display:none} #tabBtnDep,#tabBtnCodes,#tabBtnStock,#tabBtnVeh{flex:0 0 34px;font-size:16px} #tabBtnHome,#tabBtnAstreinte{flex:0 0 34px} .tabs{gap:2px;padding:4px} .tab{font-size:13px;min-width:0} }
 
 
   /* ----- navigation en bas ----- */
@@ -675,7 +692,7 @@
 <path d="M96 29v7M97 38q4 2 10 .2" fill="none" stroke="#374151" stroke-width="1" opacity=".7"/>
 </g></svg></div></div>
 <main>
-  <div class="hero"><img alt="" src="data:image/png;base64,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"><div><h1>Suivi de journée</h1><p>Heures supp · trajets · tickets</p></div></div>
+  <div class="hero"><img alt="" src="data:image/png;base64,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"><div><h1>Suivi de journée</h1><p>Heures supp · trajets · tickets</p></div><button type="button" id="heroTheme" class="herotheme" aria-label="Apparence" title="Apparence">🎨</button></div>
   <nav class="tabs" aria-label="Navigation">
     <button class="tab on" id="tabBtnHome" type="button" aria-label="Accueil" title="Accueil"><span class="ti">🏠</span><span class="tl">Accueil</span></button>
     <button class="tab" id="tabBtnSaisie" type="button" aria-label="Saisie" title="Saisie"><span class="ti">✏️</span><span class="tl">Saisie</span></button>
@@ -684,7 +701,7 @@
     <button class="tab" id="tabBtnDep" type="button" aria-label="Dépenses" title="Dépenses"><span class="ti">💶</span><span class="tl">Dépenses</span></button>
     <button class="tab" id="tabBtnVeh" type="button" aria-label="Véhicule" title="Véhicule"><span class="ti">🚗</span><span class="tl">Véhicule</span></button>
     <button class="tab" id="tabBtnStock" type="button" aria-label="Stock camion" title="Stock camion"><span class="ti">📦</span><span class="tl">Stock</span></button>
-    <button class="tab" id="tabBtnTheme" type="button" aria-label="Apparence" title="Apparence"><span class="ti">🎨</span><span class="tl">Thème</span></button>
+    <button class="tab" id="tabBtnCodes" type="button" aria-label="Adresses et codes" title="Adresses et codes"><span class="ti">🔑</span><span class="tl">Codes</span></button>
   </nav>
   <div id="tabHome" style="display:none"><div id="homeBox"></div></div>
   <div id="tabSaisie" style="display:none">
@@ -1022,6 +1039,27 @@
     <div class="dpbtns"><button type="button" id="stRecap">📋 Liste à recompléter</button><button type="button" id="stAll">📄 Inventaire complet</button></div>
     <div class="dpnote">La liste à recompléter reprend les pièces au seuil d'alerte (ou en dessous), avec PDF et envoi par e-mail. L'inventaire complet est un PDF de tout le stock.</div>
   </section>
+  </div>
+
+  <div id="tabCodes" style="display:none">
+  <section class="card">
+    <h2>Adresses et codes</h2>
+    <input type="search" id="cdSearch" placeholder="Rechercher (ville, adresse, code…)" autocomplete="off">
+    <button type="button" class="primary" id="cdAdd" style="margin-top:10px">+ Ajouter une adresse</button>
+    <div id="cdForm" style="display:none;margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px">
+      <div class="row">
+        <div class="field"><label for="cdVille">Ville</label><input type="text" id="cdVille" maxlength="60" autocomplete="off"></div>
+        <div class="field" style="flex:2 1 180px"><label for="cdAdr">Adresse</label><input type="text" id="cdAdr" maxlength="100" autocomplete="off"></div>
+        <div class="field"><label for="cdBat">N° de bâtiment</label><input type="text" id="cdBat" maxlength="30" autocomplete="off"></div>
+      </div>
+      <div class="dph3" style="margin-top:14px">Codes</div>
+      <div id="cdCodes"></div>
+      <button type="button" id="cdAddCode">+ Ajouter un code</button>
+      <div class="cdact" style="margin-top:14px"><button type="button" class="primary" id="cdSave">Valider</button><button type="button" id="cdCancel">Annuler</button></div>
+      <div class="msg" id="cdMsg"></div>
+    </div>
+  </section>
+  <section class="card"><h2>Mes adresses</h2><div id="cdList"></div></section>
   </div>
 
   <div id="tabTheme" style="display:none">
@@ -3510,7 +3548,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
 
 
   // ---------- Onglets ----------
-  var TABS={home:['tabHome','tabBtnHome'],saisie:['tabSaisie','tabBtnSaisie'],journees:['tabJournees','tabBtnJournees'],astreinte:['tabAstreinte','tabBtnAstreinte'],dep:['tabDep','tabBtnDep'],stock:['tabStock','tabBtnStock'],veh:['tabVeh','tabBtnVeh'],theme:['tabTheme','tabBtnTheme']};
+  var TABS={home:['tabHome','tabBtnHome'],saisie:['tabSaisie','tabBtnSaisie'],journees:['tabJournees','tabBtnJournees'],astreinte:['tabAstreinte','tabBtnAstreinte'],dep:['tabDep','tabBtnDep'],stock:['tabStock','tabBtnStock'],veh:['tabVeh','tabBtnVeh'],theme:['tabTheme','heroTheme'],codes:['tabCodes','tabBtnCodes']};
   (function(){
     function isTxt(t){ return t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&!/^(checkbox|radio|button|submit|file|color|range)$/.test(t.type||''); }
     document.addEventListener('focusin',function(e){ if(isTxt(e.target)) document.body.classList.add('kb'); });
@@ -3518,7 +3556,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   })();
   function showTab(name){
     if(!TABS[name]) name='saisie';
-    Object.keys(TABS).forEach(function(k){ var on=(k===name); $(TABS[k][0]).style.display=on?'':'none'; $(TABS[k][1]).className='tab'+(on?' on':''); });
+    Object.keys(TABS).forEach(function(k){ var on=(k===name); $(TABS[k][0]).style.display=on?'':'none'; var bt=$(TABS[k][1]); if(k==='theme') bt.classList.toggle('on',on); else bt.className='tab'+(on?' on':''); });
     if(name==='home') renderHome();
     if(name==='stock'){ if(!$('soDate').value||$('soDate').dataset.t!==today()){ $('soDate').value=today(); $('soDate').dataset.t=today(); } renderStock(); }
     if(name==='veh') renderVeh();
@@ -3526,13 +3564,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(name==='journees') renderHist();
     if(name==='astreinte') renderAgenda();
     if(name==='theme') renderThemeUI();
+    if(name==='codes') renderCodes();
     window.scrollTo(0,0);
   }
   $('tabBtnHome').addEventListener('click',function(){ showTab('home'); });
   $('tabBtnSaisie').addEventListener('click',function(){ showTab('saisie'); });
   $('tabBtnJournees').addEventListener('click',function(){ showTab('journees'); });
   $('tabBtnAstreinte').addEventListener('click',function(){ showTab('astreinte'); });
-  $('tabBtnTheme').addEventListener('click',function(){ showTab('theme'); });
+  $('heroTheme').addEventListener('click',function(){ showTab('theme'); });
+  $('tabBtnCodes').addEventListener('click',function(){ showTab('codes'); });
   $('tabBtnDep').addEventListener('click',function(){ showTab('dep'); });
   $('tabBtnStock').addEventListener('click',function(){ showTab('stock'); });
   $('tabBtnVeh').addEventListener('click',function(){ showTab('veh'); });
@@ -4274,6 +4314,72 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   // ---------- Sauvegarde / import ----------
   function flash2(t){ $('msg2').textContent=t; setTimeout(function(){ $('msg2').textContent=''; },5000); }
   // ---------- Véhicule : kilométrage, lavages, entretiens, niveaux, photos, rapport PDF ----------
+  // ---------- Adresses et codes ----------
+  var KEY_CODES='hs_codes_v1';
+  function cleanCodes(l){
+    if(!Array.isArray(l)) return [];
+    return l.filter(function(a){ return a&&typeof a==='object'; }).slice(0,500).map(function(a){
+      var cs=Array.isArray(a.codes)?a.codes:[];
+      return {id:(typeof a.id==='string'&&a.id)?a.id.slice(0,40):uid(),ville:cleanStr(a.ville).trim(),adresse:cleanStr(a.adresse).trim(),bat:cleanStr(a.bat).trim(),
+        codes:cs.filter(function(c){ return c&&typeof c==='object'; }).slice(0,30).map(function(c){ return {id:(typeof c.id==='string'&&c.id)?c.id.slice(0,40):uid(),desc:cleanStr(c.desc).trim(),code:cleanStr(c.code).trim()}; })};
+    }).filter(function(a){ return a.ville||a.adresse||a.bat||a.codes.length; });
+  }
+  var codes=cleanCodes(load(KEY_CODES,[]));
+  function saveCodes(){ store(KEY_CODES,codes); }
+  var cdEdit=null, cdDraft=[], cdOpen={};
+  function cdRowsHtml(){
+    $('cdCodes').innerHTML=cdDraft.map(function(c,i){ return '<div class="cdrow"><div class="field"><label>Description</label><input type="text" data-cd="desc" data-i="'+i+'" maxlength="60" placeholder="ex. Porte hall" value="'+esc(c.desc)+'" autocomplete="off"></div><div class="field"><label>Code</label><input type="text" data-cd="code" data-i="'+i+'" maxlength="40" placeholder="ex. 1234A" value="'+esc(c.code)+'" autocomplete="off"></div><button type="button" class="danger" data-cdx="'+i+'" aria-label="Supprimer ce code" style="padding:10px">✕</button></div>'; }).join('');
+  }
+  function cdOpenForm(a){
+    cdEdit=a?a.id:null;
+    $('cdVille').value=a?a.ville:''; $('cdAdr').value=a?a.adresse:''; $('cdBat').value=a?a.bat:'';
+    cdDraft=a?a.codes.map(function(c){ return {id:c.id,desc:c.desc,code:c.code}; }):[{id:uid(),desc:'',code:''}];
+    if(!cdDraft.length) cdDraft.push({id:uid(),desc:'',code:''});
+    cdRowsHtml(); $('cdMsg').textContent=''; $('cdForm').style.display=''; $('cdAdd').style.display='none';
+    $('cdVille').focus();
+  }
+  function cdCloseForm(){ $('cdForm').style.display='none'; $('cdAdd').style.display=''; cdEdit=null; }
+  $('cdAdd').addEventListener('click',function(){ cdOpenForm(null); });
+  $('cdCancel').addEventListener('click',cdCloseForm);
+  $('cdAddCode').addEventListener('click',function(){ cdDraft.push({id:uid(),desc:'',code:''}); cdRowsHtml(); var ins=$('cdCodes').querySelectorAll('input[data-cd="desc"]'); if(ins.length) ins[ins.length-1].focus(); });
+  $('cdCodes').addEventListener('input',function(e){ var k=e.target.dataset&&e.target.dataset.cd; if(!k) return; cdDraft[+e.target.dataset.i][k]=e.target.value; });
+  $('cdCodes').addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('[data-cdx]'); if(!b) return; cdDraft.splice(+b.dataset.cdx,1); if(!cdDraft.length) cdDraft.push({id:uid(),desc:'',code:''}); cdRowsHtml(); });
+  $('cdSave').addEventListener('click',function(){
+    var ville=$('cdVille').value.trim(), adr=$('cdAdr').value.trim(), bat=$('cdBat').value.trim();
+    var cs=cdDraft.map(function(c){ return {id:c.id,desc:c.desc.trim(),code:c.code.trim()}; }).filter(function(c){ return c.desc||c.code; });
+    if(!ville&&!adr){ $('cdMsg').textContent='Indique au moins la ville ou l\'adresse.'; return; }
+    var o={id:cdEdit||uid(),ville:ville,adresse:adr,bat:bat,codes:cs};
+    if(cdEdit){ codes=codes.map(function(a){ return a.id===cdEdit?o:a; }); } else codes.push(o);
+    cdOpen[(ville||'Sans ville').toLowerCase()]=true;
+    saveCodes(); cdCloseForm(); renderCodes();
+  });
+  function renderCodes(){
+    var q=$('cdSearch').value.trim().toLowerCase(), box=$('cdList');
+    var L=codes.filter(function(a){ if(!q) return true; return (a.ville+' '+a.adresse+' '+a.bat+' '+a.codes.map(function(c){ return c.desc+' '+c.code; }).join(' ')).toLowerCase().indexOf(q)>-1; });
+    if(!L.length){ box.innerHTML='<div class="sub" style="color:var(--muted)">'+(codes.length?'Aucun résultat.':'Aucune adresse enregistrée. Touche « + Ajouter une adresse ».')+'</div>'; return; }
+    var g={}; L.forEach(function(a){ var v=a.ville||'Sans ville'; (g[v]=g[v]||[]).push(a); });
+    var cities=Object.keys(g).sort(function(a,b){ return a.localeCompare(b,'fr',{sensitivity:'base'}); });
+    box.innerHTML=cities.map(function(v){
+      var open=q?true:!!cdOpen[v.toLowerCase()];
+      var ads=g[v].sort(function(a,b){ return (a.adresse+' '+a.bat).localeCompare(b.adresse+' '+b.bat,'fr',{numeric:true,sensitivity:'base'}); });
+      return '<div class="cdcity'+(open?'':' ic')+'" data-v="'+esc(v.toLowerCase())+'"><div class="cdhd" role="button" tabindex="0"><span class="ch">▾</span>'+esc(v)+'<small>'+ads.length+' adresse'+(ads.length>1?'s':'')+'</small></div><div class="cdbody">'+
+        ads.map(function(a){ return '<div class="cdad"><b>'+esc(a.adresse||'(sans adresse)')+'</b>'+(a.bat?'<div class="sub">Bâtiment '+esc(a.bat)+'</div>':'')+
+          a.codes.map(function(c){ return '<div class="cdcode"><span>'+esc(c.desc||'Code')+'</span><button type="button" data-cp="'+esc(c.code)+'" title="Copier le code">'+esc(c.code||'–')+'</button></div>'; }).join('')+
+          '<div class="cdact"><button type="button" data-cde="'+a.id+'">Modifier</button><button type="button" class="danger" data-cdd="'+a.id+'">Supprimer</button></div></div>'; }).join('')+'</div></div>';
+    }).join('');
+  }
+  $('cdSearch').addEventListener('input',renderCodes);
+  $('cdList').addEventListener('click',function(e){
+    var h=e.target.closest&&e.target.closest('.cdhd');
+    if(h){ var c=h.parentNode, v=c.dataset.v; cdOpen[v]=c.classList.contains('ic'); c.classList.toggle('ic'); return; }
+    var b=e.target.closest&&e.target.closest('button'); if(!b) return;
+    if(b.dataset.cp!==undefined){ var t=b.dataset.cp, old=b.textContent; copyText(t,function(okc){ b.textContent=okc?'Copié ✓':old; setTimeout(function(){ b.textContent=old; },1200); }); return; }
+    if(b.dataset.cde){ var a=codes.filter(function(x){return x.id===b.dataset.cde;})[0]; if(a){ cdOpenForm(a); $('cdForm').scrollIntoView({block:'center'}); } return; }
+    if(b.dataset.cdd){ var id=b.dataset.cdd, a2=codes.filter(function(x){return x.id===id;})[0]; if(!a2) return;
+      ask('Supprimer cette adresse ?',(a2.adresse||'Sans adresse')+(a2.ville?' · '+a2.ville:'')+(a2.codes.length?'. Ses '+a2.codes.length+' code(s) seront supprimés aussi.':'.'),['Supprimer','Garder']).then(function(i){ if(i===0){ codes=codes.filter(function(x){return x.id!==id;}); saveCodes(); renderCodes(); } }); }
+  });
+  $('cdList').addEventListener('keydown',function(e){ var h=e.target.closest&&e.target.closest('.cdhd'); if(h&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); h.click(); } });
+
   var KEY_VEH='hs_veh_v1';
   function vDate(x){ return /^\d{4}-\d{2}-\d{2}$/.test(x||'')?x:''; }
   function vKm(x){ var n=Math.round(parseFloat(String(x==null?'':x).replace(/[\s ]/g,'').replace(',','.'))); return (isFinite(n)&&n>0&&n<10000000)?n:0; }
@@ -4558,7 +4664,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     return loadPhotos(ks).then(function(){
       var photos={}, n=0;
       ks.forEach(function(k){ var l=asList(PH[k]); if(l.length){ photos[k]=l; n+=l.length; } });
-      return {app:'suivi-journee',version:3,exportedAt:new Date().toISOString(),settings:backupSettings(),days:days,draft:cur,photos:photos,astreintes:periods,depenses:dep,stock:stock,vehicule:veh,_n:n};
+      return {app:'suivi-journee',version:3,exportedAt:new Date().toISOString(),settings:backupSettings(),days:days,draft:cur,photos:photos,astreintes:periods,depenses:dep,stock:stock,vehicule:veh,codes:codes,_n:n};
     });
   }
   $('backup').addEventListener('click',function(){
@@ -4648,6 +4754,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
         var ho={}; stock.out.forEach(function(y){ ho[y.id]=1; }); cs.out.forEach(function(y){ if(!ho[y.id]) stock.out.push(y); });
         saveStock(); renderStock();
       }
+      if(Array.isArray(data.codes)){ var hc={}; codes.forEach(function(x){ hc[x.id]=1; }); cleanCodes(data.codes).forEach(function(x){ if(!hc[x.id]){ codes.push(x); } }); saveCodes(); renderCodes(); }
       var nv=0, vJobs=[];
       if(data.vehicule&&typeof data.vehicule==='object'){
         var cv=cleanVeh(data.vehicule);
@@ -4968,7 +5075,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   var KEY_BK='hs_bk_v1', bkBusy=false, bkNote={t:'',bad:false};
   function bkState(){ var s=load(KEY_BK,{}); return (s&&typeof s==='object')?s:{}; }
   function bkSig(){
-    var s=''; [KEY_DAYS,KEY_DEP,KEY_STOCK,KEY_AST,KEY_SET,KEY_VEH].forEach(function(k){ try{ s+=(localStorage.getItem(k)||'')+'|'; }catch(e){} });
+    var s=''; [KEY_DAYS,KEY_DEP,KEY_STOCK,KEY_AST,KEY_SET,KEY_VEH,KEY_CODES].forEach(function(k){ try{ s+=(localStorage.getItem(k)||'')+'|'; }catch(e){} });
     try{ s+=(localStorage.getItem('hs_phv')||'0'); }catch(e){}
     var h=5381; for(var i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0;
     return s.length+':'+h;
