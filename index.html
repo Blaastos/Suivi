@@ -4442,7 +4442,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   }
   function vItem(kind,x,title,sub,right){
     return '<div class="vit"><div class="dpi" style="border-top:0;padding:4px 0"><div class="t"><b>'+title+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</div>'+(right?'<div class="m">'+right+'</div>':'')+
-      '<button type="button" class="del" data-vdel="'+kind+'" data-vid="'+x.id+'" aria-label="Supprimer">🗑️</button></div>'+vPhHtml(vKey(kind,x.id),3,'Ajouter des photos')+'</div>';
+      '<button type="button" class="del" data-vdel="'+kind+'" data-vid="'+x.id+'" aria-label="Supprimer">🗑️</button></div>'+vPhHtml(vKey(kind,x.id),60,'Ajouter des photos')+'</div>';
   }
   var vRenderT=0;
   function renderVeh(){
@@ -4451,8 +4451,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(need.length&&!vRenderT){ vRenderT=1; loadPhotos(need).then(function(){ vRenderT=0; if($('tabVeh').style.display!=='none') renderVeh(); }); }
     if(document.activeElement!==$('vPlate')) $('vPlate').value=veh.plate;
     if(document.activeElement!==$('vModel')) $('vModel').value=veh.model;
-    $('vPhExt').innerHTML=vPhHtml('veh|ext',6,'Ajouter des photos de l\'extérieur');
-    $('vPhInt').innerHTML=vPhHtml('veh|int',6,'Ajouter des photos de l\'intérieur');
+    $('vPhExt').innerHTML=vPhHtml('veh|ext',60,'Ajouter des photos de l\'extérieur');
+    $('vPhInt').innerHTML=vPhHtml('veh|int',60,'Ajouter des photos de l\'intérieur');
     var cm=vCurKm(), h='';
     $('vKmNow').innerHTML=cm?'<div class="vbig">'+vKmTxt(cm.km)+'</div><div class="vsub">relevé du '+fmtDate(cm.date)+' ('+vAgo(cm.date)+')</div>':'<div class="dpnote">Aucun relevé pour l\'instant : note ton kilométrage ci-dessous.</div>';
     $('vkKm').placeholder=cm?'ex. '+(cm.km+100):'0';
