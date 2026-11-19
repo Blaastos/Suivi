@@ -252,7 +252,9 @@
   .cdcity .ch{transition:transform .2s;color:var(--muted);font-size:14px}.cdcity.ic .ch{transform:rotate(-90deg)}.cdcity.ic .cdbody{display:none}
   .cdbody{padding:8px 10px}
   .cdad{border-top:1px dashed var(--line);padding:10px 0}.cdad:first-child{border-top:0}
-  .cdad b{display:block}.cdad .sub{color:var(--muted);font-size:13px}
+  .cdah{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+  .cdah b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cdah small{color:var(--muted);flex:none;font-size:12.5px}
+  .cdad .ch{transition:transform .2s;color:var(--muted);font-size:14px;flex:none}.cdad.ic .ch{transform:rotate(-90deg)}.cdad.ic .cdab{display:none}
   .cdcode{display:flex;align-items:center;gap:8px;margin-top:6px}.cdcode span{flex:1;min-width:0;color:var(--muted)}
   .cdcode button{font-family:ui-monospace,Menlo,monospace;font-weight:700;font-size:16px;padding:8px 12px}
   .cdact{display:flex;gap:8px;margin-top:8px}
@@ -4326,7 +4328,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   }
   var codes=cleanCodes(load(KEY_CODES,[]));
   function saveCodes(){ store(KEY_CODES,codes); }
-  var cdEdit=null, cdDraft=[], cdOpen={};
+  var cdEdit=null, cdDraft=[], cdOpen={}, cdAdOpen={};
   function cdRowsHtml(){
     $('cdCodes').innerHTML=cdDraft.map(function(c,i){ return '<div class="cdrow"><div class="field"><label>Description</label><input type="text" data-cd="desc" data-i="'+i+'" maxlength="60" placeholder="ex. Porte hall" value="'+esc(c.desc)+'" autocomplete="off"></div><div class="field"><label>Code</label><input type="text" data-cd="code" data-i="'+i+'" maxlength="40" placeholder="ex. 1234A" value="'+esc(c.code)+'" autocomplete="off"></div><button type="button" class="danger" data-cdx="'+i+'" aria-label="Supprimer ce code" style="padding:10px">✕</button></div>'; }).join('');
   }
@@ -4363,13 +4365,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       var open=q?true:!!cdOpen[v.toLowerCase()];
       var ads=g[v].sort(function(a,b){ return (a.adresse+' '+a.bat).localeCompare(b.adresse+' '+b.bat,'fr',{numeric:true,sensitivity:'base'}); });
       return '<div class="cdcity'+(open?'':' ic')+'" data-v="'+esc(v.toLowerCase())+'"><div class="cdhd" role="button" tabindex="0"><span class="ch">▾</span>'+esc(v)+'<small>'+ads.length+' adresse'+(ads.length>1?'s':'')+'</small></div><div class="cdbody">'+
-        ads.map(function(a){ return '<div class="cdad"><b>'+esc(a.adresse||'(sans adresse)')+'</b>'+(a.bat?'<div class="sub">Bâtiment '+esc(a.bat)+'</div>':'')+
+        ads.map(function(a){ var ao=!!cdAdOpen[a.id]; return '<div class="cdad'+(ao?'':' ic')+'" data-aid="'+a.id+'"><div class="cdah" role="button" tabindex="0" aria-expanded="'+(ao?'true':'false')+'"><span class="ch">▾</span><b>'+esc(a.adresse||'(sans adresse)')+'</b><small>'+(a.bat?'Bât. '+esc(a.bat)+' · ':'')+a.codes.length+' code'+(a.codes.length>1?'s':'')+'</small></div><div class="cdab">'+
           a.codes.map(function(c){ return '<div class="cdcode"><span>'+esc(c.desc||'Code')+'</span><button type="button" data-cp="'+esc(c.code)+'" title="Copier le code">'+esc(c.code||'–')+'</button></div>'; }).join('')+
-          '<div class="cdact"><button type="button" data-cde="'+a.id+'">Modifier</button><button type="button" class="danger" data-cdd="'+a.id+'">Supprimer</button></div></div>'; }).join('')+'</div></div>';
+          '<div class="cdact"><button type="button" data-cde="'+a.id+'">Modifier</button><button type="button" class="danger" data-cdd="'+a.id+'">Supprimer</button></div></div></div>'; }).join('')+'</div></div>';
     }).join('');
   }
   $('cdSearch').addEventListener('input',renderCodes);
   $('cdList').addEventListener('click',function(e){
+    var ah=e.target.closest&&e.target.closest('.cdah');
+    if(ah){ var ad=ah.parentNode, aid=ad.dataset.aid; cdAdOpen[aid]=ad.classList.contains('ic'); ad.classList.toggle('ic'); ah.setAttribute('aria-expanded',cdAdOpen[aid]?'true':'false'); return; }
     var h=e.target.closest&&e.target.closest('.cdhd');
     if(h){ var c=h.parentNode, v=c.dataset.v; cdOpen[v]=c.classList.contains('ic'); c.classList.toggle('ic'); return; }
     var b=e.target.closest&&e.target.closest('button'); if(!b) return;
@@ -4378,7 +4382,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     if(b.dataset.cdd){ var id=b.dataset.cdd, a2=codes.filter(function(x){return x.id===id;})[0]; if(!a2) return;
       ask('Supprimer cette adresse ?',(a2.adresse||'Sans adresse')+(a2.ville?' · '+a2.ville:'')+(a2.codes.length?'. Ses '+a2.codes.length+' code(s) seront supprimés aussi.':'.'),['Supprimer','Garder']).then(function(i){ if(i===0){ codes=codes.filter(function(x){return x.id!==id;}); saveCodes(); renderCodes(); } }); }
   });
-  $('cdList').addEventListener('keydown',function(e){ var h=e.target.closest&&e.target.closest('.cdhd'); if(h&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); h.click(); } });
+  $('cdList').addEventListener('keydown',function(e){ var h=e.target.closest&&e.target.closest('.cdhd,.cdah'); if(h&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); h.click(); } });
 
   var KEY_VEH='hs_veh_v1';
   function vDate(x){ return /^\d{4}-\d{2}-\d{2}$/.test(x||'')?x:''; }
