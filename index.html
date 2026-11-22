@@ -1640,6 +1640,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
   function fmt(min){ if(min===null||isNaN(min)) return '–'; var h=Math.floor(min/60), m=Math.round(min%60); return h+' h '+String(m).padStart(2,'0'); }
   function num(v){ var n=parseFloat(String(v).replace(',','.')); return isNaN(n)?0:n; }
 
+  function isFreeDay(d){ if(d.tard) return true; var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d.date||''); if(!m) return false; var w=new Date(+m[1],+m[2]-1,+m[3],12).getDay(); return w===0||w===6; }
   function compute(d){
     var total=diff(d.depart,d.retour);
     var pause=Math.max(0,Math.round(num(d.pause)));
@@ -1657,6 +1658,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     else { counted=(span===null)?null:Math.max(0,span-pause); }
     var seuilMin=Math.round(num(settings.seuil)*60);
     var hs=counted===null?null:Math.max(0,counted-seuilMin);
+    if(hs===null&&isFreeDay(d)) hs=0;
     var A0=astOf(d), astTrip=null, hsBase=hs;
     if(A0){ var tr0=astTkMin(A0); if(tr0>0){ astTrip=tr0; hs=(hs||0)+tr0; } }
     var extra=Math.min(1440,Math.max(0,Math.round(num(d.xh)*60)+Math.round(num(d.xm))));
